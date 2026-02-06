@@ -8,13 +8,22 @@
 
 {{COMPRESSED_CONTEXT}}
 
+## User-Approved Technology Stack
+
+{{USER_APPROVED_TECH_STACK}}
+
+**注意**: ユーザーが database や orm を指定している場合（mode: specified かつ該当フィールドが非空）、
+その技術を前提としてデータ構造を設計すること。未指定の場合は要件に基づいて自律判断する。
+
+**後方互換**: `{{USER_APPROVED_TECH_STACK}}` が空またはプレースホルダーのまま残っている場合は `mode: auto` として処理する（従来通り自律選定）。
+
 ## Your Task
 
 `skills/database/SKILL.md` に従って実行する。
 
 主な作業:
 1. docs/requirements/user-stories.md からエンティティを抽出
-2. 各エンティティの属性・型を定義
+2. 各エンティティの属性・型を定義（ユーザー指定 DB/ORM がある場合はその型システムに準拠）
 3. リレーションを設計
 4. インデックス戦略を決定
 

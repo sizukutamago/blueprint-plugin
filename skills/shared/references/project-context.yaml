@@ -1,4 +1,4 @@
-# Project Context Schema (v3.1 — IPA標準準拠強化)
+# Project Context Schema (v3.2 — 技術スタックユーザー承認)
 # Aggregator teammate が唯一の書き込み者（単一ライター原則）
 # 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
 #
@@ -15,6 +15,16 @@ project:
   created_at: "{{CREATED_AT}}"
   updated_at: "{{UPDATED_AT}}"
   mode: greenfield | brownfield  # 新規開発 or 既存システム改修
+  constraints:
+    approved_tech_stack:
+      mode: auto | specified       # auto = おまかせ（自律選定）、specified = ユーザー指定あり
+      frontend: ""                 # 例: "React", "Next.js", "Vue.js"
+      backend: ""                  # 例: "Node.js", "Python/FastAPI", "Go"
+      database: ""                 # 例: "PostgreSQL", "MySQL", "MongoDB"
+      orm: ""                      # 例: "Prisma", "TypeORM", "Drizzle"
+      auth: ""                     # 例: "JWT", "Session", "OAuth2"
+      infrastructure: ""           # 例: "Vercel", "AWS", "Docker"
+      other: []                    # 例: ["GraphQL", "Redis"]
   profile:
     scale: small | medium | large   # プロジェクト規模（FR数ベース: <10=small, 10-30=medium, >30=large）
     sla_tier: basic | standard | premium  # SLAレベル（basic: 平日日中, standard: 24/7, premium: 金融相当）
@@ -98,9 +108,10 @@ glossary: []
 
 # メタデータ
 metadata:
-  version: "3.1.0"
-  schema_version: "3.1"
+  version: "3.2.0"
+  schema_version: "3.2"
   # 変更履歴
+  # v3.2.0: project.constraints.approved_tech_stack 追加（ユーザー承認済み技術スタック）
   # v3.0.0: agent-teams 全面移行、phases/wave_status/contracts 削除、TaskList DAG 移管
   # v2.0.0: Wave 並列化、Blackboard 統合、web-requirements 置換
   # v1.0.0: 8フェーズ構造導入

@@ -11,7 +11,7 @@
       "name": "blueprint-plugin",
       "source": "./",
       "description": "agent-teams による3-wave並列実行で設計ドキュメントを生成。アーキテクチャ設計、DB設計、API設計、画面設計、テスト設計、運用設計、レビューをIPA標準準拠で自動化。",
-      "version": "3.1.1",
+      "version": "3.2.0",
       "category": "documentation",
       "tags": [
         "design-docs",

@@ -1,7 +1,7 @@
 ---
 name: architecture-skeleton
 description: This skill should be used when the user asks to "define architecture skeleton", "select technology stack", "create ADR", "define system boundaries", "set NFR policies", or "plan high-level architecture". Designs high-level system architecture, technology selection, and NFR policies for Wave A parallel execution.
-version: 1.0.0
+version: 1.1.0
 model: opus
 ---
 
@@ -18,6 +18,7 @@ Wave A で実行される高レベルアーキテクチャ設計スキル。
 |------|------|------|
 | docs/requirements/user-stories.md | ○ | 機能要件（web-requirements 出力） |
 | docs/requirements/context_unified.md | ○ | プロジェクトコンテキスト |
+| ユーザー承認済み技術スタック | ○ | スポーンプロンプト経由で受領（`mode: auto` の場合は自律選定） |
 
 ## 出力ファイル
 
@@ -71,9 +72,14 @@ contract_outputs:
 1. 要件（user-stories.md）を読み込み
 2. NFR ポリシーを抽出・決定
 3. アーキテクチャパターンを選定
-4. 技術スタックを決定
+4. 技術スタックを検証・詳細化
+   4a. USER_APPROVED_TECH_STACK を確認
+   4b. mode: auto → 従来通り自律選定
+   4c. mode: specified → ユーザー指定を必須制約として採用
+   4d. 未指定カテゴリ（空文字列）は自律選定で補完
+   4e. 互換性検証（問題あれば needs_input で Lead に報告）
 5. システム境界を定義
-6. ADR を作成
+6. ADR を作成（ユーザー指定技術がある場合「ユーザー制約による選定」として記録）
 7. architecture.md（高レベル）を生成
 8. SendMessage で contract_outputs を Lead に送信
 ```
@@ -87,6 +93,9 @@ contract_outputs:
 | api | Modular Monolith | ADR-0001 |
 | batch | Event-Driven | ADR-0001 |
 | fullstack | SPA + BFF + API | ADR-0001 |
+
+**注意**: ユーザーが技術スタックを指定した場合（mode: specified）、そのスタックと最も相性の良いパターンを優先する。
+例: ユーザーが Next.js を指定 → SPA + BFF パターンを優先。Django を指定 → MVC モノリスを検討。
 
 ## NFR ポリシー決定項目
 
@@ -154,6 +163,8 @@ artifacts:
 contract_outputs:
   - key: decisions.architecture.tech_stack
     value: [選定した技術スタック]
+  - key: decisions.architecture.user_constraints
+    value: {ユーザー承認済み技術スタック（mode, 各カテゴリ）をそのまま転記}
   - key: decisions.architecture.boundaries
     value: [定義したシステム境界]
   - key: decisions.architecture.nfr_policies
@@ -179,4 +190,6 @@ blockers: []
 |--------|------|
 | 要件不足 | P0 報告、web-requirements へ差し戻し |
 | 矛盾する NFR | トレードオフを ADR に記録、P2 報告 |
-| 技術選定で迷い | ADR に代替案を記録、needs_input 状態 |
+| 技術選定で迷い（mode: auto 時） | ADR に代替案を記録、needs_input 状態 |
+| ユーザー指定技術の互換性問題 | ADR に代替案を記録、needs_input で Lead に報告。ユーザー指定は変更不可 |
+| ユーザー指定技術間の競合 | 補完側を調整して互換性を確保。調整不可の場合 needs_input で Lead に報告 |

@@ -1,7 +1,7 @@
 ---
 name: design-doc-orchestrator
 description: This skill should be used when the user asks to "create design documents", "generate full documentation", "run design workflow", "orchestrate design phases", or "create complete system specifications". Orchestrates comprehensive system design documentation through agent-teams multi-wave parallel execution (Wave A/B/C) with TaskList DAG coordination.
-version: 3.1.0
+version: 3.2.0
 ---
 
 # Design Doc Orchestrator
@@ -50,7 +50,7 @@ Lead Agent（オーケストレータ、delegate mode）
 ## Wave 構成
 
 ### Wave A（並列）
-- **architecture-skeleton**: 技術選定、システム境界、NFR方針
+- **architecture-skeleton**: 技術スタック検証・詳細化（ユーザー承認済み制約あり）、システム境界、NFR方針
 - **database**: エンティティ定義
 - **design-inventory**: 画面一覧、遷移図
 
@@ -77,7 +77,16 @@ Lead Agent（オーケストレータ、delegate mode）
 │ [Phase 1-2] web-requirements スキル呼び出し   │
 │ 出力: docs/requirements/{user-stories.md, ...} │
 └─────────────────────────────────────────────┘
-    ↓ ★ユーザー承認待ち
+    ↓ ★ユーザー承認待ち（要件定義）
+    ↓
+┌─────────────────────────────────────────────┐
+│ [Tech Stack] ユーザーに技術スタック確認       │
+│ カテゴリ: Frontend / Backend / DB / ORM /    │
+│           Auth / Infra / その他              │
+│ 応答: 具体指定 → 制約として Wave A へ        │
+│       「おまかせ」→ 自律選定モード            │
+└─────────────────────────────────────────────┘
+    ↓ ★ユーザー承認待ち（技術スタック）
 
 Lead → Teammate.spawnTeam("design-docs")
 Lead → Task(aggregator)  ← 常駐スポーン
@@ -161,7 +170,7 @@ aggregator → SendMessage(lead, "統合完了/矛盾検出")
 
 | Wave | ソース | 圧縮戦略 | 目標 |
 |------|--------|----------|------|
-| A | docs/requirements/ | Chain of Density | ~10k tokens |
+| A | docs/requirements/ + approved_tech_stack | Chain of Density | ~10k tokens |
 | B | docs/requirements/ + project-context.yaml | Entity Signature Only | ~15k tokens |
 | Post-B | project-context.yaml + 出力ファイル参照 | Decision Summary | ~10k tokens |
 | C | project-context.yaml + 先行成果物 | Decision Summary | ~10k tokens |
@@ -286,9 +295,16 @@ docs/
 
 ## ユーザー確認ポイント
 
-### 必須（Phase 2 完了後）
+### 必須（Phase 2 完了後 — 要件定義）
 
-要件定義の承認が必要。承認されるまで Wave A に進まない。
+要件定義の承認が必要。承認されるまで次のステップに進まない。
+
+### 必須（要件承認後 — 技術スタック）★v3.2 新規★
+
+技術スタックの承認が必要。Lead がカテゴリ別に質問し、ユーザーが回答する。
+「おまかせ」の場合は arch-skeleton が自律選定する。
+承認されるまで Wave A に進まない。
+（質問テンプレートは `references/team-mode.md` を参照）
 
 ### Gate 判定後（P0 時）
 

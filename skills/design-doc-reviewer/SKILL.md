@@ -1,7 +1,7 @@
 ---
 name: review
 description: This skill should be used when the user asks to "review design documents", "check document consistency", "validate traceability", "generate completion summary", "audit design specifications", or "check ID consistency". Performs consistency checks and reviews on design documentation with P0/P1/P2 severity-based Gate judgment.
-version: 3.0.0
+version: 3.2.0
 ---
 
 # Review Skill
@@ -22,11 +22,13 @@ version: 3.0.0
 - FR に対応する機能が全く実装されていない
 - 要件定義で承認された機能が設計から欠落
 - 根本的なアーキテクチャ選択ミス
+- ユーザー承認済み技術スタック（mode: specified）と設計結果の不一致（ユーザー制約違反）
 
 ### P1 指摘例（整合性問題）
 - API で未定義の ENT-XXX を参照
 - 画面詳細で未定義の API-XXX を参照
 - NFR で定義されたセキュリティ要件が未実装
+- ユーザー承認済み技術スタックの補完部分（自律選定したカテゴリ）に互換性問題がある
 
 ### P2 指摘例（軽微な問題）
 - 「など」「適切に」等の曖昧表現
@@ -93,6 +95,7 @@ version: 3.0.0
 | Goals/Non-Goals と FR の整合性 |
 | エラーパターンと architecture の整合性 |
 | テスト戦略と implementation の整合性 |
+| 技術スタックがユーザー承認内容と一致（`mode: specified` の場合のみ。`project.constraints.approved_tech_stack` vs `blackboard.decisions.architecture.tech_stack`） |
 
 ### Level 3: 完全性チェック
 
@@ -192,6 +195,7 @@ version: 3.0.0
 | API 参照切れ | P1 | api (Wave B) | 画面詳細で未定義の API-XXX を参照 |
 | 画面 ID 不整合 | P1 | design-inventory (Wave A) | 遷移図に未定義の SC-XXX |
 | NFR 未対応 | P1 | architecture-skeleton (Wave A) | セキュリティ要件が未実装 |
+| 技術スタック不整合（mode: specified 時） | P0 | architecture-skeleton (Wave A) | ユーザー指定技術が設計結果に反映されていない |
 | 要件対応漏れ | P0 | web-requirements | FR-XXX に対応する機能が全く存在しない |
 | 形式エラー | P2 | 当該フェーズ | Gherkin 形式不正 |
 | 曖昧表現 | P2 | 当該フェーズ | 「など」「適切に」 |

@@ -17,6 +17,7 @@ design-doc-orchestrator スキルを起動し、agent-teams による 2-wave 並
 ## ワークフロー
 
 1. **Requirements** - `web-requirements` スキルで要件定義（外部プラグイン）★承認必須★
+1.5. **Tech Stack** - 技術スタック確認（カテゴリ別ヒアリング）★承認必須★
 2. **Wave A（並列）** - Architecture Skeleton + Database + Design Inventory
 3. **Aggregator** - Wave A 統合
 4. **Wave B（並列）** - API + Architecture Detail

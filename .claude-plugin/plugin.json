@@ -1,6 +1,6 @@
 {
   "name": "blueprint-plugin",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "agent-teams による真の並列実行で設計ドキュメントを生成するワークフロー。3-wave DAG、TaskList 協調、SendMessage ハンドオフ、P0/P1/P2 Gate 判定、IPA標準準拠対応。",
   "author": {
     "name": "sizukutamago"

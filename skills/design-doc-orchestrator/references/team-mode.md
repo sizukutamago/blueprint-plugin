@@ -13,24 +13,30 @@ agent-teams による 2-wave 並列実行のライフサイクルと各ロール
 1. Lead → Teammate.spawnTeam("design-docs")
 2. Lead → Task(aggregator) をスポーン（常駐、Wave 全体を通じて生存）
 3. Lead → web-requirements を実行（Phase 1-2）
-4. Lead → ユーザー承認待ち
-5. Lead → TaskCreate で DAG（13タスク）を作成
-6. Lead → Wave A teammate 3体を並列スポーン
-7. Wave A 完了 → Lead → aggregator に統合依頼
-8. Aggregator → project-context.yaml 更新 → Lead に報告
-9. Lead → Wave A teammate を shutdown
-10. Lead → Wave B teammate 2体を並列スポーン
-11. Wave B 完了 → Lead → aggregator に統合依頼
-12. Aggregator → project-context.yaml 更新 → Lead に報告
-13. Lead → Wave B teammate を shutdown
-14. Lead → Post-B（design-detail）を順次スポーン
-15. Lead → Wave C teammate 3体を並列スポーン（impl-standards, impl-test, impl-ops）
-16. Wave C 完了（Aggregator 不要、ファイル出力のみ）
-17. Lead → Wave C teammate を shutdown
-18. Lead → reviewer をスポーン
-19. Reviewer → Gate 結果を Lead に送信
-20. Gate: PASS → cleanup / P1 → 修正サイクル / P0 → ユーザー通知
-21. Lead → Teammate.cleanup()
+4. Lead → ユーザー承認待ち（要件定義）
+5. Lead → ユーザーに技術スタック質問（カテゴリ別ヒアリング）★必須★
+6. Lead → ユーザー承認待ち（技術スタック）
+   - 具体指定: Lead がメモリ内に approved_tech_stack を保持（mode: specified）
+   - 「おまかせ」: mode: auto としてメモリ内に保持
+   - ※ Lead はファイル編集不可（delegate mode）のため、永続化は Aggregator が Wave A 統合時に実施
+7. Lead → TaskCreate で DAG（13タスク）を作成
+8. Lead → Wave A teammate 3体を並列スポーン
+   - arch-skeleton, database のスポーンプロンプトに {{USER_APPROVED_TECH_STACK}} を埋め込み
+9. Wave A 完了 → Lead → aggregator に統合依頼
+10. Aggregator → project-context.yaml 更新 → Lead に報告
+11. Lead → Wave A teammate を shutdown
+12. Lead → Wave B teammate 2体を並列スポーン
+13. Wave B 完了 → Lead → aggregator に統合依頼
+14. Aggregator → project-context.yaml 更新 → Lead に報告
+15. Lead → Wave B teammate を shutdown
+16. Lead → Post-B（design-detail）を順次スポーン
+17. Lead → Wave C teammate 3体を並列スポーン（impl-standards, impl-test, impl-ops）
+18. Wave C 完了（Aggregator 不要、ファイル出力のみ）
+19. Lead → Wave C teammate を shutdown
+20. Lead → reviewer をスポーン
+21. Reviewer → Gate 結果を Lead に送信
+22. Gate: PASS → cleanup / P1 → 修正サイクル / P0 → ユーザー通知
+23. Lead → Teammate.cleanup()
 ```
 
 ## ロール定義
@@ -45,8 +51,9 @@ agent-teams による 2-wave 並列実行のライフサイクルと各ロール
 | DAG 作成 | TaskCreate で 13 タスクと blockedBy を設定 |
 | Wave 遷移 | Wave A → Aggregator → Wave B → ... の順序制御 |
 | Gate 判定 | reviewer の結果を受けて PASS/ROLLBACK を決定 |
-| ユーザー確認 | Phase 2 後の承認、P0 時の通知 |
-| コンテキスト渡し | スポーン時にプロンプトで圧縮コンテキストを埋め込み |
+| ユーザー確認 | Phase 2 後の要件承認、技術スタック承認、P0 時の通知 |
+| 技術スタック確認 | 要件承認後にカテゴリ別技術スタックをユーザーにヒアリング、承認を取得 |
+| コンテキスト渡し | スポーン時にプロンプトで圧縮コンテキスト + 技術スタック制約を埋め込み |
 
 ### Aggregator（常駐 teammate）
 
@@ -160,7 +167,7 @@ teammate は Lead の会話履歴を継承しない。スポーンプロンプ�
 
 | Wave | ソース | 圧縮戦略 | 目標 |
 |------|--------|----------|------|
-| A | docs/requirements/ | Chain of Density | ~10k tokens |
+| A | docs/requirements/ + approved_tech_stack | Chain of Density | ~10k tokens |
 | B | docs/requirements/ + project-context.yaml | Entity Signature Only | ~15k tokens |
 | Post-B | project-context.yaml + 出力ファイル参照 | Decision Summary | ~10k tokens |
 | C | project-context.yaml + 先行成果物 | Decision Summary | ~10k tokens |
@@ -196,6 +203,73 @@ ROLLBACK_P0 (P0≥1):
   → Lead → web-requirements 再実行
   → Lead → Wave A から全再実行
 ```
+
+## 技術スタック質問テンプレート
+
+要件承認後、Lead がユーザーに表示する技術スタック確認テンプレート:
+
+```
+## 技術スタック確認
+
+要件定義が承認されました。次に、使用する技術スタックについて確認させてください。
+
+以下のカテゴリごとに、希望する技術があれば記入してください。
+未定・おまかせの場合は空欄のままで構いません。
+全てを「おまかせ」にする場合は「おまかせ」とだけ回答してください。
+
+| カテゴリ | 希望する技術 | 例 |
+|---------|-------------|-----|
+| フロントエンド | | React, Vue.js, Next.js, Svelte, Angular |
+| バックエンド | | Node.js, Python/FastAPI, Go, Ruby on Rails |
+| データベース | | PostgreSQL, MySQL, MongoDB, SQLite |
+| ORM/データアクセス | | Prisma, TypeORM, Drizzle, SQLAlchemy |
+| 認証方式 | | JWT, Session, OAuth2, OIDC |
+| インフラ/ホスティング | | Vercel, AWS, GCP, Docker, Kubernetes |
+| その他（指定があれば） | | GraphQL, tRPC, Redis, etc. |
+
+※ 指定された技術は設計の**必須制約**として扱います。
+※ 互換性に問題がある場合は、設計フェーズで代替案を提案します。
+```
+
+### ユーザー回答のパース
+
+Lead はユーザーの回答を以下の構造化 YAML に変換して保持する:
+
+```yaml
+# 具体指定の場合
+project.constraints.approved_tech_stack:
+  mode: specified
+  frontend: "React"
+  backend: ""           # 未指定 → 自律選定
+  database: "PostgreSQL"
+  orm: ""               # 未指定 → 自律選定
+  auth: "OAuth2"
+  infrastructure: ""    # 未指定 → 自律選定
+  other: ["GraphQL"]
+
+# 「おまかせ」の場合
+project.constraints.approved_tech_stack:
+  mode: auto
+```
+
+### 永続化フロー
+
+Lead はファイル編集不可（delegate mode）のため、approved_tech_stack の永続化は以下の流れで行う:
+
+1. Lead がユーザー回答をメモリ内に保持
+2. Lead が Wave A teammate のスポーンプロンプトに `{{USER_APPROVED_TECH_STACK}}` として埋め込み
+3. arch-skeleton が contract_outputs に `decisions.architecture.user_constraints` として含める
+4. Aggregator が Wave A 統合時に `project.constraints.approved_tech_stack` として永続化
+
+### プレースホルダー置換契約
+
+| プレースホルダー | 置換元 | 必須 | 未置換時の動作 |
+|----------------|--------|------|--------------|
+| `{{COMPRESSED_CONTEXT}}` | Lead がコンテキスト圧縮結果を埋め込み | ○ | teammate がエラー報告 |
+| `{{USER_APPROVED_TECH_STACK}}` | Lead がユーザー回答の YAML を埋め込み | ○ | `mode: auto` として扱う（後方互換） |
+
+**後方互換**: `{{USER_APPROVED_TECH_STACK}}` が空文字列またはプレースホルダーのまま残っている場合、
+teammate は `mode: auto`（おまかせ）として処理する。これにより、オーケストレータ外での個別スキル実行時も動作する。
 
 ## 禁止事項（全ロール共通）
 

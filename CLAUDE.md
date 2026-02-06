@@ -2,6 +2,15 @@
 
 Claude Code プラグインとして、日本語開発者向けの **agent-teams ネイティブ** 設計ドキュメントワークフローを提供するリポジトリ。
 
+**v3.2 の主な変更点（技術スタックユーザー承認）:**
+- 要件承認後・Wave A 開始前に技術スタックのユーザー承認ステップを追加（★必須★）
+- `project.constraints.approved_tech_stack` フィールド追加（ユーザー制約と設計結果を分離管理）
+- arch-skeleton: 自律選定 → ユーザー制約ベース選定に変更（mode: auto/specified）
+- database スポーンプロンプトにもユーザー指定 DB/ORM を伝達
+- `{{USER_APPROVED_TECH_STACK}}` プレースホルダーと置換契約を定義
+- Reviewer Level 2 に技術スタック整合性チェック追加（P1 指摘）
+- 技術スタック質問テンプレートを team-mode.md に追加
+
 **v3.1 の主な変更点（IPA標準準拠強化）:**
 - Phase 7 を3分割して Wave C 並列化（impl-standards / impl-test / impl-ops）
 - DAG を 11 → 13 タスクに拡張
