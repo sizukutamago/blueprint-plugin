@@ -1,10 +1,13 @@
 {
   "name": "design-docs-plugin",
-  "version": "3.0.0",
-  "description": "agent-teams による真の並列実行で設計ドキュメントを生成するワークフロー。2-wave DAG、TaskList 協調、SendMessage ハンドオフ、P0/P1/P2 Gate 判定対応。",
+  "version": "3.1.0",
+  "description": "agent-teams による真の並列実行で設計ドキュメントを生成するワークフロー。3-wave DAG、TaskList 協調、SendMessage ハンドオフ、P0/P1/P2 Gate 判定、IPA標準準拠対応。",
   "author": {
     "name": "sizukutamago"
   },
+  "repository": "https://github.com/sizukutamago/blueprint-plugin",
+  "homepage": "https://github.com/sizukutamago/blueprint-plugin",
+  "license": "MIT",
   "keywords": [
     "design-docs",
     "requirements",
@@ -13,9 +16,11 @@
     "japanese",
     "documentation",
     "parallel-execution",
-    "2-wave",
     "agent-teams",
-    "tasklist-dag"
+    "tasklist-dag",
+    "ipa-standards",
+    "test-design",
+    "operations-design"
   ],
   "dependencies": {
     "dev-tools-plugin": {

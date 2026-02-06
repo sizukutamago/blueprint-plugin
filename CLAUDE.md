@@ -141,8 +141,15 @@ tools: [list]
 ### インストール
 
 ```bash
-./install.sh                      # ~/.claude にインストール
-./install.sh -t /custom/path      # カスタムパス指定
+# マーケットプレイス経由
+/plugin marketplace add sizukutamago/blueprint-plugin
+/plugin install design-docs-plugin@blueprint-plugin
+
+# ローカル開発
+claude --plugin-dir /path/to/blueprint-plugin
+
+# アップデート（キャッシュクリア）
+./scripts/plugin-update.sh
 ```
 
 ### スキル呼び出し
