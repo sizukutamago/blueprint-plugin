@@ -1,4 +1,4 @@
-# design-docs-plugin
+# blueprint-plugin
 
 Claude Code プラグインとして、日本語開発者向けの **agent-teams ネイティブ** 設計ドキュメントワークフローを提供するリポジトリ。
 
@@ -31,7 +31,7 @@ Claude Code プラグインとして、日本語開発者向けの **agent-teams
 ## プロジェクト構造
 
 ```
-design-docs-plugin/
+blueprint-plugin/
 ├── .claude-plugin/          # プラグインメタデータ
 ├── agents/                  # エージェント定義（6種）
 ├── commands/                # コマンド定義（1種）
@@ -143,7 +143,7 @@ tools: [list]
 ```bash
 # マーケットプレイス経由
 /plugin marketplace add sizukutamago/blueprint-plugin
-/plugin install design-docs-plugin@blueprint-plugin
+/plugin install blueprint-plugin@blueprint-plugin
 
 # ローカル開発
 claude --plugin-dir /path/to/blueprint-plugin

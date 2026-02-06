@@ -1,4 +1,4 @@
-# design-docs-plugin
+# blueprint-plugin
 
 Claude Code プラグイン - agent-teams による設計ドキュメント生成ワークフロー
 
@@ -13,7 +13,7 @@ IPA共通フレーム準拠の設計書一式を、agent-teams の3-wave並列�
 /plugin marketplace add sizukutamago/blueprint-plugin
 
 # プラグインをインストール
-/plugin install design-docs-plugin@blueprint-plugin
+/plugin install blueprint-plugin@blueprint-plugin
 ```
 
 ### ローカル開発

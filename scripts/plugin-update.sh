@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# plugin-update.sh - design-docs-plugin の確実なアップデート
+# plugin-update.sh - blueprint-plugin の確実なアップデート
 #
 # 使用法:
 #   ./scripts/plugin-update.sh              # キャッシュクリア + 再インストール
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-PLUGIN_NAME="design-docs-plugin"
+PLUGIN_NAME="blueprint-plugin"
 MARKETPLACE_NAME="blueprint-plugin"
 FULL_NAME="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 CACHE_DIR="$HOME/.claude/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
