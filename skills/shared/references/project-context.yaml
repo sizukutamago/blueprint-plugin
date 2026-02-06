@@ -1,4 +1,4 @@
-# Project Context Schema (v3.0 — agent-teams ネイティブ)
+# Project Context Schema (v3.1 — IPA標準準拠強化)
 # Aggregator teammate が唯一の書き込み者（単一ライター原則）
 # 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
 #
@@ -15,6 +15,11 @@ project:
   created_at: "{{CREATED_AT}}"
   updated_at: "{{UPDATED_AT}}"
   mode: greenfield | brownfield  # 新規開発 or 既存システム改修
+  profile:
+    scale: small | medium | large   # プロジェクト規模（FR数ベース: <10=small, 10-30=medium, >30=large）
+    sla_tier: basic | standard | premium  # SLAレベル（basic: 平日日中, standard: 24/7, premium: 金融相当）
+    has_migration: false             # データ移行の有無（brownfield で true）
+    compliance: []                   # 規制要件（例: GDPR, SOC2, HIPAA）
 
 # Blackboard: 共有決定事項（Aggregator が Two-step Reduce で更新）
 blackboard:
@@ -38,6 +43,13 @@ blackboard:
     # - id: SC-XXX
     #   name: string
     #   components: []
+    nfr_measurability: {}
+    # NFR-ID ごとの測定可能性定義
+    # 例:
+    # NFR-PERF-001:
+    #   target: "API応答時間 p95 < 200ms"
+    #   measurement: "k6 負荷テスト (100同時ユーザー)"
+    #   pass_criteria: "p95 < 200ms かつ p99 < 500ms"
 
 # ID採番管理（名前空間は teammate ごとに分離済み）
 # arch-skeleton: ADR-XXXX
@@ -76,14 +88,18 @@ traceability:
   api_to_ent: {}
   # API → SC: APIから画面へ（APIを使用する画面）
   api_to_sc: {}
+  # FR → テスト: 機能要件からテストケースへ
+  fr_to_test: {}
+  # NFR → テスト: 非機能要件からテストケースへ
+  nfr_to_test: {}
 
 # 用語集
 glossary: []
 
 # メタデータ
 metadata:
-  version: "3.0.0"
-  schema_version: "3.0"
+  version: "3.1.0"
+  schema_version: "3.1"
   # 変更履歴
   # v3.0.0: agent-teams 全面移行、phases/wave_status/contracts 削除、TaskList DAG 移管
   # v2.0.0: Wave 並列化、Blackboard 統合、web-requirements 置換

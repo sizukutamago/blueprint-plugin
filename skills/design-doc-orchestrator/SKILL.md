@@ -1,7 +1,7 @@
 ---
 name: design-doc-orchestrator
 description: This skill should be used when the user asks to "create design documents", "generate full documentation", "run design workflow", "orchestrate design phases", or "create complete system specifications". Orchestrates comprehensive system design documentation through agent-teams 2-wave parallel execution with TaskList DAG coordination.
-version: 3.0.0
+version: 3.1.0
 ---
 
 # Design Doc Orchestrator
@@ -30,8 +30,10 @@ Lead Agent（オーケストレータ、delegate mode）
 ├─ Post-B
 │  └─ design-detail   (sonnet) → 06_screen_design/{component_catalog,details/}
 │
-├─ Sequential
-│  └─ implementation  (sonnet) → 07_implementation/
+├─ Wave C（3 teammate 並列）
+│  ├─ impl-standards  (sonnet) → 07_implementation/{coding_standards,environment}.md
+│  ├─ impl-test       (sonnet) → 07_implementation/{test_strategy,test_plan,traceability_matrix,nonfunctional_test_plan}.md
+│  └─ impl-ops        (sonnet) → 07_implementation/{operations,observability_design,incident_response,...}.md
 │
 └─ Sequential
    └─ reviewer        (opus)   → 08_review/
@@ -59,6 +61,13 @@ Lead Agent（オーケストレータ、delegate mode）
 ### Post-B（Wave B Aggregator 完了後）
 - **design-detail**: 画面詳細（API 依存）
 
+### Wave C（並列、Post-B 完了後）
+- **impl-standards**: コーディング規約、開発環境設定
+- **impl-test**: テスト戦略、テスト計画、トレーサビリティマトリクス、非機能テスト計画
+- **impl-ops**: 運用手順、可観測性設計、インシデント対応、バックアップ/DR（条件付き）、移行計画（条件付き）
+
+**注意**: Wave C は Aggregator 不要。出力はファイルのみで Blackboard 更新なし。
+
 ## ワークフロー
 
 ```
@@ -72,7 +81,7 @@ Lead Agent（オーケストレータ、delegate mode）
 
 Lead → Teammate.spawnTeam("design-docs")
 Lead → Task(aggregator)  ← 常駐スポーン
-Lead → TaskCreate × 11   ← DAG 作成
+Lead → TaskCreate × 13   ← DAG 作成
 
 ┌──────────────Wave A（並列）──────────────┐
 │                │                         │
@@ -101,7 +110,14 @@ Skeleton       (sonnet)               Inventory
                      ↓
     [6b] Design Detail (sonnet)
                      ↓
-    [Phase 7] Implementation (sonnet)
+    ┌──────────Wave C（並列）──────────┐
+    │              │                   │
+    ↓              ↓                   ↓
+ [7a] Impl    [7b] Impl          [7c] Impl
+ Standards    Test                Ops
+ (sonnet)     (sonnet)            (sonnet)
+    │              │                   │
+    └──────────────┼───────────────────┘
                      ↓
     [Phase 8] Review (opus)
                      ↓
@@ -123,8 +139,10 @@ task-6:  api                       blockedBy: [5]       owner: api
 task-7:  architecture-detail       blockedBy: [5]       owner: arch-detail
 task-8:  wave-aggregator-b         blockedBy: [6,7]     owner: aggregator
 task-9:  design-detail             blockedBy: [8]       owner: design-detail
-task-10: implementation            blockedBy: [9]       owner: implementation
-task-11: review                    blockedBy: [10]      owner: reviewer
+task-10: impl-standards            blockedBy: [9]       owner: impl-standards    # Wave C
+task-11: impl-test                 blockedBy: [9]       owner: impl-test         # Wave C
+task-12: impl-ops                  blockedBy: [9]       owner: impl-ops          # Wave C
+task-13: review                    blockedBy: [10,11,12] owner: reviewer
 ```
 
 ## Blackboard 連携（単一ライター原則）
@@ -146,6 +164,7 @@ aggregator → SendMessage(lead, "統合完了/矛盾検出")
 | A | docs/requirements/ | Chain of Density | ~10k tokens |
 | B | docs/requirements/ + project-context.yaml | Entity Signature Only | ~15k tokens |
 | Post-B | project-context.yaml + 出力ファイル参照 | Decision Summary | ~10k tokens |
+| C | project-context.yaml + 先行成果物 | Decision Summary | ~10k tokens |
 | Seq | project-context.yaml 全体 | Decision Summary | ~10k tokens |
 
 ## Gate 判定と差し戻しロジック
@@ -179,7 +198,7 @@ P0 検出:
 ### 新規プロジェクト（greenfield）
 
 ```
-web-requirements → Wave A → Agg A → Wave B → Agg B → Post-B → impl → review
+web-requirements → Wave A → Agg A → Wave B → Agg B → Post-B → Wave C → review
 ```
 
 ### 既存プロジェクト機能追加（brownfield）
@@ -201,7 +220,9 @@ research → gap-analysis → web-requirements(差分) → (影響範囲のみ) 
 | `wave-b-api.md` | API |
 | `wave-b-arch-detail.md` | Architecture Detail |
 | `post-b-design-detail.md` | Design Detail |
-| `seq-implementation.md` | Implementation |
+| `seq-implementation.md` | Implementation Standards (Wave C) |
+| `wave-c-impl-test.md` | Implementation Test (Wave C) |
+| `wave-c-impl-ops.md` | Implementation Ops (Wave C) |
 | `seq-reviewer.md` | Reviewer |
 
 詳細な実行プロトコルは `references/team-mode.md` を参照。
@@ -235,10 +256,17 @@ docs/
 │   └── details/             # Post-B: detail
 │       └── screen_detail_SC-XXX.md
 ├── 07_implementation/
-│   ├── coding_standards.md
-│   ├── environment.md
-│   ├── testing.md
-│   └── operations.md
+│   ├── coding_standards.md         # Wave C: impl-standards
+│   ├── environment.md              # Wave C: impl-standards
+│   ├── test_strategy.md            # Wave C: impl-test
+│   ├── test_plan.md                # Wave C: impl-test
+│   ├── traceability_matrix.md      # Wave C: impl-test
+│   ├── nonfunctional_test_plan.md  # Wave C: impl-test
+│   ├── operations.md               # Wave C: impl-ops
+│   ├── observability_design.md     # Wave C: impl-ops
+│   ├── incident_response.md        # Wave C: impl-ops
+│   ├── backup_restore_dr.md        # Wave C: impl-ops（条件付き: sla_tier≠basic）
+│   └── migration_plan.md           # Wave C: impl-ops（条件付き: has_migration=true）
 ├── 08_review/
 │   ├── consistency_check.md
 │   └── project_completion.md

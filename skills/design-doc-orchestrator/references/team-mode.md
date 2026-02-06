@@ -14,7 +14,7 @@ agent-teams による 2-wave 並列実行のライフサイクルと各ロール
 2. Lead → Task(aggregator) をスポーン（常駐、Wave 全体を通じて生存）
 3. Lead → web-requirements を実行（Phase 1-2）
 4. Lead → ユーザー承認待ち
-5. Lead → TaskCreate で DAG（11タスク）を作成
+5. Lead → TaskCreate で DAG（13タスク）を作成
 6. Lead → Wave A teammate 3体を並列スポーン
 7. Wave A 完了 → Lead → aggregator に統合依頼
 8. Aggregator → project-context.yaml 更新 → Lead に報告
@@ -23,10 +23,14 @@ agent-teams による 2-wave 並列実行のライフサイクルと各ロール
 11. Wave B 完了 → Lead → aggregator に統合依頼
 12. Aggregator → project-context.yaml 更新 → Lead に報告
 13. Lead → Wave B teammate を shutdown
-14. Lead → Post-B → implementation → reviewer を順次スポーン
-15. Reviewer → Gate 結果を Lead に送信
-16. Gate: PASS → cleanup / P1 → 修正サイクル / P0 → ユーザー通知
-17. Lead → Teammate.cleanup()
+14. Lead → Post-B（design-detail）を順次スポーン
+15. Lead → Wave C teammate 3体を並列スポーン（impl-standards, impl-test, impl-ops）
+16. Wave C 完了（Aggregator 不要、ファイル出力のみ）
+17. Lead → Wave C teammate を shutdown
+18. Lead → reviewer をスポーン
+19. Reviewer → Gate 結果を Lead に送信
+20. Gate: PASS → cleanup / P1 → 修正サイクル / P0 → ユーザー通知
+21. Lead → Teammate.cleanup()
 ```
 
 ## ロール定義
@@ -38,7 +42,7 @@ agent-teams による 2-wave 並列実行のライフサイクルと各ロール
 | 責務 | 詳細 |
 |------|------|
 | チーム管理 | spawnTeam、teammate のスポーン/shutdown |
-| DAG 作成 | TaskCreate で 11 タスクと blockedBy を設定 |
+| DAG 作成 | TaskCreate で 13 タスクと blockedBy を設定 |
 | Wave 遷移 | Wave A → Aggregator → Wave B → ... の順序制御 |
 | Gate 判定 | reviewer の結果を受けて PASS/ROLLBACK を決定 |
 | ユーザー確認 | Phase 2 後の承認、P0 時の通知 |
@@ -122,13 +126,16 @@ task-6:  api                       blockedBy: [5]       owner: api
 task-7:  architecture-detail       blockedBy: [5]       owner: arch-detail
 task-8:  wave-aggregator-b         blockedBy: [6,7]     owner: aggregator
 task-9:  design-detail             blockedBy: [8]       owner: design-detail
-task-10: implementation            blockedBy: [9]       owner: implementation
-task-11: review                    blockedBy: [10]      owner: reviewer
+task-10: impl-standards            blockedBy: [9]       owner: impl-standards    # Wave C
+task-11: impl-test                 blockedBy: [9]       owner: impl-test         # Wave C
+task-12: impl-ops                  blockedBy: [9]       owner: impl-ops          # Wave C
+task-13: review                    blockedBy: [10,11,12] owner: reviewer
 ```
 
 ### Task metadata
 
 ```yaml
+# Wave A の例
 metadata:
   skill: architecture-skeleton
   wave: A
@@ -136,6 +143,15 @@ metadata:
   inputs: [docs/requirements/user-stories.md]
   outputs: [docs/03_architecture/architecture.md, docs/03_architecture/adr.md]
   blackboard_keys: [decisions.architecture.tech_stack, decisions.architecture.boundaries]
+
+# Wave C の例（Blackboard 更新なし）
+metadata:
+  skill: impl-test
+  wave: C
+  model: sonnet
+  inputs: [docs/requirements/user-stories.md, docs/project-context.yaml, docs/03_architecture/architecture.md]
+  outputs: [docs/07_implementation/test_strategy.md, docs/07_implementation/test_plan.md, docs/07_implementation/traceability_matrix.md, docs/07_implementation/nonfunctional_test_plan.md]
+  blackboard_keys: []  # Wave C は Blackboard 更新なし
 ```
 
 ## コンテキスト渡し戦略
@@ -147,6 +163,7 @@ teammate は Lead の会話履歴を継承しない。スポーンプロンプ�
 | A | docs/requirements/ | Chain of Density | ~10k tokens |
 | B | docs/requirements/ + project-context.yaml | Entity Signature Only | ~15k tokens |
 | Post-B | project-context.yaml + 出力ファイル参照 | Decision Summary | ~10k tokens |
+| C | project-context.yaml + 先行成果物 | Decision Summary | ~10k tokens |
 | Seq | project-context.yaml 全体 | Decision Summary | ~10k tokens |
 
 ## Gate 判定フロー

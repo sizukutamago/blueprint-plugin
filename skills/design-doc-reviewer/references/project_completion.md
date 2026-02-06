@@ -34,10 +34,17 @@
 | 13 | screen_transition.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/ (Wave A) |
 | 14 | component_catalog.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/ (Post-B) |
 | 15 | screen_detail_SC-XXX.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/details/ (Post-B) |
-| 16 | coding_standards.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
-| 17 | environment.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
-| 18 | testing.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
-| 19 | operations.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
+| 16 | coding_standards.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-standards) |
+| 17 | environment.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-standards) |
+| 18 | test_strategy.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-test) |
+| 19 | test_plan.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-test) |
+| 20 | traceability_matrix.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-test) |
+| 21 | nonfunctional_test_plan.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-test) |
+| 22 | operations.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-ops) |
+| 23 | observability_design.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-ops) |
+| 24 | incident_response.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (Wave C: impl-ops) |
+| 25 | backup_restore_dr.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (条件付き: sla_tier≠basic) |
+| 26 | migration_plan.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ (条件付き: has_migration=true) |
 
 ---
 
@@ -66,6 +73,20 @@
 | API-XXX | {{API_DEF}} | {{API_REF}} | {{API_COV}} |
 | ENT-XXX | {{ENT_DEF}} | {{ENT_REF}} | {{ENT_COV}} |
 | ADR-XXXX | {{ADR_DEF}} | {{ADR_REF}} | {{ADR_COV}} |
+
+---
+
+## 運用準備サマリー
+
+| 項目 | 状態 | 備考 |
+|------|------|------|
+| SLI/SLO 定義 | {{OPS_SLI_STATUS}} | observability_design.md |
+| テスト戦略・計画 | {{OPS_TEST_STATUS}} | test_strategy.md, test_plan.md |
+| NFR 測定可能性 | {{OPS_NFR_STATUS}} | nonfunctional_test_plan.md |
+| トレーサビリティ | {{OPS_TRACE_STATUS}} | traceability_matrix.md |
+| バックアップ/DR | {{OPS_DR_STATUS}} | backup_restore_dr.md |
+| インシデント対応 | {{OPS_INCIDENT_STATUS}} | incident_response.md |
+| データガバナンス | {{OPS_DATA_STATUS}} | data_structure.md, security.md |
 
 ---
 

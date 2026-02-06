@@ -83,6 +83,22 @@
 | docs/06_screen_design/error_patterns.md | {{P6_FILE4_STATUS}} | post-B (Detail) |
 | docs/06_screen_design/ui_testing_strategy.md | {{P6_FILE5_STATUS}} | post-B (Detail) |
 
+### Phase 7: Implementation (Wave C)
+
+| ファイル | 状態 | Teammate | 生成条件 |
+|---------|------|----------|---------|
+| docs/07_implementation/coding_standards.md | {{P7_FILE1_STATUS}} | impl-standards | 常時 |
+| docs/07_implementation/environment.md | {{P7_FILE2_STATUS}} | impl-standards | 常時 |
+| docs/07_implementation/test_strategy.md | {{P7_FILE3_STATUS}} | impl-test | 常時 |
+| docs/07_implementation/test_plan.md | {{P7_FILE4_STATUS}} | impl-test | 常時 |
+| docs/07_implementation/traceability_matrix.md | {{P7_FILE5_STATUS}} | impl-test | 常時 |
+| docs/07_implementation/nonfunctional_test_plan.md | {{P7_FILE6_STATUS}} | impl-test | 常時 |
+| docs/07_implementation/operations.md | {{P7_FILE7_STATUS}} | impl-ops | 常時 |
+| docs/07_implementation/observability_design.md | {{P7_FILE8_STATUS}} | impl-ops | 常時 |
+| docs/07_implementation/incident_response.md | {{P7_FILE9_STATUS}} | impl-ops | 常時 |
+| docs/07_implementation/backup_restore_dr.md | {{P7_FILE10_STATUS}} | impl-ops | sla_tier ≠ basic |
+| docs/07_implementation/migration_plan.md | {{P7_FILE11_STATUS}} | impl-ops | has_migration = true |
+
 ### ファイル完全性サマリー
 
 | フェーズ | 状態 | 不足数 | 重大度 |
@@ -126,6 +142,23 @@
 | FR ID | 関連SC | 関連API | 関連ENT | 状態 | 重大度 |
 |-------|--------|---------|---------|------|-------|
 | {{FR_ID}} | {{SC_IDS}} | {{API_IDS}} | {{ENT_IDS}} | {{STATUS}} | P1 |
+
+---
+
+## 運用準備チェック (Level 5)
+
+| # | チェック項目 | 状態 | 重大度 | 参照ファイル |
+|---|-------------|------|--------|------------|
+| 1 | SLI/SLO 定義 | {{OPS_CHECK1}} | P1 | observability_design.md |
+| 2 | テスト完了基準（定量） | {{OPS_CHECK2}} | P1 | test_plan.md |
+| 3 | NFR 測定方法+合否基準 | {{OPS_CHECK3}} | P1 | nonfunctional_test_plan.md |
+| 4 | トレーサビリティマトリクス | {{OPS_CHECK4}} | P1 | traceability_matrix.md |
+| 5 | バックアップ/リストア手順 | {{OPS_CHECK5}} | P1 | backup_restore_dr.md |
+| 6 | 移行計画（brownfield） | {{OPS_CHECK6}} | P1 | migration_plan.md |
+| 7 | ロールバック手順 | {{OPS_CHECK7}} | P1 | operations.md |
+| 8 | 監視アラート設計 | {{OPS_CHECK8}} | P2 | observability_design.md |
+| 9 | インシデント対応計画 | {{OPS_CHECK9}} | P2 | incident_response.md |
+| 10 | データ分類（全ENT） | {{OPS_CHECK10}} | P2 | data_structure.md |
 
 ---
 

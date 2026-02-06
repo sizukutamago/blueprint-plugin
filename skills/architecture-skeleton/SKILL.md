@@ -121,6 +121,26 @@ contract_outputs:
 [後続フェーズへの影響、制約]
 ```
 
+## NFR 測定可能性定義
+
+各 NFR に対して、以下の3要素を定義する（IPA 非機能要求グレード準拠）:
+
+| 要素 | 説明 | 例 |
+|------|------|-----|
+| target | 達成目標（定量値） | API応答時間 p95 < 200ms |
+| measurement | 測定方法・ツール | k6 負荷テスト (100同時ユーザー) |
+| pass_criteria | 合否基準 | p95 < 200ms かつ p99 < 500ms |
+
+### 定義テンプレート
+
+| NFR-ID | カテゴリ | target | measurement | pass_criteria |
+|--------|---------|--------|-------------|---------------|
+| NFR-PERF-001 | パフォーマンス | API応答時間 p95 < 200ms | k6 負荷テスト (100同時ユーザー) | p95 < 200ms かつ p99 < 500ms |
+| NFR-SEC-001 | セキュリティ | OWASP Top 10 脆弱性ゼロ | OWASP ZAP フルスキャン | High/Critical = 0 |
+| NFR-AVL-001 | 可用性 | 稼働率 99.9% | 外形監視（1分間隔） | 月間ダウンタイム < 43分 |
+
+**データフロー**: Phase 3a → Aggregator → Blackboard `nfr_measurability` → Phase 7 `nonfunctional_test_plan.md` → Phase 8 検証
+
 ## SendMessage 完了報告
 
 タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
@@ -138,6 +158,13 @@ contract_outputs:
     value: [定義したシステム境界]
   - key: decisions.architecture.nfr_policies
     value: {NFR ポリシー}
+  - key: decisions.nfr_measurability
+    value:
+      NFR-PERF-001:
+        target: "API応答時間 p95 < 200ms"
+        measurement: "k6 負荷テスト"
+        pass_criteria: "p95 < 200ms かつ p99 < 500ms"
+      # 全 NFR-ID について定義
 open_questions:
   - "キャッシュ戦略は Wave B（architecture-detail）で決定"
   - "具体的なインフラ構成は Wave B で決定"

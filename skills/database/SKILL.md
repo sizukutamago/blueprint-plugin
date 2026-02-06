@@ -1,7 +1,7 @@
 ---
 name: database
 description: This skill should be used when the user asks to "design data model", "create entity definitions", "define TypeScript types", "design database schema", "create data structure", or "model entities". Defines data structures and entity models with TypeScript type definitions for Wave A parallel execution.
-version: 2.0.0
+version: 2.1.0
 model: sonnet
 ---
 
@@ -64,8 +64,10 @@ contract_outputs:
 3. エンティティ間の関係を分析
 4. 各エンティティにENT-IDを付与
 5. TypeScript型定義を生成
-6. フィールド詳細を定義
+6. フィールド詳細を定義（データ分類を含む）
 7. 派生型を定義
+8. 物理DB設計（テーブル定義、インデックス、制約、容量見積もり）
+9. データ暗号化方式とマイグレーション戦略を定義
 ```
 
 **重要**: このフェーズはAPI設計より前に実行する。
@@ -104,10 +106,19 @@ interface User {
 
 ## フィールド詳細
 
-| フィールド | 型 | 必須 | 説明 | 制約 |
-|-----------|-----|------|------|------|
-| id | string | ○ | ID | UUID形式 |
-| email | string | ○ | メール | RFC 5322 |
+| フィールド | 型 | 必須 | 説明 | 制約 | データ分類 |
+|-----------|-----|------|------|------|-----------|
+| id | string | ○ | ID | UUID形式 | Internal |
+| email | string | ○ | メール | RFC 5322 | PII |
+
+### データ分類（IPA準拠）
+
+| 分類 | 説明 | 取り扱い |
+|------|------|---------|
+| PII | 個人を識別可能な情報（氏名、メール、住所等） | 暗号化保存、アクセスログ必須、保持期限設定 |
+| Sensitive | 機密業務情報（決済、医療等） | 暗号化保存、アクセス制限 |
+| Internal | システム内部情報（ID、タイムスタンプ等） | 標準的なアクセス制御 |
+| Public | 公開情報（カテゴリ名等） | 制限なし |
 
 ## SendMessage 完了報告
 
@@ -124,7 +135,12 @@ contract_outputs:
       - id: ENT-User
         name: User
         attributes: [id, email, name, role, ...]
-      # 全エンティティを列挙
+        physical:
+          table_name: users
+          indexes: [idx_users_email]
+          estimated_rows: 10000
+          data_classification: [PII, Internal]
+      # 全エンティティを列挙（physical 含む）
   - key: traceability.fr_to_ent
     value:
       FR-001: [ENT-User]

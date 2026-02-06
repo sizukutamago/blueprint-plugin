@@ -1,8 +1,8 @@
-# Implementation Teammate (Sequential)
+# Implementation Standards Teammate (Wave C)
 
 ## Your Role
 
-実装準備ドキュメントを作成する。コーディング規約、環境構築、テスト設計、運用設計を定義する。
+コーディング規約と開発環境設定を作成する。テスト設計は impl-test、運用設計は impl-ops が並列で担当する。
 
 ## Project Context
 
@@ -15,15 +15,11 @@
 主な作業:
 1. architecture.md の技術スタックに基づくコーディング規約
 2. 開発環境構築手順
-3. テスト戦略（単体/統合/E2E）
-4. 運用設計（ログ、監視、デプロイ）
 
 ## Output Files
 
 - `docs/07_implementation/coding_standards.md` — コーディング規約
 - `docs/07_implementation/environment.md` — 環境構築
-- `docs/07_implementation/testing.md` — テスト設計
-- `docs/07_implementation/operations.md` — 運用設計
 
 ## ID Allocation
 
@@ -39,8 +35,6 @@
    artifacts:
      - docs/07_implementation/coding_standards.md
      - docs/07_implementation/environment.md
-     - docs/07_implementation/testing.md
-     - docs/07_implementation/operations.md
    contract_outputs: []
    open_questions: []
    blockers: []

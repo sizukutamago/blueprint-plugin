@@ -22,8 +22,8 @@ design-doc-orchestrator スキルを起動し、agent-teams による 2-wave 並
 4. **Wave B（並列）** - API + Architecture Detail
 5. **Aggregator** - Wave B 統合
 6. **Post-B** - Design Detail（画面詳細）
-7. **Implementation** - 実装準備ドキュメント作成
-8. **Review** - 整合性チェック・Gate 判定
+7. **Wave C（並列）** - Implementation Standards + Test Design + Operations Design
+8. **Review** - 整合性チェック・Gate 判定（Level 5 運用準備チェック含む）
 
 ## 出力先
 

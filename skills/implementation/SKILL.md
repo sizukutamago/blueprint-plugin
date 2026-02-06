@@ -1,14 +1,15 @@
 ---
 name: implementation
 description: This skill should be used when the user asks to "create coding standards", "setup development environment", "design test strategy", "write operations runbook", "define deployment process", or "document implementation guidelines". Creates implementation preparation documents.
-version: 1.0.0
+version: 2.0.0
 ---
 
-# Implementation Skill
+# Implementation Standards Skill
 
-実装準備ドキュメントを作成するスキル。
-コーディング規約の策定、開発環境のセットアップ、テスト戦略の設計、
-運用手順の文書化に使用する。
+コーディング規約と開発環境設定を作成するスキル。
+テスト設計は impl-test、運用設計は impl-ops が担当する。
+
+**実行タイミング**: Wave C（impl-test, impl-ops と並列）
 
 ## 前提条件
 
@@ -23,14 +24,13 @@ version: 1.0.0
 |---------|-------------|------|
 | docs/07_implementation/coding_standards.md | {baseDir}/references/coding_standards.md | コーディング規約 |
 | docs/07_implementation/environment.md | {baseDir}/references/environment.md | 環境設定 |
-| docs/07_implementation/testing.md | {baseDir}/references/testing.md | テスト設計 |
-| docs/07_implementation/operations.md | {baseDir}/references/operations.md | 運用手順書 |
 
 ## 依存関係
 
 | 種別 | 対象 |
 |------|------|
-| 前提スキル | architecture |
+| 前提スキル | architecture, design-detail |
+| 並列スキル | impl-test, impl-ops（Wave C） |
 | 後続スキル | review |
 
 ## ワークフロー
@@ -39,8 +39,6 @@ version: 1.0.0
 1. 技術スタック・アーキテクチャを読み込み
 2. コーディング規約を生成
 3. 環境設定・デプロイ手順を生成
-4. テスト設計を生成
-5. 運用手順書を生成
 ```
 
 ## コーディング規約
@@ -74,30 +72,6 @@ version: 1.0.0
 | staging | release/* |
 | production | main |
 
-## テスト設計
-
-### テストピラミッド
-
-| レベル | 割合 |
-|--------|------|
-| Unit | 70% |
-| Integration | 20% |
-| E2E | 10% |
-
-### カバレッジ目標
-
-| 対象 | 目標 |
-|------|------|
-| ステートメント | 80% |
-| ブランチ | 70% |
-
-## 運用手順書
-
-1. 日常運用 - 日次/週次/月次タスク
-2. デプロイ手順 - 通常/ホットフィックス/ロールバック
-3. 障害対応 - 検知→初動→復旧→報告
-4. メンテナンス - 計画メンテナンス手順
-
 ## SendMessage 完了報告
 
 タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
@@ -108,8 +82,6 @@ severity: null
 artifacts:
   - docs/07_implementation/coding_standards.md
   - docs/07_implementation/environment.md
-  - docs/07_implementation/testing.md
-  - docs/07_implementation/operations.md
 contract_outputs: []
 open_questions: []
 blockers: []
@@ -122,4 +94,4 @@ blockers: []
 | エラー | 対応 |
 |--------|------|
 | architecture.md 不在 | Phase 3 の実行を促す |
-| 技術スタック未定義 | 一般的な規約を生成、WARNING を記録 |
+| 技術スタック未定義 | 一般的な規約を生成、P2 として記録 |

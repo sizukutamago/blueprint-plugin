@@ -2,6 +2,18 @@
 
 Claude Code プラグインとして、日本語開発者向けの **agent-teams ネイティブ** 設計ドキュメントワークフローを提供するリポジトリ。
 
+**v3.1 の主な変更点（IPA標準準拠強化）:**
+- Phase 7 を3分割して Wave C 並列化（impl-standards / impl-test / impl-ops）
+- DAG を 11 → 13 タスクに拡張
+- テスト設計（テスト戦略/計画/NFRテスト/トレーサビリティ）を独立スキル化
+- 運用設計（可観測性/インシデント対応/バックアップ・DR/移行計画）を独立スキル化
+- NFR測定可能性（target + measurement + pass_criteria）を arch-skeleton に追加
+- DB 物理設計（インデックス/制約/容量/暗号化）を database スキルに追加
+- データガバナンス（PII分類/保持期限/マスキング）を architecture-detail に追加
+- Phase 8 に Level 5 運用準備チェック追加
+- 条件付き生成（project.profile による出力制御）
+- Blackboard v3.1（profile, nfr_measurability, fr_to_test, nfr_to_test 追加）
+
 **v3.0 の主な変更点（agent-teams 全面移行）:**
 - agent-teams による真の並列実行（TeammateTool + TaskList DAG）
 - project-context.yaml を大幅簡素化（phases/wave_status/contracts を TaskList に移管）
@@ -32,12 +44,14 @@ design-docs-plugin/
 │   ├── design/              # Phase 6: 画面設計（旧、互換用）
 │   ├── design-inventory/    # Phase 6a: 画面棚卸し (Wave A)
 │   ├── design-detail/       # Phase 6b: 画面詳細 (post-B)
-│   ├── implementation/      # Phase 7: 実装準備
-│   ├── design-doc-reviewer/ # Phase 8: レビュー (Gate判定)
+│   ├── implementation/      # Phase 7a: 実装標準 (Wave C: impl-standards)
+│   ├── impl-test/           # Phase 7b: テスト設計 (Wave C: impl-test) ★v3.1新規
+│   ├── impl-ops/            # Phase 7c: 運用設計 (Wave C: impl-ops) ★v3.1新規
+│   ├── design-doc-reviewer/ # Phase 8: レビュー (Gate判定、Level 5 運用準備)
 │   ├── design-doc-orchestrator/ # 全フェーズオーケストレーション（agent-teams 対応）
 │   │   └── references/
 │   │       ├── team-mode.md       # チームモード実行プロトコル
-│   │       └── spawn-prompts/     # 9 teammate スポーンプロンプト
+│   │       └── spawn-prompts/     # 11 teammate スポーンプロンプト
 │   ├── wave-aggregator/     # Wave 統合・Blackboard 更新
 │   ├── context-compressor/  # コンテキスト圧縮
 │   ├── gap-analysis/        # 既存システム分析
@@ -150,7 +164,7 @@ tools: [list]
 # /requirements   # → web-requirements を使用
 ```
 
-## agent-teams アーキテクチャ（v3.0）
+## agent-teams アーキテクチャ（v3.1）
 
 ### 3 概念アーキテクチャ
 
@@ -168,8 +182,8 @@ Lead Agent（delegate mode）
 ├─ Wave A: arch-skeleton, database, design-inventory（並列）
 ├─ Wave B: api, arch-detail（並列）
 ├─ Post-B: design-detail
-├─ Seq: implementation
-└─ Seq: reviewer → Gate 判定
+├─ Wave C: impl-standards, impl-test, impl-ops（並列、Aggregator不要）
+└─ Seq: reviewer → Gate 判定（Level 5 運用準備チェック含む）
 ```
 
 ### 単一ライター原則
@@ -183,7 +197,7 @@ Lead が Aggregator に転送して統合する。
 | ファイル | 説明 |
 |---------|------|
 | `skills/design-doc-orchestrator/references/team-mode.md` | 実行プロトコル詳細 |
-| `skills/design-doc-orchestrator/references/spawn-prompts/` | 9 teammate のプロンプト |
+| `skills/design-doc-orchestrator/references/spawn-prompts/` | 11 teammate のプロンプト |
 | `skills/shared/references/project-context.yaml` | 簡素化 Blackboard スキーマ |
 
 ## 出力規約
@@ -202,8 +216,8 @@ docs/
 ├── 04_data_structure/     # データ構造定義
 ├── 05_api_design/         # API仕様書
 ├── 06_screen_design/      # 画面設計書
-├── 07_implementation/     # 実装計画
-└── 08_review/             # レビュー結果
+├── 07_implementation/     # Wave C: 実装標準 + テスト設計 + 運用設計
+└── 08_review/             # レビュー結果（Level 5 運用準備チェック含む）
 
 # 非推奨（旧形式）
 # 01_hearing/              # → requirements/ に移行

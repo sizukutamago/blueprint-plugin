@@ -1,7 +1,7 @@
 ---
 name: review
 description: This skill should be used when the user asks to "review design documents", "check document consistency", "validate traceability", "generate completion summary", "audit design specifications", or "check ID consistency". Performs consistency checks and reviews on design documentation with P0/P1/P2 severity-based Gate judgment.
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Review Skill
@@ -62,9 +62,11 @@ version: 2.0.0
 2. Level 1: 構造チェック
 3. Level 2: 整合性チェック
 4. Level 3: 完全性チェック
-5. 問題を分類（BLOCKER/WARNING）
-6. consistency_check.md を生成
-7. project_completion.md を生成
+5. Level 4: 出力ファイル完全性チェック
+6. Level 5: 運用準備チェック（IPA準拠）
+7. 問題を分類（P0/P1/P2）
+8. consistency_check.md を生成
+9. project_completion.md を生成
 ```
 
 ## レビューレベル
@@ -116,7 +118,10 @@ version: 2.0.0
 | Phase 5: API | `05_api_design/api_design.md`, `integration.md` | B |
 | Phase 6a: Screen Inventory | `06_screen_design/screen_list.md`, `screen_transition.md` | A |
 | Phase 6b: Screen Detail | `06_screen_design/component_catalog.md`, `error_patterns.md`, `ui_testing_strategy.md`, `details/screen_detail_SC-XXX.md` (全SC-ID分) | post-B |
-| Phase 7: Implementation | `07_implementation/coding_standards.md`, `environment.md`, `testing.md`, `operations.md` | - |
+| Phase 7a: Impl Standards | `07_implementation/coding_standards.md`, `environment.md` | Wave C |
+| Phase 7b: Impl Test | `07_implementation/test_strategy.md`, `test_plan.md`, `traceability_matrix.md`, `nonfunctional_test_plan.md` | Wave C |
+| Phase 7c: Impl Ops | `07_implementation/operations.md`, `observability_design.md`, `incident_response.md` | Wave C |
+| Phase 7c: Impl Ops (条件付き) | `07_implementation/backup_restore_dr.md` (sla_tier≠basic), `migration_plan.md` (has_migration=true) | Wave C |
 | Phase 8: Review | `08_review/consistency_check.md`, `project_completion.md` | - |
 
 **注意**: Phase 1-2 は `web-requirements` スキルが生成。旧形式（`01_hearing/`, `02_requirements/`）は非推奨。
@@ -136,6 +141,23 @@ version: 2.0.0
 3. details/ ディレクトリ内のファイルを列挙
 4. 不足ファイルを BLOCKER として報告
 ```
+
+### Level 5: 運用準備チェック（IPA準拠）
+
+| チェック項目 | 重大度 | 参照ファイル | 生成条件 |
+|-------------|--------|------------|---------|
+| SLI/SLO が定義されている | P1 | observability_design.md | 常時 |
+| テスト完了基準が定量的に定義 | P1 | test_plan.md | 常時 |
+| NFR に測定方法と合否基準がある | P1 | nonfunctional_test_plan.md | 常時 |
+| トレーサビリティマトリクスが完備 | P1 | traceability_matrix.md | 常時 |
+| バックアップ/リストア手順が存在 | P1 | backup_restore_dr.md | sla_tier ≠ basic |
+| 移行計画が存在（brownfield の場合） | P1 | migration_plan.md | has_migration = true |
+| ロールバック手順が定義されている | P1 | operations.md | 常時 |
+| 監視アラートが設計されている | P2 | observability_design.md | 常時 |
+| インシデント対応計画が存在 | P2 | incident_response.md | 常時 |
+| データ分類が全エンティティに定義 | P2 | data_structure.md | 常時 |
+
+**条件付きチェック**: project-context.yaml の `project.profile` を参照し、生成条件に合致するファイルのみチェック対象とする。
 
 ## トレーサビリティチェック
 
