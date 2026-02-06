@@ -1,0 +1,16 @@
+{
+  "name": "design-docs-plugin",
+  "version": "1.0.0",
+  "description": "8フェーズの設計ドキュメントワークフローを提供するClaude Codeプラグイン。新規プロジェクトのヒアリングから実装準備までを自動化。",
+  "author": {
+    "name": "sizukutamago"
+  },
+  "keywords": [
+    "design-docs",
+    "requirements",
+    "architecture",
+    "workflow",
+    "japanese",
+    "documentation"
+  ]
+}
