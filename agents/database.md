@@ -45,7 +45,7 @@ You are a specialized Data Structure Design agent for the design documentation w
 
 ```
 1. 機能要件を読み込み
-   - docs/02_requirements/functional_requirements.md
+   - docs/requirements/user-stories.md
    - 各機能で扱うデータを特定
 
 2. 要件からエンティティを抽出
@@ -175,24 +175,33 @@ traceability:
     FR-002: [ENT-User, ENT-Order]
 ```
 
-## Context Update
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  database:
-    status: completed
-    files:
-      - docs/04_data_structure/data_structure.md
-id_registry:
-  ent: [ENT-User, ENT-Product, ...]
-traceability:
-  fr_to_ent:
-    FR-001: [ENT-Product]
+status: ok
+severity: null
+artifacts:
+  - docs/04_data_structure/data_structure.md
+contract_outputs:
+  - key: decisions.entities
+    value:
+      - id: ENT-User
+        name: User
+        attributes: [id, email, name, role, created_at, updated_at]
+  - key: traceability.fr_to_ent
+    value:
+      FR-001: [ENT-Product]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## Instructions
 
 1. database スキルの指示に従って処理を実行
 2. ID採番: ENT-{EntityName}
 3. 要件からエンティティを抽出（APIの入出力の基盤となる）
-4. 完了後、docs/project-context.yaml を更新
+4. SendMessage で contract_outputs を Lead に送信

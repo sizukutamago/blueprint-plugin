@@ -1,10 +1,14 @@
 ---
 name: architecture
-description: This skill should be used when the user asks to "design system architecture", "create ADR", "plan infrastructure", "design security", "define caching strategy", "select technology stack", or "document architecture decisions". Designs system architecture, security controls, infrastructure, and caching strategies.
-version: 1.0.0
+description: "[DEPRECATED] Use architecture-skeleton and architecture-detail instead. This unified skill is maintained for backwards compatibility only."
+version: 2.0.0
+deprecated: true
 ---
 
 # Architecture Skill
+
+> ⚠️ **非推奨（v2.0.0）**: このスキルは `architecture-skeleton`（Wave A）と `architecture-detail`（Wave B）に分割されました。
+> 新規プロジェクトでは分割スキルを使用してください。
 
 システムアーキテクチャ・セキュリティ・インフラ・キャッシュを設計するスキル。
 システム構成設計、技術選定、セキュリティ対策、キャッシュレイヤー定義、
@@ -14,8 +18,8 @@ version: 1.0.0
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| docs/02_requirements/non_functional_requirements.md | ○ | NFR（パフォーマンス要件等） |
-| docs/02_requirements/functional_requirements.md | △ | 機能規模の把握 |
+| docs/requirements/user-stories.md | ○ | 要件定義（web-requirements 出力） |
+| docs/requirements/context_unified.md | △ | NFR・コンテキスト情報 |
 
 ## 出力ファイル
 
@@ -31,8 +35,9 @@ version: 1.0.0
 
 | 種別 | 対象 |
 |------|------|
-| 前提スキル | requirements |
+| 前提スキル | web-requirements |
 | 後続スキル | implementation |
+| 置換スキル | architecture-skeleton（Wave A）, architecture-detail（Wave B） |
 
 ## ADR ID採番ルール
 
@@ -444,21 +449,31 @@ UIレイヤー（design/error_patterns.md）と整合させる。
 | ログレベル | 4xx: WARN, 5xx: ERROR |
 | アラート | 5xxエラー率が閾値超過時 |
 
-## コンテキスト更新
+## SendMessage 完了報告
+
+> **注意**: v3.0 では architecture-skeleton（Wave A）+ architecture-detail（Wave B）に分割。このスキルは後方互換用。
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  architecture:
-    status: completed
-    files:
-      - docs/03_architecture/architecture.md
-      - docs/03_architecture/adr.md
-      - docs/03_architecture/security.md
-      - docs/03_architecture/infrastructure.md
-      - docs/03_architecture/cache_strategy.md
-id_registry:
-  adr: [ADR-0001, ADR-0002, ...]
+status: ok
+severity: null
+artifacts:
+  - docs/03_architecture/architecture.md
+  - docs/03_architecture/adr.md
+  - docs/03_architecture/security.md
+  - docs/03_architecture/infrastructure.md
+  - docs/03_architecture/cache_strategy.md
+contract_outputs:
+  - key: decisions.architecture.tech_stack
+    value: [...]
+  - key: decisions.architecture.boundaries
+    value: [...]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 

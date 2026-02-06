@@ -1,20 +1,23 @@
 ---
 name: database
-description: This skill should be used when the user asks to "design data model", "create entity definitions", "define TypeScript types", "design database schema", "create data structure", or "model entities". Defines data structures and entity models with TypeScript type definitions.
-version: 1.0.0
+description: This skill should be used when the user asks to "design data model", "create entity definitions", "define TypeScript types", "design database schema", "create data structure", or "model entities". Defines data structures and entity models with TypeScript type definitions for Wave A parallel execution.
+version: 2.0.0
+model: sonnet
 ---
 
 # Database Skill
 
 データ構造・エンティティを定義するスキル。
 TypeScript型定義、エンティティ設計、バリデーションルールの作成に使用する。
-このフェーズはAPI設計より前に実行し、エンティティはAPIの入出力の基盤となる。
+
+**実行タイミング**: Wave A（architecture-skeleton, design-inventory と並列）
 
 ## 前提条件
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| docs/02_requirements/functional_requirements.md | ○ | エンティティ抽出元 |
+| docs/requirements/user-stories.md | ○ | エンティティ抽出元（web-requirements 出力） |
+| docs/requirements/context_unified.md | △ | 用語・コンテキスト情報 |
 
 ## 出力ファイル
 
@@ -26,8 +29,25 @@ TypeScript型定義、エンティティ設計、バリデーションルール�
 
 | 種別 | 対象 |
 |------|------|
-| 前提スキル | requirements |
-| 後続スキル | api |
+| 前提スキル | web-requirements |
+| 並列スキル | architecture-skeleton, design-inventory（Wave A） |
+| 後続スキル | api（Wave B）, wave-aggregator |
+
+## Wave A 契約出力
+
+Blackboard に以下を登録する:
+
+```yaml
+contract_outputs:
+  - key: decisions.entities
+    value:
+      - id: ENT-User
+        name: User
+        attributes: [id, email, name, role, created_at, updated_at]
+      - id: ENT-Post
+        name: Post
+        attributes: [id, title, content, author_id, status, published_at]
+```
 
 ## ID採番ルール
 
@@ -89,25 +109,36 @@ interface User {
 | id | string | ○ | ID | UUID形式 |
 | email | string | ○ | メール | RFC 5322 |
 
-## コンテキスト更新
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  database:
-    status: completed
-    files:
-      - docs/04_data_structure/data_structure.md
-id_registry:
-  ent: [ENT-User, ENT-Product, ...]
-traceability:
-  fr_to_ent:
-    FR-001: [ENT-Product]
+status: ok | needs_input
+severity: null
+artifacts:
+  - docs/04_data_structure/data_structure.md
+contract_outputs:
+  - key: decisions.entities
+    value:
+      - id: ENT-User
+        name: User
+        attributes: [id, email, name, role, ...]
+      # 全エンティティを列挙
+  - key: traceability.fr_to_ent
+    value:
+      FR-001: [ENT-User]
+      # FR → ENT マッピング
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 
 | エラー | 対応 |
 |--------|------|
-| FR 不在 | Phase 2 の実行を促す |
+| FR 不在 | web-requirements の実行を促す |
 | エンティティ抽出不可 | ユーザーに主要データを質問 |
-| 循環参照検出 | WARNING を記録、設計見直しを提案 |
+| 循環参照検出 | P2 として記録、設計見直しを提案 |

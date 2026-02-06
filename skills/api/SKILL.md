@@ -1,7 +1,8 @@
 ---
 name: api
-description: This skill should be used when the user asks to "design API", "create REST endpoints", "document API specifications", "define API contracts", "plan external integrations", or "create OpenAPI spec". Designs RESTful APIs and external system integration specifications.
-version: 1.0.0
+description: This skill should be used when the user asks to "design API", "create REST endpoints", "document API specifications", "define API contracts", "plan external integrations", or "create OpenAPI spec". Designs RESTful APIs and external system integration specifications for Wave B parallel execution.
+version: 2.0.0
+model: sonnet
 ---
 
 # API Skill
@@ -10,12 +11,15 @@ API設計・外部システム連携仕様を作成するスキル。
 RESTful API設計、エンドポイント定義、リクエスト/レスポンススキーマ、
 外部サービス連携仕様の文書化に使用する。
 
+**実行タイミング**: Wave B（architecture-detail と並列、Wave A 完了後）
+
 ## 前提条件
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| docs/02_requirements/functional_requirements.md | ○ | API抽出元 |
+| docs/requirements/user-stories.md | ○ | API抽出元（web-requirements 出力） |
 | docs/04_data_structure/data_structure.md | ○ | リクエスト/レスポンス型 |
+| Blackboard: decisions.entities | ○ | Wave A で確定したエンティティ一覧 |
 
 ## 出力ファイル
 
@@ -28,8 +32,29 @@ RESTful API設計、エンドポイント定義、リクエスト/レスポン�
 
 | 種別 | 対象 |
 |------|------|
-| 前提スキル | requirements, database |
-| 後続スキル | design |
+| 前提スキル | web-requirements, database（Wave A） |
+| 並列スキル | architecture-detail（Wave B） |
+| 後続スキル | design-detail（post-B）, wave-aggregator |
+
+## Wave B 契約出力
+
+Blackboard に以下を登録する:
+
+```yaml
+contract_outputs:
+  - key: decisions.api_resources
+    value:
+      - id: API-001
+        path: /users
+        methods: [GET, POST]
+        request_entity: null
+        response_entity: ENT-User
+      - id: API-002
+        path: /users/{id}
+        methods: [GET, PUT, DELETE]
+        request_entity: ENT-User
+        response_entity: ENT-User
+```
 
 ## ID採番ルール
 
@@ -92,28 +117,40 @@ RESTful API設計、エンドポイント定義、リクエスト/レスポン�
 }
 ```
 
-## コンテキスト更新
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  api:
-    status: completed
-    files:
-      - docs/05_api_design/api_design.md
-      - docs/05_api_design/integration.md
-id_registry:
-  api: [API-001, API-002, ...]
-traceability:
-  fr_to_api:
-    FR-001: [API-001]
-  api_to_ent:
-    API-001: [ENT-Product]
+status: ok | needs_input
+severity: null
+artifacts:
+  - docs/05_api_design/api_design.md
+  - docs/05_api_design/integration.md
+contract_outputs:
+  - key: decisions.api_resources
+    value:
+      - id: API-001
+        path: /users
+        methods: [GET, POST]
+        entities: [ENT-User]
+      # 全 API を列挙
+  - key: traceability.fr_to_api
+    value:
+      FR-001: [API-001, API-002]
+  - key: traceability.api_to_ent
+    value:
+      API-001: [ENT-User]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 
 | エラー | 対応 |
 |--------|------|
-| FR 不在 | Phase 2 の実行を促す |
-| エンティティ不在 | Phase 4 の実行を促す |
-| 未定義エンティティ参照 | WARNING を記録、エンティティ追加を提案 |
+| user-stories 不在 | web-requirements の実行を促す |
+| エンティティ不在 | Wave A（database）の実行を促す |
+| 未定義エンティティ参照 | P1 として記録、Wave A へ差し戻し提案 |

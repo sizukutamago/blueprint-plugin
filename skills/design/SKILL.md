@@ -1,10 +1,14 @@
 ---
 name: design
-description: This skill should be used when the user asks to "design UI", "create screen specifications", "plan screen flow", "design wireframes", "create component catalog", or "document user interface". Designs user interface screens and navigation flows.
-version: 1.0.0
+description: "[DEPRECATED] Use design-inventory and design-detail instead. This unified skill is maintained for backwards compatibility only."
+version: 2.0.0
+deprecated: true
 ---
 
 # Design Skill
+
+> ⚠️ **非推奨（v2.0.0）**: このスキルは `design-inventory`（Wave A）と `design-detail`（post-B）に分割されました。
+> 新規プロジェクトでは分割スキルを使用してください。
 
 画面設計を行うスキル。
 UIレイアウト設計、ワイヤーフレーム作成、画面フロー定義、
@@ -14,7 +18,7 @@ UIレイアウト設計、ワイヤーフレーム作成、画面フロー定義
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| docs/02_requirements/functional_requirements.md | ○ | 画面抽出元 |
+| docs/requirements/user-stories.md | ○ | 画面抽出元（web-requirements 出力） |
 | docs/03_architecture/architecture.md | ○ | エラーハンドリング設計参照 |
 | docs/05_api_design/api_design.md | ○ | 画面操作で使用するAPI |
 
@@ -33,8 +37,9 @@ UIレイアウト設計、ワイヤーフレーム作成、画面フロー定義
 
 | 種別 | 対象 |
 |------|------|
-| 前提スキル | requirements, architecture, api |
+| 前提スキル | web-requirements, architecture-skeleton, api |
 | 後続スキル | review |
+| 置換スキル | design-inventory（Wave A）, design-detail（post-B） |
 
 ## ID採番ルール
 
@@ -111,25 +116,37 @@ graph TB
     SC002 --> SC003[詳細]
 ```
 
-## コンテキスト更新
+## SendMessage 完了報告
+
+> **注意**: v3.0 では design-inventory（Wave A）+ design-detail（Post-B）に分割。このスキルは後方互換用。
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  design:
-    status: completed
-    files:
-      - docs/06_screen_design/screen_list.md
-      - docs/06_screen_design/screen_transition.md
-      - docs/06_screen_design/component_catalog.md
-      - docs/06_screen_design/details/screen_detail_SC-XXX.md
-id_registry:
-  sc: [SC-001, SC-002, ...]
-traceability:
-  fr_to_sc:
-    FR-001: [SC-001, SC-002]
-  api_to_sc:
-    API-001: [SC-001, SC-002]  # APIを使用する画面
+status: ok
+severity: null
+artifacts:
+  - docs/06_screen_design/screen_list.md
+  - docs/06_screen_design/screen_transition.md
+  - docs/06_screen_design/component_catalog.md
+  - docs/06_screen_design/details/screen_detail_SC-XXX.md
+contract_outputs:
+  - key: decisions.screens
+    value:
+      - id: SC-001
+        name: トップページ
+        category: Public
+  - key: traceability.fr_to_sc
+    value:
+      FR-001: [SC-001, SC-002]
+  - key: traceability.api_to_sc
+    value:
+      API-001: [SC-001, SC-002]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## 設計スコープ（Goals / Non-Goals）
 

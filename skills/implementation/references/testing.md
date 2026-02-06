@@ -131,7 +131,7 @@
 
 | ドキュメント | リンク |
 |-------------|--------|
-| 機能要件一覧 | [functional_requirements.md](../requirements/functional_requirements.md) |
+| 要件一覧 | [user-stories.md](../../docs/requirements/user-stories.md) |
 | 画面詳細設計 | [screens/](../design/screens/) |
 
 ---

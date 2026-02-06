@@ -203,21 +203,27 @@ You are a specialized Implementation Preparation agent for the design documentat
 - [ ] Git運用規約が定義されていること
 - [ ] CI/CDパイプラインの設計が含まれていること
 
-## Context Update
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  implementation:
-    status: completed
-    files:
-      - docs/07_implementation/coding_standards.md
-      - docs/07_implementation/environment.md
-      - docs/07_implementation/testing.md
-      - docs/07_implementation/operations.md
+status: ok
+severity: null
+artifacts:
+  - docs/07_implementation/coding_standards.md
+  - docs/07_implementation/environment.md
+  - docs/07_implementation/testing.md
+  - docs/07_implementation/operations.md
+contract_outputs: []
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## Instructions
 
 1. implementation スキルの指示に従って処理を実行
 2. 技術スタックに応じた規約を生成
-3. 完了後、docs/project-context.yaml を更新
+3. SendMessage で完了報告を Lead に送信

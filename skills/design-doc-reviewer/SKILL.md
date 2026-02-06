@@ -1,14 +1,37 @@
 ---
 name: review
-description: This skill should be used when the user asks to "review design documents", "check document consistency", "validate traceability", "generate completion summary", "audit design specifications", or "check ID consistency". Performs consistency checks and reviews on design documentation.
-version: 1.0.0
+description: This skill should be used when the user asks to "review design documents", "check document consistency", "validate traceability", "generate completion summary", "audit design specifications", or "check ID consistency". Performs consistency checks and reviews on design documentation with P0/P1/P2 severity-based Gate judgment.
+version: 2.0.0
 ---
 
 # Review Skill
 
 設計書の整合性チェック・レビューを行うスキル。
 構造チェック、相互参照検証、完全性確認を実施し、
-プロジェクト完了サマリーを生成する。
+**P0/P1/P2 重大度による Gate 判定**でプロジェクト完了サマリーを生成する。
+
+## 重大度分類（P0/P1/P2）
+
+| 重大度 | 旧分類 | 定義 | 差し戻し先 | Gate 判定 |
+|--------|--------|------|-----------|----------|
+| **P0** | BLOCKER | 要件不充足、根本的設計ミス | web-requirements | 即差し戻し |
+| **P1** | BLOCKER | セクション間不整合（DB/API等） | Wave A/B（該当フェーズ） | 2件以上で差し戻し |
+| **P2** | WARNING | 記述不足、フォーマット違反 | 当該エージェントへ再生成 | 通過（要対応リスト記録） |
+
+### P0 指摘例（即差し戻し）
+- FR に対応する機能が全く実装されていない
+- 要件定義で承認された機能が設計から欠落
+- 根本的なアーキテクチャ選択ミス
+
+### P1 指摘例（整合性問題）
+- API で未定義の ENT-XXX を参照
+- 画面詳細で未定義の API-XXX を参照
+- NFR で定義されたセキュリティ要件が未実装
+
+### P2 指摘例（軽微な問題）
+- 「など」「適切に」等の曖昧表現
+- プレースホルダー `{{}}` 残存
+- Gherkin 形式の軽微な不備
 
 ## 前提条件
 
@@ -84,16 +107,19 @@ version: 1.0.0
 
 #### 必須ファイル一覧
 
-| フェーズ | 必須ファイル |
-|---------|-------------|
-| Phase 1: Hearing | `01_hearing/project_overview.md`, `hearing_result.md`, `glossary.md` |
-| Phase 2: Requirements | `02_requirements/requirements.md`, `functional_requirements.md`, `non_functional_requirements.md` |
-| Phase 3: Architecture | `03_architecture/architecture.md`, `adr.md`, `security.md`, `infrastructure.md` |
-| Phase 4: Database | `04_data_structure/data_structure.md` |
-| Phase 5: API | `05_api_design/api_design.md`, `integration.md` |
-| Phase 6: Design | `06_screen_design/screen_list.md`, `screen_transition.md`, `component_catalog.md`, `error_patterns.md`, `ui_testing_strategy.md`, `details/screen_detail_SC-XXX.md` (全SC-ID分) |
-| Phase 7: Implementation | `07_implementation/coding_standards.md`, `environment.md`, `testing.md`, `operations.md` |
-| Phase 8: Review | `08_review/consistency_check.md`, `project_completion.md` |
+| フェーズ | 必須ファイル | Wave |
+|---------|-------------|------|
+| Phase 1-2: Requirements | `docs/requirements/user-stories.md`, `context_unified.md`, `story_map.md` | - |
+| Phase 3a: Arch Skeleton | `03_architecture/architecture.md`, `adr.md` | A |
+| Phase 3b: Arch Detail | `03_architecture/security.md`, `infrastructure.md`, `cache_strategy.md` | B |
+| Phase 4: Database | `04_data_structure/data_structure.md` | A |
+| Phase 5: API | `05_api_design/api_design.md`, `integration.md` | B |
+| Phase 6a: Screen Inventory | `06_screen_design/screen_list.md`, `screen_transition.md` | A |
+| Phase 6b: Screen Detail | `06_screen_design/component_catalog.md`, `error_patterns.md`, `ui_testing_strategy.md`, `details/screen_detail_SC-XXX.md` (全SC-ID分) | post-B |
+| Phase 7: Implementation | `07_implementation/coding_standards.md`, `environment.md`, `testing.md`, `operations.md` | - |
+| Phase 8: Review | `08_review/consistency_check.md`, `project_completion.md` | - |
+
+**注意**: Phase 1-2 は `web-requirements` スキルが生成。旧形式（`01_hearing/`, `02_requirements/`）は非推奨。
 
 #### 画面詳細ファイル完全性
 
@@ -117,48 +143,79 @@ version: 1.0.0
 - 画面操作に対応するAPIが存在
 - APIレスポンスのENTが定義済
 
-## 判定基準
+## Gate 判定基準
 
-| 判定 | 条件 |
-|------|------|
-| ✅ PASS | BLOCKER 0件、WARNING ≤5件 |
-| ⚠️ WARNING | BLOCKER 0件、WARNING >5件 |
-| ❌ BLOCKER | BLOCKER ≥1件 |
+| 判定 | 条件 | アクション |
+|------|------|-----------|
+| ✅ **PASS** | P0=0, P1≤1, P2任意 | 完了、P2 は要対応リストに記録 |
+| ⚠️ **ROLLBACK_P1** | P0=0, P1≥2 | Wave A/B の該当フェーズへ差し戻し |
+| ❌ **ROLLBACK_P0** | P0≥1 | web-requirements へ即差し戻し |
 
-## 問題分類
+## 問題分類（P0/P1/P2 マッピング）
 
-| 分類 | 例 |
-|------|-----|
-| BLOCKER | 参照先不在、重複ID、**必須ファイル不足**、**画面詳細ファイル不足** |
-| WARNING | 孤児ID、プレースホルダー残存 |
+| 重大度 | 旧分類 | 例 | 差し戻し先 |
+|--------|--------|-----|-----------|
+| P0 | BLOCKER | FR 対応機能欠落、根本設計ミス | `web-requirements` |
+| P1 | BLOCKER | 参照先不在（ENT/API/SC）、重複ID、必須ファイル不足 | 該当 Wave フェーズ |
+| P2 | WARNING | 孤児ID、プレースホルダー残存、曖昧表現 | 当該エージェント（記録のみ） |
+
+## 差し戻しロジック
+
+| 指摘カテゴリ | 重大度 | 差し戻し先 | 例 |
+|-------------|--------|-----------|-----|
+| 未定義 ENT 参照 | P1 | database (Wave A) | API で未定義の ENT-XXX を参照 |
+| API 参照切れ | P1 | api (Wave B) | 画面詳細で未定義の API-XXX を参照 |
+| 画面 ID 不整合 | P1 | design-inventory (Wave A) | 遷移図に未定義の SC-XXX |
+| NFR 未対応 | P1 | architecture-skeleton (Wave A) | セキュリティ要件が未実装 |
+| 要件対応漏れ | P0 | web-requirements | FR-XXX に対応する機能が全く存在しない |
+| 形式エラー | P2 | 当該フェーズ | Gherkin 形式不正 |
+| 曖昧表現 | P2 | 当該フェーズ | 「など」「適切に」 |
 
 ## 修正サイクル
 
 ```
 レビュー結果: 問題あり
     ↓
-該当フェーズを特定
+重大度を判定（P0/P1/P2）
     ↓
-修正を提案
+P0: web-requirements へ差し戻し
+P1: 該当 Wave フェーズへ差し戻し
+P2: 要対応リストに記録、通過
+    ↓
+差し戻し先で修正
     ↓
 再レビュー（最大3回）
+    ↓
+3回超過: ユーザー介入要請
 ```
 
-## コンテキスト更新
+## SendMessage 完了報告（Gate 結果）
+
+Gate 判定結果を以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  review:
-    status: completed
-    files:
-      - docs/08_review/consistency_check.md
-      - docs/08_review/review_template.md
-      - docs/08_review/project_completion.md
-    result:
-      overall: PASS
-      blockers: 0
-      warnings: 2
+status: ok | conflict
+severity: null | P0 | P1
+artifacts:
+  - docs/08_review/consistency_check.md
+  - docs/08_review/project_completion.md
+gate:
+  overall: PASS | ROLLBACK_P1 | ROLLBACK_P0
+  p0_count: 0
+  p1_count: 0
+  p2_count: 0
+  rollback_targets:
+    - phase: database
+      reason: "API-003 が参照する ENT-Order が未定義"
+  p2_items:
+    - "詳細仕様に「など」が残存"
+contract_outputs: []
+open_questions: []
+blockers:
+  - "P0: FR-003 に対応する API が未定義"
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 

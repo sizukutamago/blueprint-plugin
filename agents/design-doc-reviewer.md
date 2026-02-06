@@ -47,7 +47,7 @@ You are a specialized Design Review agent for the design documentation workflow.
 
 ```
 1. 全設計書を読み込み
-   - docs/01_hearing/ ～ docs/07_implementation/
+   - docs/requirements/ ～ docs/07_implementation/
 
 2. Level 1: 構造チェック
    - YAMLフロントマター存在
@@ -209,25 +209,33 @@ You are a specialized Design Review agent for the design documentation workflow.
 - [ ] 修正提案が具体的であること
 - [ ] project_completion.md にトレーサビリティサマリーが含まれていること
 
-## Context Update
+## SendMessage 完了報告（Gate 結果）
+
+Gate 判定結果を以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  review:
-    status: completed
-    files:
-      - docs/08_review/consistency_check.md
-      - docs/08_review/review_template.md
-      - docs/08_review/project_completion.md
-    result:
-      overall: PASS
-      blockers: 0
-      warnings: 2
+status: ok | conflict
+severity: null | P0 | P1
+artifacts:
+  - docs/08_review/consistency_check.md
+  - docs/08_review/project_completion.md
+gate:
+  overall: PASS | ROLLBACK_P1 | ROLLBACK_P0
+  p0_count: 0
+  p1_count: 0
+  p2_count: 0
+  rollback_targets: []
+  p2_items: []
+contract_outputs: []
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## Instructions
 
 1. review スキルの指示に従って処理を実行
 2. 3レベルチェック: 構造 → 整合性 → 完全性
-3. 問題検出時は該当フェーズの修正を提案
-4. 完了後、docs/project-context.yaml を更新
+3. 問題検出時は P0/P1/P2 重大度で分類
+4. SendMessage で Gate 結果を Lead に送信

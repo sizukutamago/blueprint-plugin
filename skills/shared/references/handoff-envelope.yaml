@@ -1,0 +1,41 @@
+# DEPRECATED (v3.0): agent-teams モードでは SendMessage で代替
+# teammate は完了時に以下の YAML 形式で SendMessage を Lead に送信する:
+#
+#   status: ok | needs_input | conflict
+#   artifacts: [ファイルパス]
+#   contract_outputs:
+#     - key: blackboard.decisions.xxx
+#       value: ...
+#   open_questions: []
+#   blockers: []
+#
+# 以下は v2.x サブエージェントモードとの後方互換のために残存
+
+kind: explorer | planner | writer | reviewer | aggregator
+agent_id: string
+mode: greenfield | brownfield
+status: ok | needs_input | conflict | blocked
+severity: null | P0 | P1 | P2
+
+# 成果物リスト
+artifacts:
+  - path: string
+    type: context | finding | question | story | review
+
+# 前提条件
+assumptions: []
+
+# 未解決の疑問
+open_questions: []
+
+# 必要な依存情報 (他エージェントへのリクエスト)
+dependencies_requested: []
+
+# 契約出力 (Blackboard に反映すべき確定事項)
+contract_outputs: []
+
+# ブロッカー情報
+blockers: []
+
+# 次の遷移先
+next: string | done

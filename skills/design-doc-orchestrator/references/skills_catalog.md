@@ -1,5 +1,9 @@
 # Skills Catalog
 
+> ⚠️ **非推奨（v3.0.0）**: このカタログは v1.x のスキル構成を記述しています。
+> v3.0 では Wave A/B 分割（architecture-skeleton/detail, design-inventory/detail）と
+> agent-teams 連携に移行しました。最新の構成は `team-mode.md` を参照してください。
+
 設計書作成ワークフローで使用する全スキルの一覧と連携パターン。
 
 ## スキル一覧

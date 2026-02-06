@@ -1,7 +1,7 @@
 {
   "name": "design-docs-plugin",
-  "version": "1.0.0",
-  "description": "8フェーズの設計ドキュメントワークフローを提供するClaude Codeプラグイン。新規プロジェクトのヒアリングから実装準備までを自動化。",
+  "version": "3.0.0",
+  "description": "agent-teams による真の並列実行で設計ドキュメントを生成するワークフロー。2-wave DAG、TaskList 協調、SendMessage ハンドオフ、P0/P1/P2 Gate 判定対応。",
   "author": {
     "name": "sizukutamago"
   },
@@ -11,6 +11,16 @@
     "architecture",
     "workflow",
     "japanese",
-    "documentation"
-  ]
+    "documentation",
+    "parallel-execution",
+    "2-wave",
+    "agent-teams",
+    "tasklist-dag"
+  ],
+  "dependencies": {
+    "dev-tools-plugin": {
+      "reason": "web-requirements スキルを Phase 1-2 として使用",
+      "skills": ["web-requirements"]
+    }
+  }
 }

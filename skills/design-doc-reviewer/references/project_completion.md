@@ -19,27 +19,25 @@
 
 | # | 成果物 | ステータス | Level1 | Level2 | Level3 | 備考 |
 |---|--------|-----------|--------|--------|--------|------|
-| 1 | project_overview.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 2 | hearing_result.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 3 | glossary.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 4 | requirements.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 5 | functional_requirements.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 6 | non_functional_requirements.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 7 | screen_list.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 8 | screen_transition.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 9 | component_catalog.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 10 | screen_detail_SC-XXX.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 11 | api_design.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 12 | integration.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 13 | data_structure.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 14 | architecture.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 15 | adr.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 16 | security.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 17 | infrastructure.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 18 | coding_standards.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 19 | environment.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 20 | testing.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
-| 21 | operations.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | {{備考}} |
+| 1 | user-stories.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | docs/requirements/ |
+| 2 | context_unified.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | docs/requirements/ |
+| 3 | story_map.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | docs/requirements/ |
+| 4 | architecture.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 03_architecture/ (Wave A) |
+| 5 | adr.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 03_architecture/ (Wave A) |
+| 6 | security.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 03_architecture/ (Wave B) |
+| 7 | infrastructure.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 03_architecture/ (Wave B) |
+| 8 | cache_strategy.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 03_architecture/ (Wave B) |
+| 9 | data_structure.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 04_data_structure/ (Wave A) |
+| 10 | api_design.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 05_api_design/ (Wave B) |
+| 11 | integration.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 05_api_design/ (Wave B) |
+| 12 | screen_list.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/ (Wave A) |
+| 13 | screen_transition.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/ (Wave A) |
+| 14 | component_catalog.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/ (Post-B) |
+| 15 | screen_detail_SC-XXX.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 06_screen_design/details/ (Post-B) |
+| 16 | coding_standards.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
+| 17 | environment.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
+| 18 | testing.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
+| 19 | operations.md | {{STATUS}} | {{L1}} | {{L2}} | {{L3}} | 07_implementation/ |
 
 ---
 
@@ -48,7 +46,7 @@
 | カテゴリ | 完了数 | 総数 | 完了率 |
 |---------|--------|------|--------|
 | project/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |
-| requirements/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |
+| docs/requirements/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |
 | design/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |
 | api/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |
 | database/ | {{COMPLETE}} | {{TOTAL}} | {{RATE}} |

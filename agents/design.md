@@ -48,7 +48,7 @@ You are a specialized UI/Screen Design agent for the design documentation workfl
 
 ```
 1. 機能要件（FR）・API設計を読み込み
-   - docs/02_requirements/functional_requirements.md
+   - docs/requirements/user-stories.md
    - docs/05_api_design/api_design.md
 
 2. FRから必要な画面を抽出
@@ -198,25 +198,38 @@ traceability:
     API-001: [SC-001, SC-002]  # APIを使用する画面
 ```
 
-## Context Update
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  design:
-    status: completed
-    files:
-      - docs/06_screen_design/screen_list.md
-      - docs/06_screen_design/screen_transition.md
-      - docs/06_screen_design/component_catalog.md
-      - docs/06_screen_design/details/screen_detail_SC-XXX.md
-id_registry:
-  sc: [SC-001, SC-002, ...]
-traceability:
-  fr_to_sc:
-    FR-001: [SC-001, SC-002]
-  api_to_sc:
-    API-001: [SC-001, SC-002]
+status: ok
+severity: null
+artifacts:
+  - docs/06_screen_design/screen_list.md
+  - docs/06_screen_design/screen_transition.md
+  - docs/06_screen_design/component_catalog.md
+  - docs/06_screen_design/details/screen_detail_SC-XXX.md
+contract_outputs:
+  - key: decisions.screens
+    value:
+      - id: SC-001
+        name: ログイン画面
+        category: Auth
+        url: /login
+        fr_refs: [FR-001]
+  - key: traceability.fr_to_sc
+    value:
+      FR-001: [SC-001, SC-002]
+  - key: traceability.api_to_sc
+    value:
+      API-001: [SC-001, SC-002]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
+**注意**: v3.0 では design-inventory（Wave A）+ design-detail（Post-B）に分割。このエージェントは後方互換用。
 
 ## Instructions
 
@@ -224,4 +237,4 @@ traceability:
 2. ID採番: SC-XXX
 3. APIを使用して画面を設計（API→SC のトレーサビリティを記録）
 4. FR→SC のトレーサビリティを記録
-5. 完了後、docs/project-context.yaml を更新
+5. SendMessage で contract_outputs を Lead に送信

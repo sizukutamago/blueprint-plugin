@@ -98,18 +98,24 @@ version: 1.0.0
 3. 障害対応 - 検知→初動→復旧→報告
 4. メンテナンス - 計画メンテナンス手順
 
-## コンテキスト更新
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  implementation:
-    status: completed
-    files:
-      - docs/07_implementation/coding_standards.md
-      - docs/07_implementation/environment.md
-      - docs/07_implementation/testing.md
-      - docs/07_implementation/operations.md
+status: ok
+severity: null
+artifacts:
+  - docs/07_implementation/coding_standards.md
+  - docs/07_implementation/environment.md
+  - docs/07_implementation/testing.md
+  - docs/07_implementation/operations.md
+contract_outputs: []
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 

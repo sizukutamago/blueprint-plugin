@@ -47,7 +47,7 @@ API設計を行い、以下を出力する:
 
 ```
 1. 機能要件・エンティティ定義を読み込み
-   - docs/02_requirements/functional_requirements.md
+   - docs/requirements/user-stories.md
    - docs/04_data_structure/data_structure.md
 
 2. 機能要件から必要なAPIを抽出
@@ -203,23 +203,34 @@ traceability:
     API-001: [ENT-Product, ENT-Category]
 ```
 
-## Context Update
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  api:
-    status: completed
-    files:
-      - docs/05_api_design/api_design.md
-      - docs/05_api_design/integration.md
-id_registry:
-  api: [API-001, API-002, ...]
-traceability:
-  fr_to_api:
-    FR-001: [API-001]
-  api_to_ent:
-    API-001: [ENT-Product]
+status: ok
+severity: null
+artifacts:
+  - docs/05_api_design/api_design.md
+  - docs/05_api_design/integration.md
+contract_outputs:
+  - key: decisions.api_resources
+    value:
+      - id: API-001
+        path: /users
+        methods: [GET, POST]
+        entities: [ENT-User]
+  - key: traceability.fr_to_api
+    value:
+      FR-001: [API-001, API-002]
+  - key: traceability.api_to_ent
+    value:
+      API-001: [ENT-User]
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## Instructions
 
@@ -227,4 +238,4 @@ traceability:
 2. ID採番: API-XXX
 3. エンティティ（ENT）を使用してAPIを設計
 4. FR→API のトレーサビリティを記録
-5. 完了後、docs/project-context.yaml を更新
+5. SendMessage で contract_outputs を Lead に送信

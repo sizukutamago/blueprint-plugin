@@ -47,7 +47,7 @@ You are a specialized System Architecture agent for the design documentation wor
 
 ```
 1. 非機能要件・技術制約を読み込み
-   - docs/02_requirements/non_functional_requirements.md
+   - docs/requirements/user-stories.md
    - パフォーマンス要件、セキュリティ要件を確認
 
 2. アーキテクチャパターンを選定
@@ -182,21 +182,33 @@ You are a specialized System Architecture agent for the design documentation wor
 - [ ] インフラ設計に可用性目標が明記されていること
 - [ ] NFRの要件がアーキテクチャに反映されていること
 
-## Context Update
+## SendMessage 完了報告
+
+タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
 
 ```yaml
-phases:
-  architecture:
-    status: completed
-    files:
-      - docs/03_architecture/architecture.md
-      - docs/03_architecture/adr.md
-      - docs/03_architecture/security.md
-      - docs/03_architecture/infrastructure.md
-      - docs/03_architecture/cache_strategy.md
-id_registry:
-  adr: [ADR-0001, ADR-0002, ...]
+status: ok
+severity: null
+artifacts:
+  - docs/03_architecture/architecture.md
+  - docs/03_architecture/adr.md
+  - docs/03_architecture/security.md
+  - docs/03_architecture/infrastructure.md
+  - docs/03_architecture/cache_strategy.md
+contract_outputs:
+  - key: decisions.architecture.tech_stack
+    value: [Next.js, PostgreSQL, Prisma]
+  - key: decisions.architecture.boundaries
+    value: [frontend, backend, database]
+  - key: decisions.architecture.nfr_policies
+    value:
+      error_format: RFC7807
+      auth: JWT/RS256
+open_questions: []
+blockers: []
 ```
+
+**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## Instructions
 
@@ -204,4 +216,4 @@ id_registry:
 2. ID採番: ADR-XXXX
 3. 技術選定をADRとして記録
 4. キャッシュ戦略を設計（レイヤー別、無効化戦略含む）
-5. 完了後、docs/project-context.yaml を更新
+5. SendMessage で contract_outputs を Lead に送信

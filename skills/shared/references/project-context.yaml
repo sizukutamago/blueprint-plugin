@@ -1,6 +1,11 @@
-# Project Context Schema
-# 各エージェント間で共有するプロジェクト状態
+# Project Context Schema (v3.0 — agent-teams ネイティブ)
+# Aggregator teammate が唯一の書き込み者（単一ライター原則）
 # 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
+#
+# v3.0 変更点:
+#   - phases / wave_status / contracts を削除（TaskList に移管）
+#   - pending_questions / conflicts を削除（TaskCreate に移管）
+#   - 実行状態は agent-teams の TaskList DAG で管理
 
 # プロジェクト基本情報
 project:
@@ -9,62 +14,36 @@ project:
   description: "{{PROJECT_DESCRIPTION}}"
   created_at: "{{CREATED_AT}}"
   updated_at: "{{UPDATED_AT}}"
+  mode: greenfield | brownfield  # 新規開発 or 既存システム改修
 
-# フェーズ状態（論理的な順序）
-phases:
-  # Phase 1: ヒアリング
-  hearing:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 01_hearing
+# Blackboard: 共有決定事項（Aggregator が Two-step Reduce で更新）
+blackboard:
+  version: 1
+  last_updated: null
+  # Wave 間で共有する決定事項
+  decisions:
+    architecture:
+      tech_stack: []
+      boundaries: []
+      nfr_policies: {}
+    entities: []
+    # - id: ENT-XXX
+    #   name: string
+    #   attributes: []
+    api_resources: []
+    # - id: API-XXX
+    #   path: string
+    #   methods: []
+    screens: []
+    # - id: SC-XXX
+    #   name: string
+    #   components: []
 
-  # Phase 2: 要件定義
-  requirements:
-    status: pending | in_progress | review | approved | completed
-    files: []
-    output_dir: 02_requirements
-
-  # Phase 3: アーキテクチャ（技術方針を先に決定）
-  architecture:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 03_architecture
-
-  # Phase 4: データ構造（エンティティ定義、APIの基盤）
-  database:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 04_data_structure
-
-  # Phase 5: API設計（エンティティを使用）
-  api:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 05_api_design
-
-  # Phase 6: 画面設計（APIを使用）
-  design:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 06_screen_design
-
-  # Phase 7: 実装準備
-  implementation:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 07_implementation
-
-  # Phase 8: レビュー
-  review:
-    status: pending | in_progress | completed
-    files: []
-    output_dir: 08_review
-    result:
-      overall: PASS | WARNING | BLOCKER
-      blockers: 0
-      warnings: 0
-
-# ID採番管理
+# ID採番管理（名前空間は teammate ごとに分離済み）
+# arch-skeleton: ADR-XXXX
+# database: ENT-{Name}
+# design-inventory: SC-XXX
+# api: API-XXX
 id_registry:
   fr:
     next: 1
@@ -103,5 +82,9 @@ glossary: []
 
 # メタデータ
 metadata:
-  version: "2.1.0"
-  schema_version: "2.1"
+  version: "3.0.0"
+  schema_version: "3.0"
+  # 変更履歴
+  # v3.0.0: agent-teams 全面移行、phases/wave_status/contracts 削除、TaskList DAG 移管
+  # v2.0.0: Wave 並列化、Blackboard 統合、web-requirements 置換
+  # v1.0.0: 8フェーズ構造導入
