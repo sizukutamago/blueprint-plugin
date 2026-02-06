@@ -26,6 +26,7 @@ __pycache__/
 # Runtime directories
 .codex-collab/
 .serena/
+plans/
 
 # Demo/example projects
 examples/
