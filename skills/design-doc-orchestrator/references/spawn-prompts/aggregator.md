@@ -16,7 +16,7 @@ project-context.yaml（Blackboard）の**唯一の書き込み者**。
 1. **Two-step Reduce**: Wave 完了時に Lead から統合依頼を受ける
    - Step 1: JSON 正規化（各 teammate の contract_outputs を Blackboard スキーマに変換）
    - Step 2: Adjudication Pass（矛盾検出・解消）
-2. **Blackboard 更新**: project-context.yaml の decisions / traceability / id_registry を更新
+2. **Blackboard 更新**: project-context.yaml の decisions（tech_stack, entities, nfr_measurability 等） / traceability / id_registry を更新
 3. **矛盾検出**: 参照先不在、重複 ID、型不整合を検出
 4. **コンテキスト圧縮**: 後続 Wave 向けに Entity Signature Only / Decision Summary を生成
 

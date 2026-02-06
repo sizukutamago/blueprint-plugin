@@ -1,13 +1,13 @@
 ---
 name: design-doc-orchestrator
-description: This skill should be used when the user asks to "create design documents", "generate full documentation", "run design workflow", "orchestrate design phases", or "create complete system specifications". Orchestrates comprehensive system design documentation through agent-teams 2-wave parallel execution with TaskList DAG coordination.
+description: This skill should be used when the user asks to "create design documents", "generate full documentation", "run design workflow", "orchestrate design phases", or "create complete system specifications". Orchestrates comprehensive system design documentation through agent-teams multi-wave parallel execution (Wave A/B/C) with TaskList DAG coordination.
 version: 3.1.0
 ---
 
 # Design Doc Orchestrator
 
 システム設計書一式を agent-teams で生成するオーケストレータ。
-**2-wave 並列実行**で効率的に設計書を作成する。
+**Wave A/B/C 並列実行**で効率的に設計書を作成する。
 
 **前提条件**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` が設定済みであること。
 
@@ -172,7 +172,7 @@ aggregator → SendMessage(lead, "統合完了/矛盾検出")
 | 判定 | 条件 | アクション |
 |------|------|-----------|
 | PASS | P0=0, P1≤1 | cleanup → 完了 |
-| ROLLBACK_P1 | P0=0, P1≥2 | 該当フェーズ修正 → Aggregator 再統合 → 再レビュー |
+| ROLLBACK_P1 | P0=0, P1≥2 | 該当フェーズ修正 → Aggregator 再統合（Wave A/B 起因時）→ 再レビュー |
 | ROLLBACK_P0 | P0≥1 | ユーザー通知 → web-requirements 再実行 → 全再実行 |
 
 ### 差し戻し時の動作
@@ -182,8 +182,8 @@ P1 検出:
   → reviewer の rollback_targets から影響フェーズを特定
   → TaskCreate で修正タスクを作成
   → 新 teammate をスポーンして修正実行
-  → Aggregator に再統合依頼
-  → 後続フェーズを再実行
+  → Wave A/B 起因: Aggregator に再統合依頼 → 後続フェーズを再実行
+  → Wave C 起因: 該当 teammate を再スポーン → reviewer を再スポーン（Aggregator 不要）
   → reviewer を再スポーン（最大3サイクル）
 
 P0 検出:

@@ -152,24 +152,28 @@ graph TD
 
 ---
 
-### Phase 7: Implementation（実装準備）
+### Phase 7: Implementation（実装準備）— Wave C 並列実行
+
+> ⚠️ **v3.1 変更**: Phase 7 は3つの並列 teammate（Wave C）に分割されました。
 
 **目的**: 実装に必要なドキュメントを作成する
 
 **入力**:
 - `docs/03_architecture/architecture.md`
 - `docs/03_architecture/adr.md`
+- `docs/project-context.yaml`
+- `docs/requirements/user-stories.md`
 
-**出力**:
-- `docs/07_implementation/coding_standards.md`
-- `docs/07_implementation/environment.md`
-- `docs/07_implementation/testing.md`
-- `docs/07_implementation/operations.md`
+**出力（3 teammate 並列）**:
+- **impl-standards**: `coding_standards.md`, `environment.md`
+- **impl-test**: `test_strategy.md`, `test_plan.md`, `traceability_matrix.md`, `nonfunctional_test_plan.md`
+- **impl-ops**: `operations.md`, `observability_design.md`, `incident_response.md`, `backup_restore_dr.md`（条件付き）, `migration_plan.md`（条件付き）
 
 **完了条件**:
 - コーディング規約が技術スタックに適合
 - 環境設定が網羅されている
-- テスト戦略が定義されている
+- テスト戦略・テスト計画が JSTQB 水準で定義されている
+- 運用手順・可観測性設計が IPA 準拠で定義されている
 
 ---
 

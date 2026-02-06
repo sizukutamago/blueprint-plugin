@@ -50,9 +50,9 @@ interface {{EntityName}} {
 
 #### フィールド詳細
 
-| フィールド | 型 | 必須 | 説明 | 制約 |
-|-----------|-----|------|------|------|
-| {{FIELD}} | {{TYPE}} | {{REQUIRED}} | {{DESC}} | {{CONSTRAINT}} |
+| フィールド | 型 | 必須 | データ分類 | 説明 | 制約 |
+|-----------|-----|------|-----------|------|------|
+| {{FIELD}} | {{TYPE}} | {{REQUIRED}} | PII / Sensitive / Internal / Public | {{DESC}} | {{CONSTRAINT}} |
 
 ## フロントエンド専用型
 

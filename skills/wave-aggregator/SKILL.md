@@ -35,7 +35,7 @@ Lead から SendMessage で統合依頼を受ける。
 |------|------|
 | 前提スキル | Wave A: architecture-skeleton, database, design-inventory |
 | 前提スキル | Wave B: api, architecture-detail |
-| 後続スキル | Wave B（Wave A 後）/ design-detail, implementation（Wave B 後） |
+| 後続スキル | Wave B（Wave A 後）/ design-detail, impl-standards, impl-test, impl-ops（Wave B 後） |
 
 ## ワークフロー
 
@@ -70,6 +70,15 @@ contract_outputs:
         name: User
         attributes: [id, email, name, role]
 
+# 入力例: architecture-skeleton の NFR 測定可能性
+contract_outputs:
+  - key: decisions.nfr_measurability
+    value:
+      NFR-PERF-001:
+        target: "API応答時間 p95 < 200ms"
+        measurement: "k6 負荷テスト"
+        pass_criteria: "p95 < 200ms かつ p99 < 500ms"
+
 # 正規化後: Blackboard 形式
 blackboard:
   decisions:
@@ -80,6 +89,11 @@ blackboard:
       - id: ENT-User
         name: User
         attributes: [id, email, name, role]
+    nfr_measurability:
+      NFR-PERF-001:
+        target: "API応答時間 p95 < 200ms"
+        measurement: "k6 負荷テスト"
+        pass_criteria: "p95 < 200ms かつ p99 < 500ms"
 ```
 
 ### Step 2: Adjudication Pass
@@ -114,6 +128,7 @@ conflicts:
 | `blackboard.decisions.entities` | ○ | - |
 | `blackboard.decisions.api_resources` | - | ○ |
 | `blackboard.decisions.screens` | ○（inventory） | ○（detail 追加） |
+| `blackboard.decisions.nfr_measurability` | ○（arch-skeleton） | - |
 | `traceability.*` | マージ | マージ |
 
 **注意**: v3.0 で `pending_questions`、`conflicts`、`wave_status`、`contracts` は削除済み。

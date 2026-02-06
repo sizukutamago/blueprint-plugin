@@ -16,7 +16,7 @@ version: 3.0.0
 |--------|--------|------|-----------|----------|
 | **P0** | BLOCKER | 要件不充足、根本的設計ミス | web-requirements | 即差し戻し |
 | **P1** | BLOCKER | セクション間不整合（DB/API等） | Wave A/B（該当フェーズ） | 2件以上で差し戻し |
-| **P2** | WARNING | 記述不足、フォーマット違反 | 当該エージェントへ再生成 | 通過（要対応リスト記録） |
+| **P2** | WARNING | 記述不足、フォーマット違反 | 要対応リストに記録（通過） | 通過（要対応リスト記録） |
 
 ### P0 指摘例（即差し戻し）
 - FR に対応する機能が全く実装されていない
@@ -45,8 +45,9 @@ version: 3.0.0
 | ファイル | テンプレート | 説明 |
 |---------|-------------|------|
 | docs/08_review/consistency_check.md | {baseDir}/references/consistency_check.md | 整合性チェック結果 |
-| docs/08_review/review_template.md | {baseDir}/references/review_template.md | 個別レビュー結果 |
 | docs/08_review/project_completion.md | {baseDir}/references/project_completion.md | 完了サマリー |
+
+**参照テンプレート**（成果物としては生成しない）: `{baseDir}/references/review_template.md`（個別レビュー時の書式参考用）
 
 ## 依存関係
 
@@ -139,7 +140,7 @@ version: 3.0.0
 1. 各フェーズの必須ファイルが存在するか確認
 2. screen_list.md から全SC-IDを抽出
 3. details/ ディレクトリ内のファイルを列挙
-4. 不足ファイルを BLOCKER として報告
+4. 不足ファイルを P1 として報告
 ```
 
 ### Level 5: 運用準備チェック（IPA準拠）
@@ -158,6 +159,8 @@ version: 3.0.0
 | データ分類が全エンティティに定義 | P2 | data_structure.md | 常時 |
 
 **条件付きチェック**: project-context.yaml の `project.profile` を参照し、生成条件に合致するファイルのみチェック対象とする。
+
+**profile 未設定時のデフォルト動作**: `project.profile` が未設定の場合は `sla_tier: basic`, `has_migration: false` として扱う（backup_restore_dr.md, migration_plan.md はチェック対象外）。profile の未設定自体を P2 として記録する。
 
 ## トレーサビリティチェック
 
