@@ -12,10 +12,10 @@ task-1:  web-requirements          depends_on: []           wave: -
 task-2:  architecture-skeleton     depends_on: [1]          wave: A
 task-3:  database                  depends_on: [1]          wave: A
 task-4:  design-inventory          depends_on: [1]          wave: A
-task-5:  wave-aggregator-a         depends_on: [2,3,4]      wave: A (統合)
+task-5:  integration-a         depends_on: [2,3,4]      wave: A (統合)
 task-6:  api                       depends_on: [5]          wave: B
 task-7:  architecture-detail       depends_on: [5]          wave: B
-task-8:  wave-aggregator-b         depends_on: [6,7]        wave: B (統合)
+task-8:  integration-b         depends_on: [6,7]        wave: B (統合)
 task-9:  design-detail             depends_on: [8]          wave: post-B
 task-10: impl-standards            depends_on: [9]          wave: C
 task-11: impl-test                 depends_on: [9]          wave: C
@@ -27,7 +27,7 @@ task-13: review                    depends_on: [10,11,12]   wave: Seq
 
 ```
                     ┌─ arch-skeleton ─┐
-web-requirements ─→ ├─ database      ─┤→ aggregator-A ─→ ┌─ api          ─┐→ aggregator-B ─→ design-detail
+web-requirements ─→ ├─ database      ─┤→ integrate-A ─→ ┌─ api          ─┐→ integrate-B ─→ design-detail
                     └─ design-inv    ─┘                   └─ arch-detail  ─┘
                                                                                     │
                                                                           ┌─ impl-standards ─┐
@@ -37,7 +37,7 @@ web-requirements ─→ ├─ database      ─┤→ aggregator-A ─→ ┌�
 
 ## Wave ごとの並列度
 
-| Wave | タスク | 並列度 | Aggregator 必要 |
+| Wave | タスク | 並列度 | 統合ステップ必要 |
 |------|--------|--------|----------------|
 | A | arch-skeleton, database, design-inventory | 3 | あり |
 | B | api, architecture-detail | 2 | あり |
@@ -45,12 +45,12 @@ web-requirements ─→ ├─ database      ─┤→ aggregator-A ─→ ┌�
 | C | impl-standards, impl-test, impl-ops | 3 | なし |
 | Seq | review | 1 | なし |
 
-## Aggregator の役割
+## 統合ステップの役割
 
 Wave A/B 完了後、各フェーズの出力を統合して Blackboard（project-context.yaml）を更新する。
-Wave C と Seq では Aggregator は不要（先行成果物を直接参照）。
+Wave C と Seq では統合ステップは不要（先行成果物を直接参照）。
 
-### Aggregator の処理（Two-step Reduce）
+### 統合処理（Two-step Reduce）
 
 1. **Collect**: 各フェーズの Blackboard 出力をマージ
 2. **Normalize**: キー名の正規化とコンフリクト解消

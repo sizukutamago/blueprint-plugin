@@ -3,7 +3,8 @@
 # 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
 #
 # 書き込みルール:
-#   Claude Code: Aggregator teammate が唯一の書き込み者（単一ライター原則）
+#   単一ライター原則: 1つのエージェント/プロセスのみが書き込む
+#   Claude Code: 専用の統合エージェントが書き込み
 #   Cursor: メインエージェントが各フェーズ完了後に直接更新
 
 # プロジェクト基本情報
@@ -99,5 +100,5 @@ metadata:
   # 変更履歴
   # v4.0.0: core/ 分離、Cursor 対応、platform 非依存スキーマ
   # v3.2.0: project.constraints.approved_tech_stack 追加
-  # v3.0.0: agent-teams 全面移行
+  # v3.0.0: マルチエージェント並列実行対応
   # v2.0.0: Wave 並列化、Blackboard 統合
