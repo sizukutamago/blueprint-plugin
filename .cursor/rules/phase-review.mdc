@@ -1,0 +1,50 @@
+---
+description: "Blueprint design workflow - review phase. Apply when reviewing design documents, checking consistency, or running Gate judgment."
+globs: "docs/08_review/**,docs/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Review Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/review.md を読み込み、内容を完全に理解してください。
+レビュー基準の詳細（Level 1-5 チェック項目、Gate 判定基準、差し戻しロジック）は @core/review-criteria.md を参照。
+トレーサビリティルールは @core/traceability.md を参照。
+必須ファイル一覧は @core/output-structure.md を参照。
+
+## Cursor 固有の実行手順
+
+1. docs/ 配下の全設計書を読み込む
+2. @core/phases/review.md の「ワークフロー」セクションの手順に従ってレビューを実施
+   - Level 1: 構造チェック
+   - Level 2: 整合性チェック
+   - Level 3: 完全性チェック
+   - Level 4: 出力ファイル完全性チェック（@core/output-structure.md 参照）
+   - Level 5: 運用準備チェック（@core/review-criteria.md 参照）
+3. 発見した問題を P0/P1/P2 に分類（@core/review-criteria.md の基準に従う）
+4. docs/08_review/consistency_check.md を生成
+5. Gate 判定を実施
+6. docs/08_review/project_completion.md を生成
+7. docs/project-context.yaml の Blackboard を更新（Gate 結果を反映）
+8. workflow-state/task_plan.md の reviewer ステータスを `complete` に更新
+
+## Gate 判定後のアクション
+
+| 判定 | アクション |
+|------|-----------|
+| PASS | 完了。P2 は要対応リストに記録 |
+| ROLLBACK_P1 | 該当フェーズの設計書を修正対象としてマーク、task_plan.md を更新 |
+| ROLLBACK_P0 | 要件定義フェーズからのやり直しが必要。ユーザーに報告 |
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- レビューは全フェーズの成果物が揃った状態で実施すること
+- project-context.yaml が無い場合はトレーサビリティチェックをスキップ
+- 修正サイクルは最大3回。超過時はユーザー介入を要請
+- 条件付きファイル（backup_restore_dr.md, migration_plan.md）は project.profile を確認してからチェック
+- profile 未設定時は `sla_tier: basic`, `has_migration: false` として扱い、P2 として記録

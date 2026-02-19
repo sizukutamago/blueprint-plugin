@@ -1,0 +1,38 @@
+---
+description: "Blueprint design workflow - database phase. Apply when creating or editing data structure definitions, entity models, TypeScript type definitions, or physical database design."
+globs: "docs/04_data_structure/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Database Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/database.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. docs/requirements/ の内容を確認（user-stories.md, context_unified.md）
+2. 技術スタックが決定済みか確認
+   - docs/project-context.yaml の `blackboard.decisions.architecture.tech_stack` を参照
+   - DB/ORM の指定がある場合はそれに従って物理設計を実施
+   - 未決定の場合は architecture-skeleton の完了を待つか、ユーザーに確認
+3. @core/phases/database.md の「ワークフロー」セクションの手順に従って設計を実施
+4. docs/04_data_structure/data_structure.md を生成
+   - テンプレートは skills/database/references/data_structure.md を参考にする
+5. docs/project-context.yaml の以下を更新:
+   - `blackboard.decisions.entities`
+   - `blackboard.traceability.fr_to_ent`
+6. workflow-state/task_plan.md の database ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- 全エンティティに ENT-ID を付与すること（ENT-{PascalCase} 形式）
+- PII 分類フィールドには暗号化・アクセスログ・保持期限を定義すること
+- 物理設計（テーブル、インデックス、制約、容量見積もり）は必須
+- FR → ENT トレーサビリティに漏れがないこと

@@ -1,0 +1,35 @@
+---
+description: "Blueprint design workflow - design inventory phase. Apply when creating or editing screen lists, screen transition diagrams, or navigation planning."
+globs: "docs/06_screen_design/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Design Inventory Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/design-inventory.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. docs/requirements/ の内容を確認（user-stories.md, story_map.md）
+2. @core/phases/design-inventory.md の「ワークフロー」セクションの手順に従って設計を実施
+3. docs/06_screen_design/screen_list.md を生成
+4. docs/06_screen_design/screen_transition.md を生成（Mermaid stateDiagram-v2 形式）
+5. docs/project-context.yaml の以下を更新:
+   - `blackboard.decisions.screens`
+   - `blackboard.traceability.fr_to_sc`
+6. workflow-state/task_plan.md の design-inventory ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- 全画面に SC-ID を付与すること（SC-XXX 3桁ゼロパディング形式）
+- SC-900〜999 はシステム画面用に予約されている
+- 認証が必要なプロジェクトでは暗黙的な画面（ログイン、登録、パスワードリセット、エラーページ）を忘れずに追加
+- 画面遷移図は Mermaid stateDiagram-v2 で記述すること
+- FR → SC トレーサビリティに漏れがないこと

@@ -1,0 +1,45 @@
+---
+description: "Blueprint design workflow - design detail phase. Apply when creating or editing screen detail specifications, component catalogs, error patterns, or UI testing strategy."
+globs: "docs/06_screen_design/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Design Detail Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/design-detail.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. workflow-state/task_plan.md を読み、前提フェーズの完了を確認する
+   - design-inventory（Wave A）: complete
+   - api（Wave B）: complete
+   - architecture-detail（Wave B）: complete
+2. docs/06_screen_design/screen_list.md から全 SC-ID を抽出する
+3. docs/05_api_design/api_design.md から API 仕様を読み込む
+4. docs/project-context.yaml から Blackboard データを読み込む
+   - decisions.screens
+   - decisions.api_resources
+   - decisions.architecture.nfr_policies
+5. @core/phases/design-detail.md の「ワークフロー」セクションの手順に従って設計を実施
+6. docs/06_screen_design/component_catalog.md を生成
+7. docs/06_screen_design/error_patterns.md を生成
+8. docs/06_screen_design/details/screen_detail_SC-XXX.md を全 SC-ID 分生成
+9. docs/06_screen_design/ui_testing_strategy.md を生成
+10. docs/project-context.yaml の以下を更新:
+    - `blackboard.traceability.api_to_sc`
+    - `blackboard.decisions.screens`（詳細情報を追加）
+11. workflow-state/task_plan.md の design-detail ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- screen_list.md に定義された全 SC-ID に対して screen_detail を作成すること（モーダル含む）
+- 画面詳細の API 連携セクションで参照する API-ID は api_design.md に存在するものを使うこと
+- エラー表示パターンは architecture-detail の NFR ポリシー（エラー形式）と整合させること
+- 完了条件: `定義済 SC-ID 数 == details/screen_detail_SC-*.md ファイル数`

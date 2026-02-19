@@ -1,0 +1,40 @@
+---
+description: "Blueprint design workflow - implementation standards phase. Apply when creating or editing coding standards, development environment configuration, or deployment process documentation."
+globs: "docs/07_implementation/coding_standards.md,docs/07_implementation/environment.md,docs/03_architecture/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Implementation Standards Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/impl-standards.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. workflow-state/task_plan.md を読み、前提フェーズの完了を確認する
+   - architecture-skeleton: complete
+   - design-detail: complete
+2. docs/03_architecture/architecture.md から技術スタック情報を読み込む
+3. docs/03_architecture/adr.md があれば技術選定理由を参考にする
+4. @core/phases/impl-standards.md の「ワークフロー」セクションの手順に従って設計を実施
+5. docs/07_implementation/coding_standards.md を生成
+   - 技術スタックに応じた命名規則・コードスタイル
+   - Git コミット規約
+   - ディレクトリ構成
+6. docs/07_implementation/environment.md を生成
+   - 各環境定義（local/development/staging/production）
+   - ブランチ戦略
+   - CI/CD パイプライン概要
+7. workflow-state/task_plan.md の impl-standards ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- このフェーズは impl-test, impl-ops と並列実行可能（Wave C）
+- コーディング規約は architecture.md の技術スタックと整合させること
+- 環境設定に全環境（local/development/staging/production）を必ず含めること

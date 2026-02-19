@@ -1,0 +1,37 @@
+---
+description: "Blueprint design document workflow - shared conventions and rules"
+alwaysApply: true
+---
+# Blueprint ワークフロー共通規約
+
+## ID 採番規約
+
+詳細は @core/id-system.md を参照。
+
+| プレフィックス | 用途 | 形式 | 例 |
+|---------------|------|------|-----|
+| FR | 機能要件 | FR-XXX | FR-001 |
+| NFR | 非機能要件 | NFR-{CAT}-XXX | NFR-PERF-001 |
+| SC | 画面 | SC-XXX | SC-001 |
+| API | API | API-XXX | API-001 |
+| ENT | エンティティ | ENT-{PascalCase} | ENT-User |
+| ADR | 設計決定 | ADR-XXXX | ADR-0001 |
+
+## 出力ディレクトリ
+
+設計ドキュメントは `docs/` 配下に生成する。
+詳細は @core/output-structure.md を参照。
+
+## Blackboard
+
+`docs/project-context.yaml` がプロジェクトの共有状態管理ファイル。
+スキーマは @core/blackboard-schema.yaml を参照。
+
+## レビュー基準
+
+P0/P1/P2 の重大度分類と Gate 判定基準は @core/review-criteria.md を参照。
+
+## トレーサビリティ
+
+全ての要件 (FR/NFR) は設計成果物にマッピングされること。
+ルールは @core/traceability.md を参照。

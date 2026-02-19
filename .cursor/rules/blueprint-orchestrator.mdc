@@ -1,0 +1,88 @@
+---
+description: "Blueprint design document orchestrator. Apply when the user asks to create design documents, run the full design workflow, or orchestrate design phases. Manages the multi-phase design document generation workflow."
+alwaysApply: false
+---
+# Blueprint Design Doc Orchestrator (Cursor)
+
+## 概要
+
+設計ドキュメント一式を生成するマルチフェーズワークフロー。
+DAG 定義は @core/dag.md を参照。
+
+## フェーズ実行順序
+
+```
+Phase 1-2: 要件定義（docs/requirements/）
+    ↓
+技術スタック承認（ユーザー対話）
+    ↓
+Wave A（順次実行、相互依存なし）:
+  - architecture-skeleton → docs/03_architecture/
+  - database             → docs/04_data_structure/
+  - design-inventory     → docs/06_screen_design/
+    ↓
+project-context.yaml 統合（Wave A の結果をマージ）
+    ↓
+Wave B（順次実行）:
+  - api                  → docs/05_api_design/
+  - architecture-detail  → docs/03_architecture/ 追記
+    ↓
+project-context.yaml 統合（Wave B の結果をマージ）
+    ↓
+design-detail → docs/06_screen_design/ 追記
+    ↓
+Wave C（順次実行）:
+  - impl-standards → docs/07_implementation/
+  - impl-test      → docs/07_implementation/
+  - impl-ops       → docs/07_implementation/
+    ↓
+review → docs/08_review/（Gate 判定）
+```
+
+## 進捗管理
+
+`workflow-state/task_plan.md` でフェーズの進捗を追跡する。
+
+### task_plan.md フォーマット
+
+```markdown
+# Blueprint Design Workflow
+
+## Phases
+
+### Phase 1-2: Web Requirements
+**Status:** pending | in_progress | complete
+**Output:** docs/requirements/
+
+### Phase 3a: Architecture Skeleton
+**Status:** pending | in_progress | complete
+**Output:** docs/03_architecture/architecture.md, adr.md
+
+### Phase 4: Database
+**Status:** pending | in_progress | complete
+**Output:** docs/04_data_structure/data_structure.md
+
+...（各フェーズ）
+```
+
+## 実行ルール
+
+1. 各フェーズ開始前に、そのフェーズの `@.cursor/rules/phase-*.mdc` を確認する
+2. フェーズ完了後は必ず `project-context.yaml` を更新する
+3. Wave 統合ポイント（Wave A 完了後、Wave B 完了後）では、全 contract_outputs が project-context.yaml に反映されていることを確認する
+4. レビューフェーズでは @core/review-criteria.md の Gate 判定基準に従う
+
+## 技術スタック承認
+
+Phase 1-2 完了後、Wave A 開始前にユーザーに以下を質問する:
+
+| カテゴリ | 質問 | 回答例 |
+|---------|------|--------|
+| フロントエンド | 使用するフレームワークは？ | React, Next.js, Vue.js, おまかせ |
+| バックエンド | 使用する言語/フレームワークは？ | Node.js, Python/FastAPI, Go, おまかせ |
+| データベース | 使用する DB は？ | PostgreSQL, MySQL, MongoDB, おまかせ |
+| ORM | 使用する ORM は？ | Prisma, TypeORM, Drizzle, おまかせ |
+| 認証 | 認証方式は？ | JWT, Session, OAuth2, おまかせ |
+| インフラ | デプロイ先は？ | Vercel, AWS, Docker, おまかせ |
+
+「おまかせ」→ `mode: auto`、具体的な指定 → `mode: specified`

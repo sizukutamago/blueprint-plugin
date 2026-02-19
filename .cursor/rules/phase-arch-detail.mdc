@@ -1,0 +1,41 @@
+---
+description: "Blueprint design workflow - architecture detail phase. Apply when creating or editing security design, infrastructure configuration, or cache strategy documents."
+globs: "docs/03_architecture/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Architecture Detail Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/architecture-detail.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. docs/03_architecture/architecture.md と adr.md を確認（Wave A の出力）
+2. docs/project-context.yaml から以下を確認:
+   - `decisions.architecture`（NFR ポリシー）
+   - `decisions.entities`（データ構造）
+3. @core/phases/architecture-detail.md の「ワークフロー」セクションの手順に従って詳細設計を実施
+4. docs/03_architecture/security.md を生成
+5. docs/03_architecture/infrastructure.md を生成
+6. docs/03_architecture/cache_strategy.md を生成
+7. docs/project-context.yaml の以下を更新:
+   - `blackboard.decisions.architecture.security`
+   - `blackboard.decisions.architecture.cache`
+   - `blackboard.decisions.architecture.infrastructure`
+8. workflow-state/task_plan.md の architecture-detail ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- Wave A の NFR ポリシーは変更不可。詳細化のみ行うこと
+- OWASP Top 10 の脅威は全て対策テーブルに含めること
+- PII 分類は必ずデータ分類テーブルで明示すること
+- RTO/RPO は必ず数値で定義すること
+- キャッシュ戦略はブラウザ/CDN/アプリケーション/DB の全レイヤーで設計すること
+- 構成図は必ず Mermaid 形式で記述すること

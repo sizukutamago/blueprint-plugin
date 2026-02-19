@@ -1,0 +1,52 @@
+---
+description: "Blueprint design workflow - operations design phase. Apply when creating or editing operations runbook, observability design, incident response plan, backup/DR strategy, or migration plan."
+globs: "docs/07_implementation/operations.md,docs/07_implementation/observability_design.md,docs/07_implementation/incident_response.md,docs/07_implementation/backup_restore_dr.md,docs/07_implementation/migration_plan.md,docs/03_architecture/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Operations Design Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/impl-ops.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+特に**条件付き生成ルール**（sla_tier, has_migration）を必ず確認すること。
+
+## Cursor 固有の実行手順
+
+1. workflow-state/task_plan.md を読み、前提フェーズの完了を確認する
+   - architecture-skeleton: complete
+   - architecture-detail: complete
+2. docs/03_architecture/ から設計書を読み込む
+   - architecture.md（技術スタック・アーキテクチャ）
+   - infrastructure.md（インフラ設計）
+   - security.md（セキュリティ設計）
+3. docs/project-context.yaml から以下を取得
+   - project.profile.sla_tier（条件付き生成の判定）
+   - project.profile.has_migration（条件付き生成の判定）
+   - NFR ポリシー
+4. 条件付き生成の判定を行う
+   - sla_tier == "basic" → backup_restore_dr.md をスキップ
+   - has_migration == false → migration_plan.md をスキップ
+   - profile 未設定 → 全ファイル生成（デフォルト）
+5. @core/phases/impl-ops.md の「ワークフロー」セクションの手順に従って設計を実施
+6. 必須ファイルを生成
+   - docs/07_implementation/operations.md
+   - docs/07_implementation/observability_design.md
+   - docs/07_implementation/incident_response.md
+7. 条件付きファイルを生成（判定結果に基づく）
+   - docs/07_implementation/backup_restore_dr.md（sla_tier != basic の場合）
+   - docs/07_implementation/migration_plan.md（has_migration == true の場合）
+8. workflow-state/task_plan.md の impl-ops ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- このフェーズは impl-standards, impl-test と並列実行可能（Wave C）
+- SLI/SLO 定義は architecture.md の NFR ポリシーと整合させること
+- インシデント対応にはエスカレーションパスを必ず含めること
+- 条件付きファイルのスキップ時は、task_plan.md に「スキップ理由」をメモすること
+- infrastructure.md が不在の場合は汎用的な運用設計で代替する（WARNING）

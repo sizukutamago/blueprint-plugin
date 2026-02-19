@@ -1,0 +1,38 @@
+---
+description: "Blueprint design workflow - API design phase. Apply when creating or editing API specifications, endpoint definitions, or external integration documents."
+globs: "docs/05_api_design/**,docs/requirements/**,docs/04_data_structure/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# API Design Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/api.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. docs/requirements/user-stories.md を確認（API 抽出元）
+2. docs/04_data_structure/data_structure.md を確認（エンティティ定義）
+3. docs/project-context.yaml から `decisions.entities` を確認
+4. @core/phases/api.md の「ワークフロー」セクションの手順に従って API を設計
+5. docs/05_api_design/api_design.md を生成
+6. 外部連携がある場合は docs/05_api_design/integration.md を生成
+7. docs/project-context.yaml の以下を更新:
+   - `blackboard.decisions.api_resources`
+   - `blackboard.traceability.fr_to_api`
+   - `blackboard.traceability.api_to_ent`
+8. workflow-state/task_plan.md の api ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- API-ID は API-XXX 形式（3桁ゼロパディング）で採番すること
+- エンドポイントは kebab-case、複数形で命名すること
+- エラーレスポンスは RFC 7807 形式に準拠すること
+- 全 FR-ID が最低1つの API にマッピングされていること（トレーサビリティ）
+- エンティティ定義にない型をリクエスト/レスポンスに使用しないこと

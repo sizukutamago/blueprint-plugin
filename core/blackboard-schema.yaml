@@ -1,0 +1,103 @@
+# Blackboard Schema (v3.2)
+# 設計ワークフローの共有状態管理スキーマ
+# 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
+#
+# 書き込みルール:
+#   Claude Code: Aggregator teammate が唯一の書き込み者（単一ライター原則）
+#   Cursor: メインエージェントが各フェーズ完了後に直接更新
+
+# プロジェクト基本情報
+project:
+  name: "{{PROJECT_NAME}}"
+  type: webapp | mobile | api | batch | fullstack
+  description: "{{PROJECT_DESCRIPTION}}"
+  created_at: "{{CREATED_AT}}"
+  updated_at: "{{UPDATED_AT}}"
+  mode: greenfield | brownfield  # 新規開発 or 既存システム改修
+  constraints:
+    approved_tech_stack:
+      mode: auto | specified       # auto = おまかせ（自律選定）、specified = ユーザー指定あり
+      frontend: ""                 # 例: "React", "Next.js", "Vue.js"
+      backend: ""                  # 例: "Node.js", "Python/FastAPI", "Go"
+      database: ""                 # 例: "PostgreSQL", "MySQL", "MongoDB"
+      orm: ""                      # 例: "Prisma", "TypeORM", "Drizzle"
+      auth: ""                     # 例: "JWT", "Session", "OAuth2"
+      infrastructure: ""           # 例: "Vercel", "AWS", "Docker"
+      other: []                    # 例: ["GraphQL", "Redis"]
+  profile:
+    scale: small | medium | large   # プロジェクト規模（FR数ベース: <10=small, 10-30=medium, >30=large）
+    sla_tier: basic | standard | premium  # SLA レベル
+    has_migration: false             # データ移行の有無
+    compliance: []                   # 規制要件（例: GDPR, SOC2, HIPAA）
+
+# Blackboard: 共有決定事項
+blackboard:
+  version: 1
+  last_updated: null
+  decisions:
+    architecture:
+      tech_stack: []
+      boundaries: []
+      nfr_policies: {}
+    entities: []
+    # - id: ENT-XXX
+    #   name: string
+    #   attributes: []
+    api_resources: []
+    # - id: API-XXX
+    #   path: string
+    #   methods: []
+    screens: []
+    # - id: SC-XXX
+    #   name: string
+    #   components: []
+    nfr_measurability: {}
+    # NFR-ID ごとの測定可能性定義
+    # 例:
+    # NFR-PERF-001:
+    #   target: "API応答時間 p95 < 200ms"
+    #   measurement: "k6 負荷テスト (100同時ユーザー)"
+    #   pass_criteria: "p95 < 200ms かつ p99 < 500ms"
+
+# ID 採番管理（詳細は core/id-system.md 参照）
+id_registry:
+  fr:
+    next: 1
+    allocated: []
+  nfr:
+    next: 1
+    allocated: []
+  sc:
+    next: 1
+    allocated: []
+  api:
+    next: 1
+    allocated: []
+  ent:
+    allocated: []
+  adr:
+    next: 1
+    allocated: []
+
+# トレーサビリティマップ（詳細は core/traceability.md 参照）
+traceability:
+  fr_to_sc: {}
+  fr_to_api: {}
+  fr_to_ent: {}
+  api_to_ent: {}
+  api_to_sc: {}
+  fr_to_test: {}
+  nfr_to_test: {}
+
+# 用語集
+glossary: []
+
+# メタデータ
+metadata:
+  version: "4.0.0"
+  schema_version: "4.0"
+  # 変更履歴
+  # v4.0.0: core/ 分離、Cursor 対応、platform 非依存スキーマ
+  # v3.2.0: project.constraints.approved_tech_stack 追加
+  # v3.0.0: agent-teams 全面移行
+  # v2.0.0: Wave 並列化、Blackboard 統合

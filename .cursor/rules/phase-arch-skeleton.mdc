@@ -1,0 +1,38 @@
+---
+description: "Blueprint design workflow - architecture skeleton phase. Apply when creating or editing system architecture documentation, technology stack decisions, or ADR records."
+globs: "docs/03_architecture/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
+---
+# Architecture Skeleton Phase (Cursor)
+
+## 仕様参照
+
+まず @core/phases/architecture-skeleton.md を読み込み、内容を完全に理解してください。
+入力要件、出力ファイル、必須セクション、品質基準は全てこの仕様に従うこと。
+
+## Cursor 固有の実行手順
+
+1. docs/requirements/ の内容を確認（user-stories.md, context_unified.md）
+2. ユーザーに技術スタックの確認を行う（未決定の場合は質問する）
+   - フロントエンド、バックエンド、DB、ORM、認証、インフラの各カテゴリ
+   - 「おまかせ」の場合は要件に基づいて自律選定
+3. @core/phases/architecture-skeleton.md の「ワークフロー」セクションの手順に従って設計を実施
+4. docs/03_architecture/architecture.md を生成
+5. docs/03_architecture/adr.md を生成
+6. docs/project-context.yaml の以下を更新:
+   - `blackboard.decisions.architecture.tech_stack`
+   - `blackboard.decisions.architecture.boundaries`
+   - `blackboard.decisions.architecture.nfr_policies`
+   - `blackboard.decisions.nfr_measurability`
+7. workflow-state/task_plan.md の architecture-skeleton ステータスを `complete` に更新
+
+## 状態管理
+
+タスク開始前に必ず `workflow-state/task_plan.md` を読み、現在の進捗を確認すること。
+タスク完了後は必ず `task_plan.md` のステータスを更新すること。
+
+## 注意事項
+
+- NFR は必ず target / measurement / pass_criteria の3項目を定義すること
+- ADR は ADR-0001 形式で採番すること
+- ユーザー指定技術（mode: specified）は変更不可。互換性問題がある場合はユーザーに確認
