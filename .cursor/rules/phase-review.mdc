@@ -1,6 +1,6 @@
 ---
 description: "Blueprint design workflow - review phase. Apply when reviewing design documents, checking consistency, or running Gate judgment."
-globs: "docs/08_review/**,docs/**,workflow-state/task_plan.md"
+globs: "docs/08_review/**,workflow-state/task_plan.md"
 alwaysApply: false
 ---
 # Review Phase (Cursor)

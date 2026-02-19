@@ -58,19 +58,6 @@ Wave C と Seq では統合ステップは不要（先行成果物を直接参�
    - `traceability.*` → トップレベルに配置
    - `id_registry.*` → トップレベルに配置
 
-## コンテキスト圧縮戦略
-
-各 Wave 開始時に、先行成果物をコンテキストとして渡す。
-トークン効率のため、Wave ごとに異なる圧縮戦略を使用する。
-
-| Wave | 入力コンテキスト | 圧縮手法 | 目標サイズ |
-|------|----------------|---------|-----------|
-| A | docs/requirements/ + approved_tech_stack | Chain of Density | ~10k tokens |
-| B | docs/requirements/ + project-context.yaml | Entity Signature Only | ~15k tokens |
-| post-B | project-context.yaml + 出力ファイル参照 | Decision Summary | ~10k tokens |
-| C | project-context.yaml + 先行成果物 | Decision Summary | ~10k tokens |
-| Seq | project-context.yaml 全体 | Decision Summary | ~10k tokens |
-
 ## 条件付きタスク
 
 `project.profile` に基づき、一部タスクの出力が変わる:

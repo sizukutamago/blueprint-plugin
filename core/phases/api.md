@@ -17,7 +17,7 @@ outputs:
   - path: docs/05_api_design/api_design.md
     required: true
   - path: docs/05_api_design/integration.md
-    required: false   # 外部連携がある場合のみ
+    required: true    # 外部連携がない場合も「連携なし」を明記
 
 contract_outputs:
   - key: decisions.api_resources

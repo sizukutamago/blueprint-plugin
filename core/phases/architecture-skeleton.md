@@ -36,7 +36,7 @@ contract_outputs:
     description: "NFR-ID ごとの target/measurement/pass_criteria"
 
 quality_gates:
-  - "全 FR-ID が最低1つのコンポーネントにマッピングされていること"
+  - "全 FR-ID が最低1つのシステム境界またはレイヤーにマッピングされていること"
   - "NFR は target/measurement/pass_criteria の3項目が定義されていること"
   - "mode: specified の場合、ユーザー指定技術が全て設計に反映されていること"
 ```

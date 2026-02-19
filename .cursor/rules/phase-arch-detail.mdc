@@ -1,6 +1,6 @@
 ---
 description: "Blueprint design workflow - architecture detail phase. Apply when creating or editing security design, infrastructure configuration, or cache strategy documents."
-globs: "docs/03_architecture/**,docs/requirements/**,workflow-state/task_plan.md"
+globs: "docs/03_architecture/security.md,docs/03_architecture/infrastructure.md,docs/03_architecture/cache_strategy.md,docs/requirements/**,workflow-state/task_plan.md"
 alwaysApply: false
 ---
 # Architecture Detail Phase (Cursor)
@@ -14,8 +14,8 @@ alwaysApply: false
 
 1. docs/03_architecture/architecture.md と adr.md を確認（Wave A の出力）
 2. docs/project-context.yaml から以下を確認:
-   - `decisions.architecture`（NFR ポリシー）
-   - `decisions.entities`（データ構造）
+   - `blackboard.decisions.architecture`（NFR ポリシー）
+   - `blackboard.decisions.entities`（データ構造）
 3. @core/phases/architecture-detail.md の「ワークフロー」セクションの手順に従って詳細設計を実施
 4. docs/03_architecture/security.md を生成
 5. docs/03_architecture/infrastructure.md を生成

@@ -1,6 +1,6 @@
 ---
 description: "Blueprint design workflow - architecture skeleton phase. Apply when creating or editing system architecture documentation, technology stack decisions, or ADR records."
-globs: "docs/03_architecture/**,docs/requirements/**,workflow-state/task_plan.md"
+globs: "docs/03_architecture/architecture.md,docs/03_architecture/adr.md,docs/requirements/**,workflow-state/task_plan.md"
 alwaysApply: false
 ---
 # Architecture Skeleton Phase (Cursor)

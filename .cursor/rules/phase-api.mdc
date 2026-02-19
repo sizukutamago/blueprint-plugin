@@ -14,7 +14,7 @@ alwaysApply: false
 
 1. docs/requirements/user-stories.md を確認（API 抽出元）
 2. docs/04_data_structure/data_structure.md を確認（エンティティ定義）
-3. docs/project-context.yaml から `decisions.entities` を確認
+3. docs/project-context.yaml から `blackboard.decisions.entities` を確認
 4. @core/phases/api.md の「ワークフロー」セクションの手順に従って API を設計
 5. docs/05_api_design/api_design.md を生成
 6. 外部連携がある場合は docs/05_api_design/integration.md を生成

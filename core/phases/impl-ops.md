@@ -63,7 +63,7 @@ Blackboard の `project.profile` に基づき出力を制御する:
 | profile.sla_tier = basic | backup_restore_dr.md をスキップ |
 | profile.has_migration = false | migration_plan.md をスキップ |
 
-profile が未設定の場合はデフォルト（全ファイル生成）とする。
+**profile 未設定時のデフォルト動作**: `sla_tier: basic`, `has_migration: false` として扱う（backup_restore_dr.md, migration_plan.md はスキップ）。profile の未設定自体を P2 として記録する。
 
 ## ワークフロー
 

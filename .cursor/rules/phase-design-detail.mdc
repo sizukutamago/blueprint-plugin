@@ -19,9 +19,9 @@ alwaysApply: false
 2. docs/06_screen_design/screen_list.md から全 SC-ID を抽出する
 3. docs/05_api_design/api_design.md から API 仕様を読み込む
 4. docs/project-context.yaml から Blackboard データを読み込む
-   - decisions.screens
-   - decisions.api_resources
-   - decisions.architecture.nfr_policies
+   - blackboard.decisions.screens
+   - blackboard.decisions.api_resources
+   - blackboard.decisions.architecture.nfr_policies
 5. @core/phases/design-detail.md の「ワークフロー」セクションの手順に従って設計を実施
 6. docs/06_screen_design/component_catalog.md を生成
 7. docs/06_screen_design/error_patterns.md を生成

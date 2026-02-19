@@ -1,11 +1,10 @@
-# Blackboard Schema (v3.2)
+# Blackboard Schema (v4.0)
 # 設計ワークフローの共有状態管理スキーマ
 # 使用方法: 初回実行時にこのファイルを docs/project-context.yaml にコピー
 #
 # 書き込みルール:
 #   単一ライター原則: 1つのエージェント/プロセスのみが書き込む
-#   Claude Code: 専用の統合エージェントが書き込み
-#   Cursor: メインエージェントが各フェーズ完了後に直接更新
+#   書き込み方法は platform 層（skills/ または .cursor/rules/）で定義
 
 # プロジェクト基本情報
 project:
