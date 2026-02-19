@@ -22,7 +22,7 @@ alwaysApply: false
    - テンプレートは skills/database/references/data_structure.md を参考にする
 5. docs/project-context.yaml の以下を更新:
    - `blackboard.decisions.entities`
-   - `blackboard.traceability.fr_to_ent`
+   - `traceability.fr_to_ent`
 6. workflow-state/task_plan.md の database ステータスを `complete` に更新
 
 ## 状態管理

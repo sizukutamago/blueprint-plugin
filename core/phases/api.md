@@ -51,7 +51,7 @@ quality_gates:
 | ファイル | 説明 |
 |---------|------|
 | docs/05_api_design/api_design.md | API 仕様書 |
-| docs/05_api_design/integration.md | 外部システム連携仕様（該当する場合のみ） |
+| docs/05_api_design/integration.md | 外部システム連携仕様（連携なしの場合も「連携なし」を明記） |
 
 ### api_design.md 必須セクション
 
@@ -63,7 +63,7 @@ quality_gates:
 6. 共通仕様（日時形式、ページネーション、レート制限）
 7. エラーコード一覧
 
-### integration.md 必須セクション（該当する場合のみ）
+### integration.md 必須セクション
 
 1. 連携システム一覧
 2. 連携方式（同期API、非同期、Webhook、バッチ）
@@ -82,7 +82,7 @@ quality_gates:
 7. エンドポイント・メソッドを決定
 8. 認証・認可要件を定義
 9. エラーレスポンスを RFC 7807 形式で設計
-10. 外部連携がある場合は integration.md を生成
+10. integration.md を生成（外部連携がない場合は「連携なし」を明記）
 11. トレーサビリティ（FR→API、API→ENT）を作成
 12. contract_outputs を出力
 ```

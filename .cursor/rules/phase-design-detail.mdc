@@ -28,7 +28,7 @@ alwaysApply: false
 8. docs/06_screen_design/details/screen_detail_SC-XXX.md を全 SC-ID 分生成
 9. docs/06_screen_design/ui_testing_strategy.md を生成
 10. docs/project-context.yaml の以下を更新:
-    - `blackboard.traceability.api_to_sc`
+    - `traceability.api_to_sc`
     - `blackboard.decisions.screens`（詳細情報を追加）
 11. workflow-state/task_plan.md の design-detail ステータスを `complete` に更新
 

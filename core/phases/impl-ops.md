@@ -101,4 +101,4 @@ Blackboard の `project.profile` に基づき出力を制御する:
 | エラー | 対応 |
 |--------|------|
 | infrastructure.md 不在 | WARNING: 汎用的な運用設計で代替 |
-| project.profile 未設定 | 全ファイルをデフォルト生成（条件付きスキップなし） |
+| project.profile 未設定 | sla_tier: basic, has_migration: false として扱い条件付きファイルはスキップ。P2 として記録 |

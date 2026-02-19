@@ -17,7 +17,7 @@ core_ref: core/phases/impl-test.md
 ## Claude Code 固有: 実行コンテキスト
 
 - **実行タイミング**: Wave C（impl-standards, impl-ops と並列）
-- **前提スキル**: architecture, database, api, design-detail
+- **前提スキル**: architecture-skeleton, database, api, design-detail
 - **並列スキル**: impl-standards, impl-ops（Wave C）
 - **後続スキル**: review
 

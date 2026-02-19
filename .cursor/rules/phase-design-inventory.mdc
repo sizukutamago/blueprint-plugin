@@ -18,7 +18,7 @@ alwaysApply: false
 4. docs/06_screen_design/screen_transition.md を生成（Mermaid stateDiagram-v2 形式）
 5. docs/project-context.yaml の以下を更新:
    - `blackboard.decisions.screens`
-   - `blackboard.traceability.fr_to_sc`
+   - `traceability.fr_to_sc`
 6. workflow-state/task_plan.md の design-inventory ステータスを `complete` に更新
 
 ## 状態管理
