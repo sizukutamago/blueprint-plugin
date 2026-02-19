@@ -1,77 +1,103 @@
 # blueprint-plugin
 
-Claude Code プラグインとして、日本語開発者向けの **agent-teams ネイティブ** 設計ドキュメントワークフローを提供するリポジトリ。
+日本語開発者向けの **クロスプラットフォーム対応** 設計ドキュメントワークフロープラグイン。
+**Claude Code** と **Cursor** の両方で動作する。
 
-**v3.2 の主な変更点（技術スタックユーザー承認）:**
-- 要件承認後・Wave A 開始前に技術スタックのユーザー承認ステップを追加（★必須★）
-- `project.constraints.approved_tech_stack` フィールド追加（ユーザー制約と設計結果を分離管理）
-- arch-skeleton: 自律選定 → ユーザー制約ベース選定に変更（mode: auto/specified）
-- database スポーンプロンプトにもユーザー指定 DB/ORM を伝達
-- `{{USER_APPROVED_TECH_STACK}}` プレースホルダーと置換契約を定義
-- Reviewer Level 2 に技術スタック整合性チェック追加（P1 指摘）
-- 技術スタック質問テンプレートを team-mode.md に追加
+## v4.0 の主な変更点（クロスプラットフォーム対応）
 
-**v3.1 の主な変更点（IPA標準準拠強化）:**
-- Phase 7 を3分割して Wave C 並列化（impl-standards / impl-test / impl-ops）
-- DAG を 11 → 13 タスクに拡張
-- テスト設計（テスト戦略/計画/NFRテスト/トレーサビリティ）を独立スキル化
-- 運用設計（可観測性/インシデント対応/バックアップ・DR/移行計画）を独立スキル化
-- NFR測定可能性（target + measurement + pass_criteria）を arch-skeleton に追加
-- DB 物理設計（インデックス/制約/容量/暗号化）を database スキルに追加
-- データガバナンス（PII分類/保持期限/マスキング）を architecture-detail に追加
-- Phase 8 に Level 5 運用準備チェック追加
-- 条件付き生成（project.profile による出力制御）
-- Blackboard v3.1（profile, nfr_measurability, fr_to_test, nfr_to_test 追加）
+- **core/ 分離**: 全フェーズの仕様を platform 非依存の `core/` に抽出（Single Source of Truth）
+- **Contract YAML**: 各フェーズ仕様に機械可読な `## Contract (YAML)` セクション追加
+- **Cursor .mdc 対応**: `.cursor/rules/` に 12 ルールファイル（10 phase + orchestrator + always）
+- **SKILL.md 薄ラッパー化**: 既存 SKILL.md を core 参照 + Claude Code 固有部分のみに削減（-74%）
+- **仕様依存 vs 実行依存の分離**: `core/phases/` に仕様依存、`core/dag.md` に実行依存
+- **Blackboard schema v4.0**: platform 非依存スキーマ（書き込みルールを platform 層に委譲）
 
-**v3.0 の主な変更点（agent-teams 全面移行）:**
-- agent-teams による真の並列実行（TeammateTool + TaskList DAG）
-- project-context.yaml を大幅簡素化（phases/wave_status/contracts を TaskList に移管）
-- handoff-envelope.yaml を非推奨化（SendMessage で代替）
-- Aggregator teammate による Blackboard 単一ライター原則
-- JIT spawn パターン（Wave 間 shutdown でトークン節約）
-- スポーンプロンプトテンプレート（`references/spawn-prompts/`）
-- チームモード実行プロトコル（`references/team-mode.md`）
+**v3.2 の変更点（引き続き有効）:**
+- 技術スタックユーザー承認ステップ、`approved_tech_stack` フィールド
+- Reviewer Level 2 に技術スタック整合性チェック追加
 
-**v2.0 の変更点（引き続き有効）:**
-- Phase 1-2 を `web-requirements` スキル（外部プラグイン）で置換
-- Wave A/B 並列実行で処理時間を短縮
-- P0/P1/P2 Gate 判定による差し戻しロジック
+**v3.0-3.1 の変更点（引き続き有効）:**
+- agent-teams による並列実行（Claude Code 固有）
+- IPA 標準準拠、NFR 測定可能性、Wave C 並列化
 
 ## プロジェクト構造
 
 ```
 blueprint-plugin/
-├── .claude-plugin/          # プラグインメタデータ
-├── agents/                  # エージェント定義（6種）
-├── commands/                # コマンド定義（1種）
-├── skills/                  # スキル実装
-│   ├── architecture/        # Phase 3: アーキテクチャ（旧、互換用）
-│   ├── architecture-skeleton/ # Phase 3a: Arch Skeleton (Wave A)
-│   ├── architecture-detail/   # Phase 3b: Arch Detail (post-B)
-│   ├── database/            # Phase 4: データ構造 (Wave A)
-│   ├── api/                 # Phase 5: API仕様 (Wave B)
-│   ├── design/              # Phase 6: 画面設計（旧、互換用）
-│   ├── design-inventory/    # Phase 6a: 画面棚卸し (Wave A)
-│   ├── design-detail/       # Phase 6b: 画面詳細 (post-B)
-│   ├── implementation/      # Phase 7a: 実装標準 (Wave C: impl-standards)
-│   ├── impl-test/           # Phase 7b: テスト設計 (Wave C: impl-test) ★v3.1新規
-│   ├── impl-ops/            # Phase 7c: 運用設計 (Wave C: impl-ops) ★v3.1新規
-│   ├── design-doc-reviewer/ # Phase 8: レビュー (Gate判定、Level 5 運用準備)
-│   ├── design-doc-orchestrator/ # 全フェーズオーケストレーション（agent-teams 対応）
+├── core/                        # ★ 統一仕様層（Platform 非依存、Single Source of Truth）
+│   ├── phases/                  #   各フェーズの仕様（Contract YAML 付き）
+│   │   ├── architecture-skeleton.md
+│   │   ├── database.md
+│   │   ├── design-inventory.md
+│   │   ├── api.md
+│   │   ├── architecture-detail.md
+│   │   ├── design-detail.md
+│   │   ├── impl-standards.md
+│   │   ├── impl-test.md
+│   │   ├── impl-ops.md
+│   │   └── review.md
+│   ├── blackboard-schema.yaml   #   project-context.yaml スキーマ
+│   ├── dag.md                   #   Wave 構成と依存関係
+│   ├── id-system.md             #   ID 採番規約
+│   ├── review-criteria.md       #   5段階レビュー + Gate 判定
+│   ├── output-structure.md      #   docs/ ディレクトリ構造
+│   └── traceability.md          #   トレーサビリティルール
+│
+├── .cursor/rules/               # ★ Cursor 用ラッパー（.mdc ルール）
+│   ├── blueprint-always.mdc     #   共通規約（alwaysApply: true）
+│   ├── blueprint-orchestrator.mdc #  全体制御（Agent-Requested）
+│   └── phase-*.mdc              #   各フェーズ（Auto-Attach via globs）
+│
+├── .claude-plugin/              # Claude Code プラグインメタデータ
+├── agents/                      # Claude Code エージェント定義（6種）
+├── commands/                    # Claude Code コマンド定義（1種）
+├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
+│   ├── architecture-skeleton/   #   Phase 3a: core_ref + SendMessage
+│   ├── database/                #   Phase 4: core_ref + SendMessage
+│   ├── design-inventory/        #   Phase 6a: core_ref + SendMessage
+│   ├── api/                     #   Phase 5: core_ref + SendMessage
+│   ├── architecture-detail/     #   Phase 3b: core_ref + SendMessage
+│   ├── design-detail/           #   Phase 6b: core_ref + SendMessage
+│   ├── implementation/          #   Phase 7a: core_ref + SendMessage
+│   ├── impl-test/               #   Phase 7b: core_ref + SendMessage
+│   ├── impl-ops/                #   Phase 7c: core_ref + SendMessage
+│   ├── design-doc-reviewer/     #   Phase 8: core_ref + Gate SendMessage
+│   ├── design-doc-orchestrator/ #   オーケストレーション（agent-teams 固有）
 │   │   └── references/
-│   │       ├── team-mode.md       # チームモード実行プロトコル
-│   │       └── spawn-prompts/     # 11 teammate スポーンプロンプト
-│   ├── wave-aggregator/     # Wave 統合・Blackboard 更新
-│   ├── context-compressor/  # コンテキスト圧縮
-│   ├── gap-analysis/        # 既存システム分析
-│   ├── research/            # 技術調査
-│   └── shared/              # 共有テンプレート
-│       └── references/
-│           ├── project-context.yaml  # Blackboard（簡素化、Aggregator のみ書き込み）
-│           └── handoff-envelope.yaml # 非推奨（SendMessage で代替）
-├── plans/                   # 計画ファイル
-└── docs/                    # マイグレーションガイド等
+│   │       ├── team-mode.md
+│   │       └── spawn-prompts/
+│   ├── wave-aggregator/         #   Wave 統合（Claude Code 固有）
+│   ├── context-compressor/      #   コンテキスト圧縮
+│   ├── gap-analysis/            #   既存システム分析
+│   ├── research/                #   技術調査
+│   ├── architecture/            #   旧、互換用
+│   ├── design/                  #   旧、互換用
+│   └── shared/references/
+│       └── project-context.yaml #   旧 Blackboard（core/ に移管済み）
+├── plans/
+└── docs/
 ```
+
+## 三層アーキテクチャ
+
+```
+┌─────────────────────────────────────────┐
+│  core/  — 統一仕様層（保守の中心）       │
+│  phases/*.md + 共通ドキュメント          │
+│  Platform 非依存、変更頻度: 高           │
+└────────────┬───────────────┬────────────┘
+             │               │
+   ┌─────────▼──────┐ ┌─────▼──────────┐
+   │ skills/SKILL.md │ │ .cursor/rules/ │
+   │ Claude Code 用  │ │ Cursor 用      │
+   │ 薄いラッパー    │ │ 薄いラッパー   │
+   │ 変更頻度: 低    │ │ 変更頻度: 低   │
+   └────────────────┘ └────────────────┘
+```
+
+**仕様変更時**: `core/` のみ変更 → 両 platform に自動反映
+**Claude Code API 変更時**: `skills/*/SKILL.md` のみ変更
+**Cursor 仕様変更時**: `.cursor/rules/*.mdc` のみ変更
 
 ## 外部依存
 
@@ -83,67 +109,76 @@ blueprint-plugin/
 
 ### 言語ポリシー
 
-- **frontmatter description**: 英語（Claude のトリガー検出用）
+- **frontmatter description**: 英語（Claude/Cursor のトリガー検出用）
 - **本文**: 日本語（開発者向け）
 - **コード例**: コンテキストに応じて混在可
 
 ### ファイル構造
 
-**スキル（SKILL.md）:**
+**core/phases/*.md（仕様本体）:**
+
+```markdown
+# Phase: [フェーズ名]
+
+[概要]
+
+## Contract (YAML)
+ ```yaml
+phase_id: "X"
+required_artifacts: [...]
+outputs: [...]
+contract_outputs: [...]
+quality_gates: [...]
+ ```
+
+## 入力要件
+## 出力ファイル
+## ワークフロー（platform 非依存）
+## 仕様詳細
+## エラーハンドリング（platform 中立）
+```
+
+**skills/*/SKILL.md（Claude Code ラッパー）:**
 
 ```markdown
 ---
 name: skill-name
-description: English description for Claude's trigger detection
-version: X.Y.Z
+description: English description
+version: 2.0.0
+core_ref: core/phases/xxx.md
 ---
-
-# スキル名（日本語）
-
-## 前提条件
-## 出力ファイル
-## 依存関係
-## ワークフロー
-## ツール使用ルール
-## エラーハンドリング
+# スキル名 (Claude Code)
+## 仕様参照（core を参照）
+## Claude Code 固有: 実行コンテキスト
+## Claude Code 固有: SendMessage 完了報告
 ```
 
-**エージェント:**
+**.cursor/rules/phase-*.mdc（Cursor ラッパー）:**
 
-```markdown
+```yaml
 ---
-name: agent-name
-description: English trigger description
-model: inherit
-color: blue
-tools: [list]
+description: "Blueprint - [phase]. Apply when [context]."
+globs: "[output_dir]/**,docs/requirements/**,workflow-state/task_plan.md"
+alwaysApply: false
 ---
-
-## Core Responsibilities
-## Process Description
-## Output Format
+# [Phase] (Cursor)
+## 仕様参照（@core/phases/*.md を読み込み指示）
+## Cursor 固有の実行手順
+## 状態管理（task_plan.md）
 ```
 
 ### ID体系
+
+詳細は `core/id-system.md` を参照。
 
 | プレフィックス | 用途 | 例 |
 |---------------|------|-----|
 | FR | 機能要件 | FR-001 |
 | NFR | 非機能要件 | NFR-PERF-001 |
-| SC | 成功基準 | SC-001 |
+| SC | 画面 | SC-001 |
 | API | API仕様 | API-001 |
 | ENT | エンティティ | ENT-User |
 | ADR | 設計決定記録 | ADR-0001 |
-
-**NFRカテゴリ:**
-- PERF: パフォーマンス
-- SEC: セキュリティ
-- AVL: 可用性
-- SCL: スケーラビリティ
-- MNT: 保守性
-- OPR: 運用
-- CMP: 互換性
-- ACC: アクセシビリティ
 
 ## コマンド
 
@@ -161,34 +196,29 @@ claude --plugin-dir /path/to/blueprint-plugin
 ./scripts/plugin-update.sh
 ```
 
-### スキル呼び出し
+### スキル呼び出し（Claude Code）
 
 ```bash
 # 全フェーズ実行（推奨、agent-teams モード）
-/design-docs      # agent-teams による 2-wave 並列実行
+/design-docs      # agent-teams による 3-wave 並列実行
 
 # 個別フェーズ（上級者向け）
-/architecture     # Phase 3: アーキテクチャ設計
-/database         # Phase 4: データ構造設計
-/api              # Phase 5: API仕様作成
-/design           # Phase 6: 画面設計
-/implementation   # Phase 7: 実装準備
-/review           # Phase 8: レビュー（Gate判定）
-
-# 非推奨（web-requirements に置換）
-# /hearing        # → web-requirements を使用
-# /requirements   # → web-requirements を使用
+/architecture-skeleton  # Phase 3a
+/database               # Phase 4
+/api                    # Phase 5
+/design                 # Phase 6
+/implementation         # Phase 7
+/review                 # Phase 8: Gate判定
 ```
 
-## agent-teams アーキテクチャ（v3.1）
+### Cursor での使用
 
-### 3 概念アーキテクチャ
+1. プロジェクトルートに `.cursor/rules/` が自動適用される
+2. 「設計ドキュメントを作成して」等のプロンプトで `blueprint-orchestrator.mdc` が発火
+3. 各フェーズは出力ディレクトリの `globs` パターンで Auto-Attach
+4. `workflow-state/task_plan.md` でフェーズ進捗を追跡
 
-| 概念 | 用途 |
-|------|------|
-| `docs/` | 成果物ファイル（各 teammate が書き込み） |
-| `TaskList` | 実行 DAG（blockedBy で依存関係管理） |
-| `SendMessage` | イベント（contract_outputs YAML で構造化ハンドオフ） |
+## Claude Code: agent-teams アーキテクチャ
 
 ### チーム構成
 
@@ -198,77 +228,49 @@ Lead Agent（delegate mode）
 ├─ Wave A: arch-skeleton, database, design-inventory（並列）
 ├─ Wave B: api, arch-detail（並列）
 ├─ Post-B: design-detail
-├─ Wave C: impl-standards, impl-test, impl-ops（並列、Aggregator不要）
-└─ Seq: reviewer → Gate 判定（Level 5 運用準備チェック含む）
+├─ Wave C: impl-standards, impl-test, impl-ops（並列）
+└─ Seq: reviewer → Gate 判定
 ```
 
 ### 単一ライター原則
 
-project-context.yaml への書き込みは **Aggregator のみ**。
-各 teammate は `contract_outputs` を SendMessage で Lead に送信し、
-Lead が Aggregator に転送して統合する。
-
-### 参照ファイル
-
-| ファイル | 説明 |
-|---------|------|
-| `skills/design-doc-orchestrator/references/team-mode.md` | 実行プロトコル詳細 |
-| `skills/design-doc-orchestrator/references/spawn-prompts/` | 11 teammate のプロンプト |
-| `skills/shared/references/project-context.yaml` | 簡素化 Blackboard スキーマ |
+- **Claude Code**: Aggregator teammate のみが project-context.yaml に書き込み
+- **Cursor**: メインエージェントが各フェーズ完了後に直接更新
 
 ## 出力規約
 
-設計ドキュメントは `docs/` 配下に生成:
-
-```
-docs/
-├── project-context.yaml    # Blackboard（decisions + traceability、Aggregator のみ書き込み）
-├── 00_analysis/           # 既存システム分析（brownfield）
-├── requirements/          # ← 新: web-requirements 出力
-│   ├── user-stories.md    # Gherkin 形式
-│   ├── context_unified.md # プロジェクトコンテキスト
-│   └── story_map.md       # Epic/Feature/Story 階層
-├── 03_architecture/       # アーキテクチャ設計
-├── 04_data_structure/     # データ構造定義
-├── 05_api_design/         # API仕様書
-├── 06_screen_design/      # 画面設計書
-├── 07_implementation/     # Wave C: 実装標準 + テスト設計 + 運用設計
-└── 08_review/             # レビュー結果（Level 5 運用準備チェック含む）
-
-# 非推奨（旧形式）
-# 01_hearing/              # → requirements/ に移行
-# 02_requirements/         # → requirements/ に移行
-```
+詳細は `core/output-structure.md` を参照。設計ドキュメントは `docs/` 配下に生成。
 
 ## 変更時の注意
 
-### スキル編集時
+### core/ 編集時（最も頻繁）
 
-1. `SKILL.md` の frontmatter description は英語で記述
-2. バージョン番号を適切に更新（セマンティックバージョニング）
-3. `references/` 配下のテンプレートとの整合性を確認
-4. 依存する他スキルへの影響を考慮
+1. `core/phases/*.md` の Contract YAML を正確に維持
+2. core に **Claude Code 固有用語を含めない**（SendMessage, agent-teams, spawn, Aggregator 等）
+3. ワークフローの最後は「contract_outputs を出力」（transport は書かない）
+4. エラーハンドリングは platform 中立（「P0 報告」「入力要請」）
 
-### エージェント編集時
+### SKILL.md 編集時（Claude Code API 変更時のみ）
 
-1. `tools` リストは実際に使用可能なツールのみ記載
-2. `color` は他エージェントと重複しないよう設定
-3. `model: inherit` を基本とし、特別な理由がある場合のみ変更
+1. frontmatter の `core_ref` が正しい core ファイルを参照していること
+2. 仕様は core に委譲し、Claude Code 固有部分のみ残す
+3. SendMessage フォーマットの変更は SKILL.md 側で対応
 
-### テンプレート編集時
+### .cursor/rules/*.mdc 編集時（Cursor 仕様変更時のみ）
 
-1. プレースホルダーは `{{placeholder}}` 形式
-2. 日本語コメントで用途を明記
-3. 実際の出力例を `references/` に配置
+1. `@core/phases/*.md` の参照パスが正しいこと
+2. `globs` パターンが出力ディレクトリ + 入力ディレクトリをカバー
+3. `workflow-state/task_plan.md` への読み書き指示を含む
 
 ## 品質基準
 
 - 曖昧な表現（「など」「適切に」）は具体化するか補足説明を追加
 - 用語は `glossary.md` で定義し一貫性を保つ
-- 各フェーズの依存関係を明確に定義
+- 各フェーズの依存関係は `core/dag.md` で明確に定義
 
 ## 技術スタック
 
-- **コア**: Claude Code プラグインシステム
-- **並列実行**: Claude Code agent-teams（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`）
+- **コア**: Claude Code プラグインシステム + Cursor Rules (.mdc)
+- **並列実行**: Claude Code agent-teams / Cursor 2.0 並列 Agent
 - **ドキュメント参照**: Context7 MCP
+- **仕様管理**: core/ (Single Source of Truth)
