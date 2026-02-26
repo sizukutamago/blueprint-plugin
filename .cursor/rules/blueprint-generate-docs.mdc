@@ -1,0 +1,50 @@
+---
+description: "Blueprint v5 - Generate Docs. Apply when generating design documents from code, reverse engineering architecture, or working with docs/ directory."
+globs: "docs/03_architecture/**,docs/04_data_structure/**,docs/05_api_design/**,docs/06_screen_design/**,docs/07_implementation/**,docs/08_review/**"
+alwaysApply: false
+---
+
+# Generate Docs ワークフロー (Cursor)
+
+## 仕様参照
+
+以下の仕様ファイルを必ず読み込むこと:
+
+- `@core/v5/generate-docs.md` — ワークフロー定義（5 ステップ）
+- `@core/v5/output-structure-v5.md` — 出力構造仕様
+- `@core/v5/knowledge-structure.md` — .knowledge/ 構造（トレーサビリティ用）
+
+抽出ルール:
+- `@skills/generate-docs/references/extraction-rules.md`
+
+各設計書のフォーマット・品質基準:
+- `@core/phases/*.md` — v4 の各フェーズ仕様
+
+## Cursor 固有の実行手順
+
+### Step 1: プロジェクト分析
+
+プロジェクトルートで tech stack を推定:
+- package.json / go.mod / Cargo.toml → 依存関係
+- ディレクトリ構造 → レイヤー構成
+- .knowledge/ → Contract / Concept / Decision
+
+### Step 2: 自動抽出
+
+`@skills/generate-docs/references/extraction-rules.md` に従って抽出。
+各セクションに確信度 (`<!-- confidence: high/medium/low -->`) を付与。
+
+### Step 3: 補足入力
+
+コードから不明な情報はユーザーに確認。
+フロントエンドがない場合は `06_screen_design/` をスキップ。
+
+### Step 4-5: 検証 + レビュー
+
+トレーサビリティ検証と v4 Phase 8 相当のレビューを実行。
+
+## 品質基準
+
+- コードにない情報は推測しない（TODO にする）
+- 確信度 low のセクションには TODO マーカーを付ける
+- v4 の出力フォーマットに準拠

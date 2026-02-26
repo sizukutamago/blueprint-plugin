@@ -3,6 +3,15 @@
 日本語開発者向けの **クロスプラットフォーム対応** 設計ドキュメントワークフロープラグイン。
 **Claude Code** と **Cursor** の両方で動作する。
 
+## v5.0 の主な変更点（Knowledge Graph + Contract-first）
+
+- **v5 ワークフロー**: `/spec` → `/test-from-contract` → 実装 → `/generate-docs`
+- **core/v5/ 追加**: knowledge-structure, contract-schema, spec, generate-docs 仕様
+- **`.knowledge/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
+- **Contract YAML**: 3 タイプ (api/external/file) の機械可読 I/O 境界仕様
+- **設計書はコードから後追い生成**: `/generate-docs` でコード → docs/ (v4 互換出力)
+- **v4 との共存**: core/v5/ は core/phases/ と並列。v4 スキルは変更なし
+
 ## v4.0 の主な変更点（クロスプラットフォーム対応）
 
 - **core/ 分離**: 全フェーズの仕様を platform 非依存の `core/` に抽出（Single Source of Truth）
@@ -25,6 +34,12 @@
 ```
 blueprint-plugin/
 ├── core/                        # ★ 統一仕様層（Platform 非依存、Single Source of Truth）
+│   ├── v5/                      #   v5 仕様（Contract-first ワークフロー）
+│   │   ├── knowledge-structure.md # .knowledge/ 構造 + v5 ID 体系
+│   │   ├── contract-schema.md   #   Contract YAML スキーマ（3 types）
+│   │   ├── spec.md              #   /spec ワークフロー
+│   │   ├── generate-docs.md     #   /generate-docs ワークフロー
+│   │   └── output-structure-v5.md # docs/ 出力構造（v4 互換）
 │   ├── phases/                  #   各フェーズの仕様（Contract YAML 付き）
 │   │   ├── architecture-skeleton.md
 │   │   ├── database.md
@@ -46,11 +61,13 @@ blueprint-plugin/
 ├── .cursor/rules/               # ★ Cursor 用ラッパー（.mdc ルール）
 │   ├── blueprint-always.mdc     #   共通規約（alwaysApply: true）
 │   ├── blueprint-orchestrator.mdc #  全体制御（Agent-Requested）
+│   ├── blueprint-spec.mdc       #   v5: /spec ワークフロー
+│   ├── blueprint-generate-docs.mdc # v5: /generate-docs ワークフロー
 │   └── phase-*.mdc              #   各フェーズ（Auto-Attach via globs）
 │
 ├── .claude-plugin/              # Claude Code プラグインメタデータ
 ├── agents/                      # Claude Code エージェント定義（6種）
-├── commands/                    # Claude Code コマンド定義（1種）
+├── commands/                    # Claude Code コマンド定義（3種）
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── architecture-skeleton/   #   Phase 3a: core_ref + SendMessage
 │   ├── database/                #   Phase 4: core_ref + SendMessage
@@ -68,6 +85,8 @@ blueprint-plugin/
 │   │       └── spawn-prompts/
 │   ├── wave-aggregator/         #   Wave 統合（Claude Code 固有）
 │   ├── context-compressor/      #   コンテキスト圧縮
+│   ├── spec/                    #   v5: ブレスト + Contract 生成
+│   ├── generate-docs/           #   v5: コードから設計書生成
 │   ├── gap-analysis/            #   既存システム分析
 │   ├── research/                #   技術調査
 │   ├── architecture/            #   旧、互換用
@@ -199,10 +218,14 @@ claude --plugin-dir /path/to/blueprint-plugin
 ### スキル呼び出し（Claude Code）
 
 ```bash
-# 全フェーズ実行（推奨、agent-teams モード）
+# v5 ワークフロー（推奨）
+/spec             # ブレスト → Contract YAML 生成
+/generate-docs    # コードから設計書を後追い生成
+
+# v4 全フェーズ実行（agent-teams モード）
 /design-docs      # agent-teams による 3-wave 並列実行
 
-# 個別フェーズ（上級者向け）
+# v4 個別フェーズ（上級者向け）
 /architecture-skeleton  # Phase 3a
 /database               # Phase 4
 /api                    # Phase 5

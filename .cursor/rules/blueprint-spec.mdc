@@ -1,0 +1,57 @@
+---
+description: "Blueprint v5 - Spec workflow. Apply when creating or editing .knowledge/ directory, brainstorming contracts, or defining I/O boundaries."
+globs: ".knowledge/**,docs/requirements/**"
+alwaysApply: false
+---
+
+# Spec ワークフロー (Cursor)
+
+## 仕様参照
+
+以下の仕様ファイルを必ず読み込むこと:
+
+- `@core/v5/spec.md` — ワークフロー定義（7 ステップ）
+- `@core/v5/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
+- `@core/v5/knowledge-structure.md` — `.knowledge/` ディレクトリ構造
+
+## Cursor 固有の実行手順
+
+### Step 1: コンテキスト読み込み
+
+`.knowledge/` ディレクトリの状態を確認。存在しなければ以下を初期化:
+
+```
+.knowledge/
+├── contracts/
+│   ├── api/
+│   ├── external/
+│   └── files/
+├── concepts/
+└── decisions/
+```
+
+### Step 3: ブレインストーミング
+
+ユーザーと対話してビジネスルールを深掘り。最大 10 質問。
+質問の観点は `@core/v5/spec.md` Step 3 を参照。
+
+### Step 5: Contract YAML 生成
+
+Contract テンプレートを参照:
+- API: `@skills/spec/references/contract-templates/api.yaml`
+- External: `@skills/spec/references/contract-templates/external.yaml`
+- File: `@skills/spec/references/contract-templates/file.yaml`
+
+### ID 体系
+
+| プレフィックス | 用途 | 例 |
+|---------------|------|-----|
+| CON- | Contract | CON-order-create |
+| CONCEPT- | Concept | CONCEPT-order |
+| DEC- | Decision | DEC-001-payment-provider |
+
+### 品質基準
+
+- 全フィールドにテスト導出可能な制約を含める
+- 曖昧な記述（「適切に」「必要に応じて」）は具体化
+- 既存 Contract への影響を `links.impacts` で明示
