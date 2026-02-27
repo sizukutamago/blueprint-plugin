@@ -39,6 +39,7 @@ blueprint-plugin/
 │   │   ├── contract-schema.md   #   Contract YAML スキーマ（3 types）
 │   │   ├── spec.md              #   /spec ワークフロー
 │   │   ├── generate-docs.md     #   /generate-docs ワークフロー
+│   │   ├── test-from-contract.md # /test-from-contract ワークフロー
 │   │   └── output-structure-v5.md # docs/ 出力構造（v4 互換）
 │   ├── phases/                  #   各フェーズの仕様（Contract YAML 付き）
 │   │   ├── architecture-skeleton.md
@@ -63,11 +64,12 @@ blueprint-plugin/
 │   ├── blueprint-orchestrator.mdc #  全体制御（Agent-Requested）
 │   ├── blueprint-spec.mdc       #   v5: /spec ワークフロー
 │   ├── blueprint-generate-docs.mdc # v5: /generate-docs ワークフロー
+│   ├── blueprint-test-from-contract.mdc # v5: /test-from-contract ワークフロー
 │   └── phase-*.mdc              #   各フェーズ（Auto-Attach via globs）
 │
 ├── .claude-plugin/              # Claude Code プラグインメタデータ
 ├── agents/                      # Claude Code エージェント定義（6種）
-├── commands/                    # Claude Code コマンド定義（3種）
+├── commands/                    # Claude Code コマンド定義（4種）
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── architecture-skeleton/   #   Phase 3a: core_ref + SendMessage
 │   ├── database/                #   Phase 4: core_ref + SendMessage
@@ -87,6 +89,7 @@ blueprint-plugin/
 │   ├── context-compressor/      #   コンテキスト圧縮
 │   ├── spec/                    #   v5: ブレスト + Contract 生成
 │   ├── generate-docs/           #   v5: コードから設計書生成
+│   ├── test-from-contract/      #   v5: Contract から TDD テスト生成
 │   ├── gap-analysis/            #   既存システム分析
 │   ├── research/                #   技術調査
 │   ├── architecture/            #   旧、互換用
@@ -219,8 +222,9 @@ claude --plugin-dir /path/to/blueprint-plugin
 
 ```bash
 # v5 ワークフロー（推奨）
-/spec             # ブレスト → Contract YAML 生成
-/generate-docs    # コードから設計書を後追い生成
+/spec                 # ブレスト → Contract YAML 生成
+/test-from-contract   # Contract から TDD テスト生成
+/generate-docs        # コードから設計書を後追い生成
 
 # v4 全フェーズ実行（agent-teams モード）
 /design-docs      # agent-teams による 3-wave 並列実行
