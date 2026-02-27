@@ -16,7 +16,7 @@
 
 - **core/ 分離**: 全フェーズの仕様を platform 非依存の `core/` に抽出（Single Source of Truth）
 - **Contract YAML**: 各フェーズ仕様に機械可読な `## Contract (YAML)` セクション追加
-- **Cursor .mdc 対応**: `.cursor/rules/` に 12 ルールファイル（10 phase + orchestrator + always）
+- **Cursor .mdc 対応**: `.cursor/rules/` に 16 ルールファイル（10 phase + orchestrator + always + 4 v5）
 - **SKILL.md 薄ラッパー化**: 既存 SKILL.md を core 参照 + Claude Code 固有部分のみに削減（-74%）
 - **仕様依存 vs 実行依存の分離**: `core/phases/` に仕様依存、`core/dag.md` に実行依存
 - **Blackboard schema v4.0**: platform 非依存スキーマ（書き込みルールを platform 層に委譲）
@@ -40,6 +40,7 @@ blueprint-plugin/
 │   │   ├── spec.md              #   /spec ワークフロー
 │   │   ├── generate-docs.md     #   /generate-docs ワークフロー
 │   │   ├── test-from-contract.md # /test-from-contract ワークフロー
+│   │   ├── orchestrator.md     #   /v5 オーケストレーター
 │   │   └── output-structure-v5.md # docs/ 出力構造（v4 互換）
 │   ├── phases/                  #   各フェーズの仕様（Contract YAML 付き）
 │   │   ├── architecture-skeleton.md
@@ -65,11 +66,12 @@ blueprint-plugin/
 │   ├── blueprint-spec.mdc       #   v5: /spec ワークフロー
 │   ├── blueprint-generate-docs.mdc # v5: /generate-docs ワークフロー
 │   ├── blueprint-test-from-contract.mdc # v5: /test-from-contract ワークフロー
+│   ├── blueprint-v5-orchestrator.mdc # v5: /v5 オーケストレーター
 │   └── phase-*.mdc              #   各フェーズ（Auto-Attach via globs）
 │
 ├── .claude-plugin/              # Claude Code プラグインメタデータ
 ├── agents/                      # Claude Code エージェント定義（6種）
-├── commands/                    # Claude Code コマンド定義（4種）
+├── commands/                    # Claude Code コマンド定義（5種）
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── architecture-skeleton/   #   Phase 3a: core_ref + SendMessage
 │   ├── database/                #   Phase 4: core_ref + SendMessage
@@ -90,6 +92,9 @@ blueprint-plugin/
 │   ├── spec/                    #   v5: ブレスト + Contract 生成
 │   ├── generate-docs/           #   v5: コードから設計書生成
 │   ├── test-from-contract/      #   v5: Contract から TDD テスト生成
+│   ├── v5-orchestrator/         #   v5: パイプラインオーケストレーター
+│   │   └── references/
+│   │       └── review-prompts/  #   Review Swarm プロンプト（3 gates）
 │   ├── gap-analysis/            #   既存システム分析
 │   ├── research/                #   技術調査
 │   ├── architecture/            #   旧、互換用
@@ -222,6 +227,9 @@ claude --plugin-dir /path/to/blueprint-plugin
 
 ```bash
 # v5 ワークフロー（推奨）
+/v5                   # 全パイプライン自動実行（/spec → テスト → docs）
+/v5 --resume          # 実装後に Stage 4 から再開
+/v5 --force           # 全ステージ強制再実行
 /spec                 # ブレスト → Contract YAML 生成
 /test-from-contract   # Contract から TDD テスト生成
 /generate-docs        # コードから設計書を後追い生成

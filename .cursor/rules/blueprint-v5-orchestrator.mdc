@@ -1,0 +1,76 @@
+---
+description: "Blueprint v5 - Orchestrator. Apply when running the full v5 pipeline, working with .knowledge/pipeline-state.yaml, or coordinating /spec → /test-from-contract → /generate-docs workflow."
+globs: ".knowledge/**,tests/contracts/**,docs/**,src/**,routes/**,app/**"
+alwaysApply: false
+---
+
+# v5 Orchestrator ワークフロー (Cursor)
+
+## 仕様参照
+
+以下の仕様ファイルを必ず読み込むこと:
+
+- `@core/v5/orchestrator.md` — パイプライン定義（4 ステージ + Review Swarm）
+- `@core/v5/spec.md` — Stage 1: Spec ワークフロー
+- `@core/v5/test-from-contract.md` — Stage 2: Test Generation ワークフロー
+- `@core/v5/generate-docs.md` — Stage 4: Doc Generation ワークフロー
+- `@core/v5/contract-schema.md` — Contract YAML スキーマ
+- `@core/review-criteria.md` — レビュー基準（5 段階 + P0/P1/P2）
+
+Review Swarm プロンプト:
+- `@skills/v5-orchestrator/references/review-prompts/contract-reviewer.md`
+- `@skills/v5-orchestrator/references/review-prompts/test-reviewer.md`
+- `@skills/v5-orchestrator/references/review-prompts/doc-reviewer.md`
+
+## Cursor 固有の実行手順
+
+### パイプライン概要
+
+```
+Stage 1: /spec（対話的）→ Contract Review Gate
+Stage 2: /test-from-contract（準自動）→ Test Review Gate
+Stage 3: Implementation Pause
+Stage 4: /generate-docs（準自動）→ Doc Review Gate
+```
+
+### Smart Skip
+
+既存成果物を検出した場合、ユーザーに確認してからスキップ判定:
+- `.knowledge/contracts/` に Contract あり → Stage 1 スキップ候補
+- `tests/contracts/` に `@generated` テストあり → Stage 2 スキップ候補
+- `docs/` に設計書あり → Stage 4 スキップ候補
+
+スキップ時もレビューゲートは実行する。
+
+### パイプライン状態
+
+`.knowledge/pipeline-state.yaml` で進捗を追跡:
+- 各ステージの status: pending | in_progress | completed | skipped
+- current_stage: 現在のステージ
+- review_result: 各ゲートの判定結果
+
+### Review Swarm
+
+各 Review Gate で 3 つの観点から並列レビュー:
+
+| Gate | Agent 1 | Agent 2 | Agent 3 |
+|------|---------|---------|---------|
+| Contract | Schema Validator | Completeness Checker | Testability Auditor |
+| Test | Coverage Validator | Constraint Collision | Traceability Auditor |
+| Doc | Structure (L1-L2) | Completeness (L3-L5) | Accuracy |
+
+Gate 判定: P0=0 かつ P1≤1 → PASS、それ以外 → REVISE（最大 2 サイクル）。
+重複 findings は同一 target + field で正規化（最高 severity を採用、message は連結保持）。
+
+### --resume フロー
+
+1. `pipeline-state.yaml` を読み込み
+2. `implementation_pause` の場合: テスト GREEN チェック → Stage 4
+3. 他のステージの場合: 該当ステージから再開
+
+## 品質基準
+
+- Review Swarm の findings は P0/P1/P2 で分類
+- 重複正規化後に Gate 判定
+- P2 は記録のみ（要対応リストとして出力）
+- 最大 2 REVISE サイクル、超過時はユーザー介入
