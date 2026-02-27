@@ -48,7 +48,7 @@ docs/
 | 項目 | v4 | v5 |
 |------|-----|-----|
 | requirements/ | 必須（Phase 1-2 出力） | なし（Contract が代替） |
-| project-context.yaml | 必須（Blackboard） | なし（.knowledge/ が代替） |
+| project-context.yaml | 必須（Blackboard） | なし（.blueprint/ が代替） |
 | 生成方向 | 要件→設計書 (top-down) | コード→設計書 (bottom-up) |
 | 06_screen_design/ | 必須 | 条件付き（フロントエンドなしならスキップ） |
 | 確信度 | なし | あり（high/medium/low） |

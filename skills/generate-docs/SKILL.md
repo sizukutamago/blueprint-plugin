@@ -23,7 +23,7 @@ core_ref: core/v5/generate-docs.md
 |------|------|------|
 | ソースコード | ○ | 分析対象のプロジェクト |
 | Git リポジトリ | ○ | docs/ をプロジェクトルートに配置 |
-| .knowledge/ | △ | あればトレーサビリティ検証可能。なくても動作する |
+| .blueprint/ | △ | あればトレーサビリティ検証可能。なくても動作する |
 
 ## 出力ファイル
 
@@ -69,9 +69,9 @@ Glob("**/docker-compose*.yml")
 ```
 
 ```
-# .knowledge/ スキャン（存在する場合）
-Glob(".knowledge/**/*.yaml")
-Glob(".knowledge/**/*.md")
+# .blueprint/ スキャン（存在する場合）
+Glob(".blueprint/**/*.yaml")
+Glob(".blueprint/**/*.md")
 ```
 
 ### Step 2: 自動抽出フェーズ
@@ -126,6 +126,6 @@ Glob(".knowledge/**/*.md")
 |--------|------|
 | ソースコードなし | 対象ディレクトリの確認を促す |
 | 未知の tech stack | 汎用抽出ルール適用 + ユーザーに確認 |
-| .knowledge/ なし | docs/ 生成は可能、トレーサビリティ検証はスキップ |
+| .blueprint/ なし | docs/ 生成は可能、トレーサビリティ検証はスキップ |
 | フロントエンドなし | 06_screen_design/ をスキップ |
 | 既存 docs/ あり | 上書き前にユーザー確認 |

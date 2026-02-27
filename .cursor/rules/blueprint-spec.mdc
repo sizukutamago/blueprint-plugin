@@ -1,6 +1,6 @@
 ---
-description: "Blueprint v5 - Spec workflow. Apply when creating or editing .knowledge/ directory, brainstorming contracts, or defining I/O boundaries."
-globs: ".knowledge/**,docs/requirements/**"
+description: "Blueprint v5 - Spec workflow. Apply when creating or editing .blueprint/ directory, brainstorming contracts, or defining I/O boundaries."
+globs: ".blueprint/**,docs/requirements/**"
 alwaysApply: false
 ---
 
@@ -12,16 +12,16 @@ alwaysApply: false
 
 - `@core/v5/spec.md` — ワークフロー定義（7 ステップ）
 - `@core/v5/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
-- `@core/v5/knowledge-structure.md` — `.knowledge/` ディレクトリ構造
+- `@core/v5/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 ## Cursor 固有の実行手順
 
 ### Step 1: コンテキスト読み込み
 
-`.knowledge/` ディレクトリの状態を確認。存在しなければ以下を初期化:
+`.blueprint/` ディレクトリの状態を確認。存在しなければ以下を初期化:
 
 ```
-.knowledge/
+.blueprint/
 ├── contracts/
 │   ├── api/
 │   ├── external/

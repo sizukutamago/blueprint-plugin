@@ -1,0 +1,194 @@
+# Drift Review Swarm プロンプト
+
+v5 パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Drift Gate のレビュープロンプト。
+Contract YAML に宣言された制約と実装コードの乖離を 3 エージェントが並列で検出する。
+
+**テスト GREEN チェックとの違い**:
+- GREEN チェック: テストが PASS するか（動作の正しさ）
+- Drift Gate: Contract の宣言がコードに反映されているか（宣言の一致）
+- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Drift Gate が検出
+
+## 共通入力
+
+各エージェントに以下を渡す:
+- Contract YAML ファイル（`.blueprint/contracts/**/*.contract.yaml`）
+- ソースコード（`src/`, `app/`, `routes/` 等のメインコードディレクトリ）
+- バリデーションスキーマ（Zod, Joi, Yup 等の定義ファイル）
+- テストファイル（`tests/contracts/` — 参考情報として）
+- `core/v5/contract-schema.md` の内容（Contract フィールド定義参照）
+
+## 共通出力フォーマット
+
+```yaml
+reviewer: "{エージェント名}"
+gate: "drift"
+findings:
+  - severity: P0 | P1 | P2
+    target: "CON-xxx"
+    field: "contract field path (e.g., input.body.quantity.max)"
+    impl_file: "src/xxx.ts:42"
+    message: "乖離の説明"
+    suggestion: "修正提案"
+    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition_reason: null   # disposition が null でない場合は必須
+    original_severity: null    # downgraded の場合、元の severity を記録
+summary:
+  p0: 0
+  p1: 0
+  p2: 0
+```
+
+---
+
+## Agent 1: Schema Drift Checker
+
+### 役割
+
+Contract YAML のフィールド制約（type, required, min, max, pattern, enum, default）が
+バリデーション層（Zod, Joi, class-validator 等）に正しく反映されているかを検証する。
+
+### チェック手順
+
+```
+1. バリデーションスキーマの検出:
+
+   以下のパターンでバリデーション定義を検索:
+   - Zod: z.object / z.string / z.number 等の定義
+   - Joi: Joi.object / Joi.string 等の定義
+   - class-validator: @IsString / @IsNumber 等のデコレータ
+   - Yup: yup.object / yup.string 等の定義
+   - 未検出 → P1（バリデーション層が存在しない）
+
+2. Contract フィールドとの 1:1 対応チェック:
+
+   各 Contract の input/request フィールドについて:
+   a. 対応するバリデーション定義があるか → 欠落: P1
+   b. type が一致しているか:
+      - Contract string → z.string() / Joi.string() 等
+      - Contract integer → z.number().int() / Joi.number().integer() 等
+      → 不一致: P1
+   c. required: true のフィールドがバリデーションで必須になっているか
+      → .optional() が付いている: P1
+   d. min/max 制約がバリデーションに反映されているか:
+      - Contract min: 1 → z.min(1) / Joi.min(1) 等
+      - Contract max: 99 → z.max(99) / Joi.max(99) 等
+      → 欠落: P1、値の不一致: P0
+   e. pattern 制約がバリデーションに反映されているか
+      → 欠落: P1、正規表現の不一致: P0
+   f. enum 制約の値リストが一致しているか
+      → 値の過不足: P0
+
+3. 固定値フィールドの検証:
+
+   Contract に value: "xxx" が定義されているフィールド:
+   - 実装でハードコードされた値が一致しているか → 不一致: P0
+   - 設定ファイル経由の場合、設定値が一致しているか → 不一致: P1
+
+4. default 値の検証:
+
+   Contract に default が定義されているフィールド:
+   - バリデーションまたはアプリケーション層でデフォルト値が設定されているか → 欠落: P2
+   - デフォルト値が一致しているか → 不一致: P1
+```
+
+---
+
+## Agent 2: Route & Handler Checker
+
+### 役割
+
+api Contract の method/path と external Contract の endpoint/provider が
+実装のルート定義・クライアント設定と一致しているかを検証する。
+
+### チェック手順
+
+```
+1. api Contract のルート検証:
+
+   各 api Contract について:
+   a. method + path に対応するルート定義があるか:
+      - Express: app.get/post/put/delete("/path", ...)
+      - Hono: app.get/post/put/delete("/path", ...)
+      - Fastify: fastify.get/post/put/delete("/path", ...)
+      - Next.js: app/api/path/route.ts の export
+      → 欠落: P0（API エンドポイントが未実装）
+   b. method が一致しているか → 不一致: P0
+   c. path パラメータが Contract と一致しているか → 不一致: P1
+
+2. external Contract の接続先検証:
+
+   各 external Contract について:
+   a. provider + endpoint に対応する HTTP クライアント設定があるか
+      → 欠落: P1
+   b. endpoint URL が Contract と一致しているか → 不一致: P0
+   c. 認証方式（auth フィールド）が実装と一致しているか → 不一致: P1
+
+3. エラーレスポンスの検証:
+
+   各 Contract の errors 定義について:
+   a. 定義された status code がレスポンスで使用されているか
+      → 未使用の status code: P1
+   b. error code が実装のエラーレスポンスと一致しているか
+      → 不一致: P1（例: Contract "INSUFFICIENT_STOCK" vs 実装 "OUT_OF_STOCK"）
+   c. エラーメッセージのフォーマットが一致しているか → 不一致: P2
+
+4. レスポンス構造の検証:
+
+   各 Contract の output/response 定義について:
+   a. レスポンスフィールドが実装のレスポンスオブジェクトに存在するか
+      → 欠落: P1
+   b. 型が一致しているか → 不一致: P1
+```
+
+---
+
+## Agent 3: Business Logic Checker
+
+### 役割
+
+Contract に定義された business_rules, state_transition, constraints が
+実装のビジネスロジックに反映されているかを検証する。
+
+### チェック手順
+
+```
+1. business_rules の実装確認:
+
+   各 api Contract の business_rules について:
+   a. BR-xxx の rule 記述に対応する実装ロジックが存在するか
+      - ソースコード内に BR-xxx のコメント参照があるか
+      - rule の内容に対応する条件分岐/バリデーションがあるか
+      → 完全に欠落: P0
+      → 部分的に実装: P1（コメントで明記）
+   b. ルールの条件値が Contract と一致しているか
+      - 例: Contract "quantity は stock 以下" → 実装に stock チェックがあるか
+      → 不一致: P1
+
+2. state_transition の実装確認:
+
+   state_transition が定義されている Contract について:
+   a. 状態遷移の初期状態（initial）が実装に反映されているか → 欠落: P1
+   b. 許可遷移（transitions の from → to）が実装されているか → 欠落: P1
+   c. 拒否遷移（未定義の from → to）が拒否されるか
+      → ガードなし: P1
+   d. 遷移時のアクション（action フィールド）が実装されているか → 欠落: P2
+
+3. constraints の実装確認（external Contract）:
+
+   各 external Contract の constraints について:
+   a. EC-xxx の rule 記述に対応する実装があるか:
+      - 冪等性（idempotency）: リクエストにべき等キーを含む実装があるか
+      - タイムアウト: HTTP クライアントにタイムアウト設定があるか
+      - リトライ: リトライロジックが実装されているか
+      → 欠落: P1
+   b. 制約値が Contract と一致しているか:
+      - timeout: 30s → 実装のタイムアウト値が 30000ms か
+      - max_retries: 3 → リトライ回数が 3 か
+      → 不一致: P1
+
+4. processing_rules の実装確認（file Contract）:
+
+   各 file Contract の processing_rules について:
+   a. PR-xxx の rule 記述に対応する実装ロジックが存在するか → 欠落: P1
+   b. result 構造（success/error）が実装のレスポンスと一致しているか → 不一致: P1
+```

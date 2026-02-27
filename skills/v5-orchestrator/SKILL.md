@@ -8,7 +8,7 @@ core_ref: core/v5/orchestrator.md
 # v5 Orchestrator スキル (Claude Code)
 
 v5 パイプラインをワンコマンドで自動実行するオーケストレーター。
-4 ステージの直列パイプラインを実行し、各ステージ後に Review Swarm で品質を担保する。
+4 ステージの直列パイプラインを実行し、各ステージ後に Review Swarm（4 Gate）で品質を担保する。
 
 ## 仕様参照
 
@@ -28,7 +28,7 @@ Contract スキーマ: `core/v5/contract-schema.md`
 |------|------|------|
 | Git リポジトリ | ○ | git root でプロジェクトルートを検出 |
 | テストフレームワーク | △ | 未検出時は Stage 2 でユーザーに確認 |
-| `.knowledge/` | × | なくても Stage 1 から開始可能 |
+| `.blueprint/` | × | なくても Stage 1 から開始可能 |
 
 ## コマンドオプション
 
@@ -61,14 +61,15 @@ git rev-parse --show-toplevel
 
 ```
 # パイプライン状態を確認
-Read(".knowledge/pipeline-state.yaml")
+Read(".blueprint/pipeline-state.yaml")
 ```
 
 **--resume モード判定**:
-- ユーザーが `--resume` を指定 → パイプライン状態を読み込み、中断点から再開:
-  - `implementation_pause` → テスト GREEN チェック → Stage 4 へ
-  - `spec` / `test_generation` / `doc_generation` → 該当ステージの最初から再実行
-  - `completed` → 「完了済み。--force で再実行してください」
+- ユーザーが `--resume` を指定 → `.blueprint/pipeline-state.yaml` を読み込み、中断点から再開:
+  - `stage_3_pause` 完了 → テスト GREEN チェック → Drift Gate → Stage 4 へ
+  - `drift_review_gate` 失敗 → Drift Gate から再実行
+  - 各ステージが `pending`/`in_progress` → 該当ステージの最初から再実行
+  - `final_status: completed` → 「完了済み。--force で再実行してください」
 - `--force` を指定 → 新規パイプラインとして全ステージ実行
 - 指定なし → Smart Skip を適用して実行
 
@@ -78,7 +79,7 @@ Read(".knowledge/pipeline-state.yaml")
 
 ```
 # Stage 1 スキップ判定
-Glob(".knowledge/contracts/**/*.contract.yaml")
+Glob(".blueprint/contracts/**/*.contract.yaml")
 → active/draft Contract ≥1 → ユーザーに確認:
   「既存の Contract が N 件見つかりました。これを使いますか？ 新機能を追加しますか？」
 
@@ -97,7 +98,7 @@ Glob("docs/03_architecture/**")
 
 `core/v5/spec.md` の 7 ステップワークフローを直接実行する。
 
-1. `.knowledge/` コンテキスト読み込み
+1. `.blueprint/` コンテキスト読み込み
 2. スコープ確認（ユーザー対話）
 3. ブレインストーミング（ユーザー対話）
 4. Contract 一覧合意（ユーザー承認必須）
@@ -158,16 +159,39 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の 
 
 1. パイプライン状態を保存:
 
-```
-Write(".knowledge/pipeline-state.yaml", {
-  pipeline:
-    current_stage: implementation_pause
-    stages:
-      spec: { status: completed, ... }
-      test_generation: { status: completed, ... }
-      implementation: { status: in_progress, started_at: now() }
-      doc_generation: { status: pending }
-})
+```yaml
+# Write(".blueprint/pipeline-state.yaml")
+pipeline_version: "1.0.0"
+project_root: "{git root}"
+started_at: "{開始タイムスタンプ}"
+paused_at: "{now()}"
+stages:
+  stage_1_spec:
+    status: completed
+    contracts: [{ id: "CON-xxx", path: "...", version: "1.0.0" }]
+  contract_review_gate:
+    status: passed
+    cycles: N
+    final_counts: { p0: 0, p1: N, p2: N }
+  stage_2_test:
+    status: completed
+    test_files: { level1: [...], level2: [...] }
+    counts: { level1: {...}, level2: {...}, total: N }
+  test_review_gate:
+    status: passed
+    cycles: N
+    final_counts: { p0: 0, p1: N, p2: N }
+  stage_3_pause:
+    status: completed
+    message: "Implementation pause - resume with /v5 --resume"
+  drift_review_gate:
+    status: pending
+  stage_4_docs:
+    status: pending
+  doc_review_gate:
+    status: pending
+completed_at: null
+final_status: pending
 ```
 
 2. ユーザーに実装指示を出力:
@@ -213,6 +237,23 @@ N / M テストが FAIL しています:
 （未実装テストがあると、生成されるドキュメントに TODO が増えます）
 ```
 
+### Step 7.5: Drift Gate（Contract↔実装の乖離検出）
+
+3 つの Task エージェントを**並列**起動:
+
+```
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 1 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 2 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 3 プロンプト}")
+```
+
+**入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ
+
+**Gate 判定**: Step 3 と同じプロトコル
+
+- PASS → Stage 4 へ
+- REVISE → ユーザーに乖離リストを提示、修正後に再実行
+
 ### Step 8: Stage 4 — Doc Generation 実行
 
 `core/v5/generate-docs.md` の 5 ステップワークフローを実行する。
@@ -233,7 +274,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の Agent 3 プロンプト}")
 ```
 
-**入力**: docs/ ファイルリスト + .knowledge/ + ソースコード + review-criteria.md
+**入力**: docs/ ファイルリスト + .blueprint/ + ソースコード + review-criteria.md
 
 **Gate 判定**: Step 3 と同じプロトコル
 
@@ -255,6 +296,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 |------|----|----|----|----- |---------|
 | Contract | 0 | 0 | N | PASS | 1 |
 | Test | 0 | N | N | PASS | 1 |
+| Drift | 0 | N | N | PASS | 1 |
 | Doc | 0 | N | N | PASS | 1 |
 
 ### P2 要対応リスト
@@ -267,12 +309,11 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 
 パイプライン状態を `completed` に更新:
 
-```
-Write(".knowledge/pipeline-state.yaml", {
-  pipeline:
-    current_stage: completed
-    ...
-})
+```yaml
+# Write(".blueprint/pipeline-state.yaml") — 既存の内容を更新
+completed_at: "{now()}"
+final_status: completed
+# 各 stages と review gate の status はそれぞれの完了時に更新済み
 ```
 
 ## 原則
@@ -282,16 +323,16 @@ Write(".knowledge/pipeline-state.yaml", {
 | Contract が唯一の真実源 | テストも設計書も Contract から導出される |
 | Review Swarm で品質担保 | 各ステージ後に 3 並列レビューで多角的に検証 |
 | Smart Skip で効率化 | 既存成果物を検出して不要なステージをスキップ |
-| 状態永続化 | pipeline-state.yaml でパイプライン進捗を保持 |
+| 状態永続化 | .blueprint/pipeline-state.yaml でパイプライン進捗を保持 |
 | 段階的品質向上 | REVISE サイクルで findings を修正し品質を上げる |
 
 ## エラーハンドリング
 
 | エラー | 対応 |
 |--------|------|
-| `.knowledge/` なし + `/v5` | Stage 1 から開始（正常フロー） |
-| `--resume` で pipeline-state.yaml なし | `/v5` で最初から実行するよう案内 |
+| `.blueprint/` なし + `/v5` | Stage 1 から開始（正常フロー） |
+| `--resume` で .blueprint/pipeline-state.yaml なし | `/v5` で最初から実行するよう案内 |
 | Review Gate で REVISE 2 回超過 | findings リストを提示してユーザーに介入要請 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |
-| Stage 途中でエラー | 成功分は保持、pipeline-state.yaml に現在のステージを記録して停止 |
+| Stage 途中でエラー | 成功分は保持、.blueprint/pipeline-state.yaml に現在のステージを記録して停止 |
 | テスト実行失敗（--resume 時） | ユーザーに警告し、続行するか確認 |

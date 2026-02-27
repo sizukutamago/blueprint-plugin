@@ -1,6 +1,6 @@
 ---
-description: "Blueprint v5 - Test from Contract. Apply when generating tests from contracts, creating TDD test stubs, working with tests/contracts/ directory, or editing .knowledge/contracts/."
-globs: "tests/contracts/**,.knowledge/contracts/**"
+description: "Blueprint v5 - Test from Contract. Apply when generating tests from contracts, creating TDD test stubs, working with tests/contracts/ directory, or editing .blueprint/contracts/."
+globs: "tests/contracts/**,.blueprint/contracts/**"
 alwaysApply: false
 ---
 
@@ -12,7 +12,7 @@ alwaysApply: false
 
 - `@core/v5/test-from-contract.md` — ワークフロー定義（6 ステップ）
 - `@core/v5/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
-- `@core/v5/knowledge-structure.md` — `.knowledge/` ディレクトリ構造
+- `@core/v5/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 テスト生成ルール:
 - `@skills/test-from-contract/references/test-generation-rules.md`
@@ -21,7 +21,7 @@ alwaysApply: false
 
 ### Step 1: コンテキスト読み込み
 
-`.knowledge/contracts/` を走査して Contract YAML を特定:
+`.blueprint/contracts/` を走査して Contract YAML を特定:
 - `contracts/api/*.contract.yaml` → api 型
 - `contracts/external/*.contract.yaml` → external 型
 - `contracts/files/*.contract.yaml` → file 型（注意: `files/` は複数形）

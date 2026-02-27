@@ -3,20 +3,20 @@
 Contract YAML をブレインストーミングから生成するワークフロー。
 ユーザーがビジネス判断、AI が構造化を担当する。
 
-> **前提**: `knowledge-structure.md` と `contract-schema.md` を参照。
+> **前提**: `blueprint-structure.md` と `contract-schema.md` を参照。
 
 ## ワークフロー（7 ステップ）
 
 ### Step 1: コンテキスト読み込み
 
-`.knowledge/` ディレクトリの状態を確認する。
+`.blueprint/` ディレクトリの状態を確認する。
 
-- **存在しない場合**: ディレクトリ構造を初期化（`knowledge-structure.md` の構造に従う）
+- **存在しない場合**: ディレクトリ構造を初期化（`blueprint-structure.md` の構造に従う）
 - **存在する場合**: 既存の contracts, concepts, decisions を読み込んで現状を把握
 
 ```
 チェック項目:
-- .knowledge/ の存在
+- .blueprint/ の存在
 - 既存 Contract の一覧と status
 - 既存 concepts の相互リンク構造
 - 既存 decisions の一覧
@@ -88,15 +88,15 @@ Contract YAML をブレインストーミングから生成するワークフロ
 ```
 
 **配置先**:
-- `api` → `.knowledge/contracts/api/{name}.contract.yaml`
-- `external` → `.knowledge/contracts/external/{name}.contract.yaml`
-- `file` → `.knowledge/contracts/files/{name}.contract.yaml`
+- `api` → `.blueprint/contracts/api/{name}.contract.yaml`
+- `external` → `.blueprint/contracts/external/{name}.contract.yaml`
+- `file` → `.blueprint/contracts/files/{name}.contract.yaml`
 
 **SemVer 初期値**: `1.0.0`（新規の場合）
 
 ### Step 6: 副産物生成
 
-ブレスト中に出たドメイン知識と設計判断を `.knowledge/` に書き出す。
+ブレスト中に出たドメイン知識と設計判断を `.blueprint/` に書き出す。
 
 **concepts/**:
 - ブレストで登場した主要ドメイン概念ごとに 1 ファイル
@@ -116,9 +116,9 @@ Contract YAML をブレインストーミングから生成するワークフロ
 
 ```
 ## 生成ファイル
-- .knowledge/contracts/api/{name}.contract.yaml (CON-{name} v1.0.0)
-- .knowledge/concepts/{concept}.md
-- .knowledge/decisions/DEC-{NNN}-{name}.md
+- .blueprint/contracts/api/{name}.contract.yaml (CON-{name} v1.0.0)
+- .blueprint/concepts/{concept}.md
+- .blueprint/decisions/DEC-{NNN}-{name}.md
 - ...
 
 ## 次のステップ
@@ -144,7 +144,7 @@ Contract YAML をブレインストーミングから生成するワークフロ
 
 | エラー | 対応 |
 |--------|------|
-| .knowledge/ 初期化失敗 | git root でない場合の案内、権限確認 |
+| .blueprint/ 初期化失敗 | git root でない場合の案内、権限確認 |
 | ブレストが収束しない | 10 質問上限 + open_questions への退避 |
 | タイプ判定が曖昧 | ユーザーに判断を委ねる |
 | 既存 Contract との依存が不明確 | 明示的に確認、不明な場合は TODO リンクとして残す |

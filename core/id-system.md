@@ -11,7 +11,7 @@
 | ENT | エンティティ | ENT-{PascalCase} | database | ENT-User, ENT-OrderItem |
 | ADR | 設計決定記録 | ADR-XXXX (4桁) | architecture-skeleton/detail | ADR-0001 |
 
-> **v5 拡張**: CON-*, CONCEPT-*, DEC-* プレフィックスは `core/v5/knowledge-structure.md` を参照。
+> **v5 拡張**: CON-*, CONCEPT-*, DEC-* プレフィックスは `core/v5/blueprint-structure.md` を参照。
 
 ## NFR カテゴリ
 

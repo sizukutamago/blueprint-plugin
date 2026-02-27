@@ -72,6 +72,54 @@
 **条件付きチェック**: `project.profile` を参照し、生成条件に合致するファイルのみチェック対象とする。
 **profile 未設定時**: `sla_tier: basic`, `has_migration: false` として扱い、P2 として記録。
 
+## Severity ガバナンスルール
+
+### P1→P2 格下げルール
+
+P1 finding を P2 に格下げするには以下の**すべて**を満たす必要がある:
+
+| 条件 | 説明 |
+|------|------|
+| 正当化理由 | 「プロジェクト固有の事情で影響度が低い」等の具体的理由が必要 |
+| 記録義務 | 格下げの理由を findings の `disposition_reason` フィールドに記載（`disposition: downgraded` を設定） |
+| 影響範囲の確認 | 格下げが他のステージ/成果物に波及しないことを確認 |
+
+**禁止される格下げ**:
+- 「テストで検証されるから」— テストの存在は P1 の正当化にならない（テスト自体が不完全な可能性）
+- 「後で直すから」— 修正予定は格下げ理由にならない
+- 「小さな差異だから」— 差異の大小ではなく整合性の有無で判定
+
+**正当な格下げ例**:
+- Contract に定義があるが、プロジェクト要件で明示的に対象外とされた機能
+- 外部サービスの制約により Contract 通りの実装が不可能（代替実装がある）
+- deprecated な Contract フィールド（status: deprecated）
+
+### False Positive（誤検出）の扱い
+
+レビューエージェントが報告した finding が実際には問題でない場合:
+
+| ステータス | 説明 | 記録方法 |
+|-----------|------|---------|
+| `acknowledged` | 誤検出として認知、記録を保持 | findings に `disposition: false_positive` + 理由を記載 |
+| `wont_fix` | 既知の問題だが修正しない | findings に `disposition: wont_fix` + 理由を記載 |
+
+**重要**: False positive は**削除しない**。監査証跡として記録を残す。
+REVISE サイクルのカウントからは除外する（修正不要のため）。
+
+### findings 記録フォーマット（拡張）
+
+```yaml
+findings:
+  - severity: P1
+    target: "CON-xxx"
+    field: "input.body.quantity.max"
+    message: "max 制約が未定義"
+    suggestion: "max: 99 等の上限を追加"
+    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition_reason: null   # disposition が null でない場合は必須
+    original_severity: null    # downgraded の場合、元の severity を記録
+```
+
 ## Gate 判定基準
 
 | 判定 | 条件 | アクション |

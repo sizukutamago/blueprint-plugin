@@ -106,7 +106,36 @@ describe("CON-order-create: Contract Structure (Level 1)", () => {
 Level 2 テストは Contract の仕様に基づいて実装を検証する。
 生成時点では RED スタブ（FAIL する形式）で出力する。
 
+### RED スタブの AAA 骨格（必須）
+
+全ての Level 2 テストに **Arrange / Act & Assert** の骨格コメントを含めること。
+
+```typescript
+it("テスト名", () => {
+  // Derived from: {contract_field}
+  // @contract {CON-ID}
+
+  // Arrange
+  const payload = validPayload();    // valid base からテスト対象だけ変更
+  payload.targetField = invalidValue; // 単一変更原則
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect {expected_status} {expected_error}
+  expect.fail("RED: implement to verify {what}");
+});
+```
+
+**ルール**:
+- `validPayload()` は関数として定義（テスト間のミューテーション干渉を回避）
+- Arrange で valid base + 単一変更を明記
+- Act & Assert の TODO に期待するステータスコード/エラーコードを記載
+- GREEN 化時に `expect.fail` 行を削除して実際のアサーションに置き換える
+
 ### フィールド別導出手順
+
+> **Note**: 以下のパターン例は導出ロジックの説明に焦点を当てており、一部は省略形で記載している。
+> **実際のテスト生成時は、上記の「RED スタブの AAA 骨格」に必ず従うこと。**
+> `validPayload()` + Arrange / Act & Assert コメントは全テストに必須。
 
 #### `required: true`
 
@@ -120,9 +149,32 @@ Contract の入力フィールドに `required: true` がある場合:
 it("items が未送信の場合はエラー", () => {
   // Derived from: input.body.items (required: true)
   // @contract CON-order-create
+
+  // Arrange
+  const payload = { ...validPayload() };
+  delete payload.items;
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 400 error with "items is required"
   expect.fail("RED: implement to verify items is required");
 });
 ```
+
+#### `required: true` + `default` の矛盾検出
+
+Contract で同一フィールドに `required: true` と `default` が両方指定されている場合、**論理矛盾**（P1）として報告する。
+
+| required | default | 意味 | テスト生成 |
+|----------|---------|------|-----------|
+| `true` | なし | 必須フィールド。欠落はエラー | 欠落エラーテストを生成 |
+| `true` | あり | **矛盾**: 必須なのにデフォルトは不要 | P1 finding を生成。default 適用テストは**出さない** |
+| `false` | あり | 任意フィールド。省略時は default 適用 | 省略→default 適用テストを生成 |
+| `false` | なし | 任意フィールド。省略時は null/未設定 | 省略 OK テストを生成 |
+
+**矛盾検出時のアクション**:
+1. テスト生成を続行する（ブロックしない）
+2. テストファイルの先頭に `// WARNING: Contract矛盾 - {field} は required:true かつ default あり` を出力
+3. Review Gate の Test Reviewer に P1 finding として報告
 
 #### `min: N` / `max: N`
 
@@ -138,11 +190,25 @@ it("items が未送信の場合はエラー", () => {
 it("items[].quantity: 100 は拒否（max: 99）", () => {
   // Derived from: input.body.items[].quantity (max: 99)
   // Note: other fields use valid values to avoid constraint collision
+
+  // Arrange
+  const payload = validPayload();
+  payload.items[0].quantity = 100; // max + 1
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 400 error
   expect.fail("RED: implement to verify quantity max boundary");
 });
 
 it("items[].quantity: 99 は OK（境界値 max）", () => {
   // Derived from: input.body.items[].quantity (max: 99)
+
+  // Arrange
+  const payload = validPayload();
+  payload.items[0].quantity = 99; // exactly max
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 2xx success
   expect.fail("RED: implement to verify quantity at max boundary passes");
 });
 ```
@@ -159,6 +225,13 @@ it("items[].quantity: 99 は OK（境界値 max）", () => {
 ```typescript
 it("items: 0 件は拒否（min_items: 1）", () => {
   // Derived from: input.body.items (min_items: 1)
+
+  // Arrange
+  const payload = validPayload();
+  payload.items = [];  // 0 件 = min_items 未満
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 400 / validation error
   expect.fail("RED: implement to verify empty items array is rejected");
 });
 ```
@@ -175,11 +248,25 @@ it("items: 0 件は拒否（min_items: 1）", () => {
 ```typescript
 it("name: 201 文字は拒否（max_length: 200）", () => {
   // Derived from: columns[name].max_length: 200
+
+  // Arrange
+  const payload = validPayload();
+  payload.name = "a".repeat(201);  // max + 1
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 400 / validation error
   expect.fail("RED: implement to verify max_length boundary");
 });
 
 it("name: 200 文字は OK（境界値 max_length）", () => {
   // Derived from: columns[name].max_length: 200
+
+  // Arrange
+  const payload = validPayload();
+  payload.name = "a".repeat(200);  // exactly max
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 2xx success
   expect.fail("RED: implement to verify max_length at boundary passes");
 });
 ```
@@ -204,6 +291,13 @@ it("name: 200 文字は OK（境界値 max_length）", () => {
 ```typescript
 it("category: 無効な値 'unknown' は拒否", () => {
   // Derived from: columns[category].enum: [electronics, clothing, food, books, other]
+
+  // Arrange
+  const payload = validPayload();
+  payload.category = "unknown";  // enum にない値
+
+  // Act & Assert
+  // TODO: call API/function with payload, expect 400 / validation error
   expect.fail("RED: implement to verify invalid enum value is rejected");
 });
 ```
@@ -230,6 +324,14 @@ describe("Business Rules", () => {
   it("BR-001: サーバー側で金額再計算", () => {
     // Derived from: business_rules[BR-001]
     // Rule: total は items の price × quantity の合計をサーバー側で再計算
+
+    // Arrange
+    const payload = validPayload();
+    payload.items = [{ product_id: "P1", quantity: 2, price: 500 }];
+    payload.total = 9999;  // クライアント送信値（サーバーで無視されるべき）
+
+    // Act & Assert
+    // TODO: call API with payload, expect response.total === 1000 (not 9999)
     expect.fail("RED: implement to verify server-side amount recalculation");
   });
 });
@@ -248,17 +350,35 @@ describe("Business Rules", () => {
 describe("State Transitions", () => {
   it("初期状態は pending_payment", () => {
     // Derived from: state_transition.initial: pending_payment
+
+    // Arrange
+    const payload = validPayload();
+
+    // Act & Assert
+    // TODO: create order with payload, expect result.status === "pending_payment"
     expect.fail("RED: implement to verify initial state");
   });
 
   it("pending_payment → paid は許可", () => {
     // Derived from: state_transition.transitions.pending_payment: [paid, cancelled]
+
+    // Arrange
+    const order = createOrder({ status: "pending_payment" });
+
+    // Act & Assert
+    // TODO: transition order to "paid", expect success
     expect.fail("RED: implement to verify allowed transition");
   });
 
   it("paid → cancelled は拒否（不正な遷移）", () => {
     // Derived from: state_transition.transitions.paid: [shipping]
     // cancelled is NOT in the allowed list
+
+    // Arrange
+    const order = createOrder({ status: "paid" });
+
+    // Act & Assert
+    // TODO: transition order to "cancelled", expect 400/422 error
     expect.fail("RED: implement to verify denied transition");
   });
 });
@@ -275,6 +395,13 @@ describe("State Transitions", () => {
 describe("Error Handling", () => {
   it("在庫不足 → 409 insufficient_stock", () => {
     // Derived from: output.errors[0]: { status: 409, code: insufficient_stock }
+
+    // Arrange
+    const payload = validPayload();
+    // TODO: set up mock/condition for insufficient stock
+
+    // Act & Assert
+    // TODO: call API with payload, expect 409 with code "insufficient_stock"
     expect.fail("RED: implement to verify insufficient stock error");
   });
 });
@@ -295,11 +422,24 @@ describe("Error Handling", () => {
 describe("Constraints", () => {
   it("EC-001: 冪等性キーが送信される", () => {
     // Derived from: constraints[EC-001]
+
+    // Arrange
+    const payload = validPayload();
+
+    // Act & Assert
+    // TODO: call external API with payload, verify idempotency key header is present
     expect.fail("RED: implement to verify idempotency key is sent");
   });
 
   it("EC-001: 同一 order_id → 同一キー", () => {
     // Derived from: constraints[EC-001]
+
+    // Arrange
+    const payload = validPayload();
+    const orderId = "order-123";
+
+    // Act & Assert
+    // TODO: call twice with same order_id, verify same idempotency key
     expect.fail("RED: implement to verify deterministic key generation");
   });
 });
@@ -316,6 +456,12 @@ describe("Constraints", () => {
 describe("Error Handling", () => {
   it("card_error → ユーザーにメッセージを返す", () => {
     // Derived from: response.errors (type: card_error)
+
+    // Arrange
+    // TODO: set up mock to return card_error from external API
+
+    // Act & Assert
+    // TODO: call payment function, expect user-facing error message
     expect.fail("RED: implement to verify card_error handling");
   });
 });
@@ -328,6 +474,13 @@ describe("Error Handling", () => {
 ```typescript
 it("currency は常に 'jpy'", () => {
   // Derived from: request.body.currency (value: "jpy")
+
+  // Arrange
+  const payload = validPayload();
+  // currency should be auto-set regardless of input
+
+  // Act & Assert
+  // TODO: call API, verify request body contains currency: "jpy"
   expect.fail("RED: implement to verify currency is always jpy");
 });
 ```
@@ -365,12 +518,25 @@ it("currency は常に 'jpy'", () => {
 describe("Processing Rules", () => {
   it("PR-001: 既存レコードは UPDATE、新規は INSERT", () => {
     // Derived from: processing_rules[PR-001]
+
+    // Arrange
+    const existingRecord = { product_id: "P1", name: "Existing" };
+    const newRecord = { product_id: "P999", name: "New" };
+
+    // Act & Assert
+    // TODO: process file with both records, verify UPDATE/INSERT behavior
     expect.fail("RED: implement to verify upsert behavior");
   });
 
   it("PR-003: price=0 の場合 status が inactive に強制される", () => {
     // Derived from: processing_rules[PR-003]
     // Note: constraint collision - user may set status=active but PR-003 overrides
+
+    // Arrange
+    const record = { product_id: "P1", price: 0, status: "active" };
+
+    // Act & Assert
+    // TODO: process file, verify record.status is forced to "inactive"
     expect.fail("RED: implement to verify price=0 forces inactive");
   });
 });
@@ -383,11 +549,23 @@ describe("Processing Rules", () => {
 ```typescript
 it("正常処理: result に total_rows, success_rows が含まれる", () => {
   // Derived from: result.success
+
+  // Arrange
+  const csvContent = validCsvContent();  // 正常なCSVデータ
+
+  // Act & Assert
+  // TODO: process CSV, verify result has total_rows and success_rows
   expect.fail("RED: implement to verify success result structure");
 });
 
 it("エラー処理: result に failed_rows と errors が含まれる", () => {
   // Derived from: result.error
+
+  // Arrange
+  const csvContent = invalidCsvContent();  // 不正な行を含むCSVデータ
+
+  // Act & Assert
+  // TODO: process CSV, verify result has failed_rows and errors array
   expect.fail("RED: implement to verify error result structure");
 });
 ```
@@ -442,7 +620,7 @@ import { parse } from "yaml";
 import { resolve } from "path";
 
 export function loadContract(relativePath: string) {
-  const root = resolve(__dirname, "../../.knowledge/contracts");
+  const root = resolve(__dirname, "../../.blueprint/contracts");
   const content = readFileSync(resolve(root, relativePath), "utf-8");
   return parse(content);
 }
@@ -527,8 +705,13 @@ describe("CON-{name}: Level 2 Implementation Tests")
 ```typescript
 import { describe, it, expect } from "vitest";
 
-// RED stub
-expect.fail("RED: implement to verify ...");
+// RED stub（AAA 骨格付き）
+it("テスト名", () => {
+  // Arrange
+  const payload = validPayload();
+  // Act & Assert
+  expect.fail("RED: implement to verify ...");
+});
 ```
 
 ### Jest（TypeScript/JavaScript）
@@ -546,7 +729,7 @@ import pytest
 import yaml
 
 def load_contract(relative_path: str) -> dict:
-    with open(f".knowledge/contracts/{relative_path}") as f:
+    with open(f".blueprint/contracts/{relative_path}") as f:
         return yaml.safe_load(f)
 
 class TestOrderCreateLevel1:

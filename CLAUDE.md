@@ -6,8 +6,8 @@
 ## v5.0 の主な変更点（Knowledge Graph + Contract-first）
 
 - **v5 ワークフロー**: `/spec` → `/test-from-contract` → 実装 → `/generate-docs`
-- **core/v5/ 追加**: knowledge-structure, contract-schema, spec, generate-docs 仕様
-- **`.knowledge/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
+- **core/v5/ 追加**: blueprint-structure, contract-schema, spec, generate-docs 仕様
+- **`.blueprint/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
 - **Contract YAML**: 3 タイプ (api/external/file) の機械可読 I/O 境界仕様
 - **設計書はコードから後追い生成**: `/generate-docs` でコード → docs/ (v4 互換出力)
 - **v4 との共存**: core/v5/ は core/phases/ と並列。v4 スキルは変更なし
@@ -35,7 +35,7 @@
 blueprint-plugin/
 ├── core/                        # ★ 統一仕様層（Platform 非依存、Single Source of Truth）
 │   ├── v5/                      #   v5 仕様（Contract-first ワークフロー）
-│   │   ├── knowledge-structure.md # .knowledge/ 構造 + v5 ID 体系
+│   │   ├── blueprint-structure.md # .blueprint/ 構造 + v5 ID 体系
 │   │   ├── contract-schema.md   #   Contract YAML スキーマ（3 types）
 │   │   ├── spec.md              #   /spec ワークフロー
 │   │   ├── generate-docs.md     #   /generate-docs ワークフロー

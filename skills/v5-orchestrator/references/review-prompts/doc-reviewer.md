@@ -7,7 +7,7 @@ v5 パイプライン Stage 4 後の Doc Review Gate で使用するレビュー
 
 各エージェントに以下を渡す:
 - `docs/` 配下の全設計書ファイルパスリスト
-- `.knowledge/contracts/` の Contract YAML（トレーサビリティ検証用）
+- `.blueprint/contracts/` の Contract YAML（トレーサビリティ検証用）
 - `tests/contracts/` のテストファイル（chain 検証用）
 - `core/output-structure.md`（必須ファイル一覧参照）
 - `core/review-criteria.md`（5 段階レビュー基準参照）
@@ -28,6 +28,8 @@ summary:
   p1: 0
   p2: 0
 ```
+
+> **Note**: REVISE サイクルで severity を変更する場合は `core/review-criteria.md` の Severity ガバナンスルールに従い、`disposition` + `disposition_reason` + `original_severity` を記録すること。
 
 ---
 

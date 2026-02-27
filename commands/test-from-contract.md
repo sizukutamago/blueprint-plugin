@@ -15,7 +15,7 @@ Contract YAML から TDD テストコードを自動生成する。
 
 ## ワークフロー
 
-1. **コンテキスト読み込み** - `.knowledge/contracts/` スキャン、Contract 一覧化
+1. **コンテキスト読み込み** - `.blueprint/contracts/` スキャン、Contract 一覧化
 2. **Contract 選択** - テスト生成対象の選択 + ユーザー承認
 3. **テスト環境確認** - フレームワーク自動検出 + 出力先確認
 4. **Level 1 テスト生成** - 構造検証テスト（即 GREEN）
@@ -30,7 +30,7 @@ Contract YAML から TDD テストコードを自動生成する。
 
 ## 前提
 
-- `/spec` で Contract が `.knowledge/contracts/` に定義済みであること
+- `/spec` で Contract が `.blueprint/contracts/` に定義済みであること
 
 ## 次のステップ
 

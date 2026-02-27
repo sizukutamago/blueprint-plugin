@@ -14,29 +14,29 @@ core_ref: core/v5/spec.md
 
 本スキルのワークフローは `core/v5/spec.md` に定義。
 Contract YAML のスキーマは `core/v5/contract-schema.md` を参照。
-`.knowledge/` の構造規約は `core/v5/knowledge-structure.md` を参照。
+`.blueprint/` の構造規約は `core/v5/blueprint-structure.md` を参照。
 
 ## 前提条件
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| Git リポジトリ | ○ | `.knowledge/` をプロジェクトルートに配置するため |
+| Git リポジトリ | ○ | `.blueprint/` をプロジェクトルートに配置するため |
 | 対象ドメインの基本知識 | ○ | ユーザーがビジネスルールを判断できること |
 
 ## 出力ファイル
 
 | ファイル | 説明 |
 |---------|------|
-| `.knowledge/contracts/{type}/{name}.contract.yaml` | Contract YAML（メイン出力） |
-| `.knowledge/concepts/{name}.md` | ドメイン概念メモ（副産物） |
-| `.knowledge/decisions/DEC-{NNN}-{name}.md` | 設計判断記録（副産物） |
+| `.blueprint/contracts/{type}/{name}.contract.yaml` | Contract YAML（メイン出力） |
+| `.blueprint/concepts/{name}.md` | ドメイン概念メモ（副産物） |
+| `.blueprint/decisions/DEC-{NNN}-{name}.md` | 設計判断記録（副産物） |
 
 ## ツール
 
 | ツール | 用途 |
 |--------|------|
 | Bash | git root 検出 (`git rev-parse --show-toplevel`) |
-| Glob | `.knowledge/` 配下の既存ファイル一覧取得 |
+| Glob | `.blueprint/` 配下の既存ファイル一覧取得 |
 | Read | 既存 Contract/Concept/Decision の読み込み |
 | Write | Contract YAML、Concept、Decision の書き出し |
 
@@ -52,14 +52,14 @@ git rev-parse --show-toplevel
 ```
 
 ```
-# 既存 .knowledge/ のスキャン
-Glob(".knowledge/**/*.yaml")
-Glob(".knowledge/**/*.md")
+# 既存 .blueprint/ のスキャン
+Glob(".blueprint/**/*.yaml")
+Glob(".blueprint/**/*.md")
 ```
 
-`.knowledge/` が存在しない場合は、ディレクトリ構造を初期化:
+`.blueprint/` が存在しない場合は、ディレクトリ構造を初期化:
 ```
-.knowledge/
+.blueprint/
 ├── contracts/
 │   ├── api/
 │   ├── external/
@@ -91,7 +91,7 @@ Glob(".knowledge/**/*.md")
 
 ```
 ## 生成ファイル
-- .knowledge/contracts/api/{name}.contract.yaml (CON-{name} v1.0.0)
+- .blueprint/contracts/api/{name}.contract.yaml (CON-{name} v1.0.0)
 - ...
 
 ## 次のステップ

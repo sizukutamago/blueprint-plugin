@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Create I/O boundary contracts through brainstorming. Generates Contract YAML files in .knowledge/ directory.
+description: Create I/O boundary contracts through brainstorming. Generates Contract YAML files in .blueprint/ directory.
 ---
 
 # Spec Command
@@ -15,7 +15,7 @@ description: Create I/O boundary contracts through brainstorming. Generates Cont
 
 ## ワークフロー
 
-1. **コンテキスト読み込み** - `.knowledge/` の初期化 or 既存読み込み
+1. **コンテキスト読み込み** - `.blueprint/` の初期化 or 既存読み込み
 2. **スコープ確認** - 何を作る/変更するか
 3. **ブレインストーミング** - ビジネスルール深掘り（最大 10 質問）
 4. **Contract 一覧合意** - タイプ判定 + 依存関係 ★承認必須★
@@ -25,9 +25,9 @@ description: Create I/O boundary contracts through brainstorming. Generates Cont
 
 ## 出力先
 
-- `.knowledge/contracts/` — Contract YAML
-- `.knowledge/concepts/` — ドメイン概念メモ
-- `.knowledge/decisions/` — 設計判断記録
+- `.blueprint/contracts/` — Contract YAML
+- `.blueprint/concepts/` — ドメイン概念メモ
+- `.blueprint/decisions/` — 設計判断記録
 
 ## 次のステップ
 

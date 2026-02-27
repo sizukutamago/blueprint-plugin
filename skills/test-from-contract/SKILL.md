@@ -1,6 +1,6 @@
 ---
 name: test-from-contract
-description: Generate TDD tests from Contract YAML files. Use when the user wants to "generate tests from contracts", "create TDD tests", "test from contract", "generate test stubs", "create Level 1 and Level 2 tests", "derive tests from spec", "write contract tests", or "TDD from contracts". Reads .knowledge/contracts/ and produces Level 1 (structure validation) and Level 2 (implementation stubs) test files.
+description: Generate TDD tests from Contract YAML files. Use when the user wants to "generate tests from contracts", "create TDD tests", "test from contract", "generate test stubs", "create Level 1 and Level 2 tests", "derive tests from spec", "write contract tests", or "TDD from contracts". Reads .blueprint/contracts/ and produces Level 1 (structure validation) and Level 2 (implementation stubs) test files.
 version: 1.0.0
 core_ref: core/v5/test-from-contract.md
 ---
@@ -20,7 +20,7 @@ Contract スキーマは `core/v5/contract-schema.md` を参照。
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| `.knowledge/contracts/` | ○ | `/spec` で生成済みの Contract YAML が最低 1 つ必要 |
+| `.blueprint/contracts/` | ○ | `/spec` で生成済みの Contract YAML が最低 1 つ必要 |
 | Git リポジトリ | ○ | tests/ をプロジェクトルートに配置 |
 | テストフレームワーク | △ | 未検出時はユーザーに確認（デフォルト: Vitest） |
 
@@ -54,7 +54,7 @@ git rev-parse --show-toplevel
 
 ```
 # Contract ファイルをスキャン
-Glob(".knowledge/contracts/**/*.contract.yaml")
+Glob(".blueprint/contracts/**/*.contract.yaml")
 ```
 
 各 Contract YAML を `Read()` して id, type, status, version を取得。
@@ -189,7 +189,7 @@ it("BR-001: サーバー側で金額再計算", () => {
 
 | エラー | 対応 |
 |--------|------|
-| `.knowledge/` なし | `/spec` の実行を案内 |
+| `.blueprint/` なし | `/spec` の実行を案内 |
 | Contract 0 件 | `/spec` で Contract を作成するよう案内 |
 | YAML パースエラー | エラー報告 + 該当 Contract スキップ + 他の Contract は続行 |
 | フレームワーク未検出 | ユーザーに確認、デフォルト Vitest を提案 |

@@ -34,18 +34,18 @@
 
 ### 境界コンテキスト推定
 
-`.knowledge/contracts/` のタイプ別ディレクトリから推定:
+`.blueprint/contracts/` のタイプ別ディレクトリから推定:
 - `api/` → 公開 API 境界
 - `external/` → 外部連携境界
 - `files/` → バッチ/ファイル境界
 
 ## 03_architecture/adr.md
 
-`.knowledge/decisions/` のファイルを集約:
+`.blueprint/decisions/` のファイルを集約:
 
 ```
 抽出手順:
-1. .knowledge/decisions/*.md を全読み込み
+1. .blueprint/decisions/*.md を全読み込み
 2. frontmatter の id, status, date を抽出
 3. 本文の Context/Decision/Reason/Alternatives/Consequences を構造化
 4. ADR 番号順にソート
@@ -91,7 +91,7 @@
 
 ```
 照合手順:
-1. .knowledge/contracts/api/*.contract.yaml の path を収集
+1. .blueprint/contracts/api/*.contract.yaml の path を収集
 2. コードのルート定義と照合
 3. 一致 → Contract の仕様を設計書に反映
 4. 不一致 → 不整合として報告
@@ -99,7 +99,7 @@
 
 ## 05_api_design/integration.md
 
-`.knowledge/contracts/external/*.contract.yaml` を集約 + コードの外部 API クライアントを分析。
+`.blueprint/contracts/external/*.contract.yaml` を集約 + コードの外部 API クライアントを分析。
 
 ## 06_screen_design/
 
@@ -130,7 +130,7 @@
 | vitest.config.ts / jest.config.ts | テスト設定 | high |
 | tests/ ディレクトリ構造 | テスト構成（unit/integration/e2e） | high |
 | テストファイル一覧 | テストケース数、カバレッジ | high |
-| .knowledge/contracts/ | Contract ベースのテスト期待値 | high |
+| .blueprint/contracts/ | Contract ベースのテスト期待値 | high |
 
 ## 07_implementation/traceability_matrix.md
 

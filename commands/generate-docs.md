@@ -28,7 +28,7 @@ description: Generate design documents from existing code. Analyzes source code 
 ## 前提
 
 - `/spec` で Contract が定義済みだとトレーサビリティ検証が有効
-- `.knowledge/` がなくても設計書生成は可能（トレーサビリティはスキップ）
+- `.blueprint/` がなくても設計書生成は可能（トレーサビリティはスキップ）
 
 ## 関連
 

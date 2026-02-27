@@ -12,7 +12,7 @@ alwaysApply: false
 
 - `@core/v5/generate-docs.md` — ワークフロー定義（5 ステップ）
 - `@core/v5/output-structure-v5.md` — 出力構造仕様
-- `@core/v5/knowledge-structure.md` — .knowledge/ 構造（トレーサビリティ用）
+- `@core/v5/blueprint-structure.md` — .blueprint/ 構造（トレーサビリティ用）
 
 抽出ルール:
 - `@skills/generate-docs/references/extraction-rules.md`
@@ -27,7 +27,7 @@ alwaysApply: false
 プロジェクトルートで tech stack を推定:
 - package.json / go.mod / Cargo.toml → 依存関係
 - ディレクトリ構造 → レイヤー構成
-- .knowledge/ → Contract / Concept / Decision
+- .blueprint/ → Contract / Concept / Decision
 
 ### Step 2: 自動抽出
 

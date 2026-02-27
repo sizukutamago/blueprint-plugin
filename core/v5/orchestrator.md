@@ -14,6 +14,7 @@ Stage 1: Spec（対話的）
 Stage 2: Test Generation（自動）
     → Test Review Gate（3 並列レビュー）
 Stage 3: Implementation Pause（ユーザーが実装）
+    → Drift Gate（3 並列レビュー：Contract↔実装の乖離検出）
 Stage 4: Doc Generation（自動）
     → Doc Review Gate（3 並列レビュー）
 ```
@@ -22,10 +23,11 @@ Stage 4: Doc Generation（自動）
 
 | ステージ | 入力 | 出力 |
 |---------|------|------|
-| Stage 1 | ユーザーのビジネス知識 | `.knowledge/contracts/`, `.knowledge/concepts/`, `.knowledge/decisions/` |
-| Stage 2 | `.knowledge/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/` |
+| Stage 1 | ユーザーのビジネス知識 | `.blueprint/contracts/`, `.blueprint/concepts/`, `.blueprint/decisions/` |
+| Stage 2 | `.blueprint/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/` |
 | Stage 3 | `tests/contracts/level2/`（RED スタブ） | 実装コード + GREEN テスト |
-| Stage 4 | ソースコード + `.knowledge/` | `docs/` |
+| Drift Gate | `.blueprint/contracts/` + ソースコード | findings（Contract↔実装の乖離リスト） |
+| Stage 4 | ソースコード + `.blueprint/` | `docs/` |
 
 ## ステージ詳細
 
@@ -35,7 +37,7 @@ Stage 4: Doc Generation（自動）
 
 ```
 実行内容:
-1. .knowledge/ コンテキスト読み込み
+1. .blueprint/ コンテキスト読み込み
 2. スコープ確認（ユーザー対話）
 3. ブレインストーミング（ユーザー対話、最大 10 質問）
 4. Contract 一覧合意（ユーザー承認必須）
@@ -45,7 +47,7 @@ Stage 4: Doc Generation（自動）
 ```
 
 **Smart Skip 条件**:
-- `.knowledge/contracts/` に status: active | draft の Contract が 1 つ以上存在
+- `.blueprint/contracts/` に status: active | draft の Contract が 1 つ以上存在
 - スキップ検出時: ユーザーに確認（「既存 Contract を使いますか？ 新機能を追加しますか？」）
   - 既存を使う → Stage 1 をスキップし、Contract Review Gate へ直接進む
   - 新機能追加 → Stage 1 を実行（既存 Contract も保持）
@@ -78,7 +80,7 @@ Stage 4: Doc Generation（自動）
 
 ```
 実行内容:
-1. パイプライン状態を .knowledge/pipeline-state.yaml に保存
+1. パイプライン状態を .blueprint/pipeline-state.yaml に保存
 2. ユーザーに次のステップを案内:
    - Level 1 テストを実行して全 GREEN を確認
    - Level 2 の RED スタブを 1 つずつ実装して GREEN にする
@@ -87,16 +89,17 @@ Stage 4: Doc Generation（自動）
 ```
 
 **再開フロー**（`--resume`）:
-1. `.knowledge/pipeline-state.yaml` を読み込み
-2. `current_stage` を確認（`implementation_pause` 以外でも再開可能、下記参照）
+1. `.blueprint/pipeline-state.yaml` を読み込み
+2. 各ステージの `status` を確認（下記参照）
 3. テスト GREEN チェック:
    - Level 2 テストを実行し、全テスト PASS であることを確認
    - FAIL が残っている場合: ユーザーに警告し、続行するか確認
    - テストフレームワークが検出できない場合: チェックをスキップして続行
-4. Stage 4 から実行を再開
+4. Drift Gate を実行（Contract↔実装の乖離検出）
+5. Stage 4 から実行を再開
 
 **一般再開**（任意ステージから）:
-- `current_stage` が `spec`/`test_generation`/`doc_generation` の場合も再開可能
+- 各ステージの `status` が `pending`/`in_progress` の場合、そのステージから再開可能
 - 該当ステージの最初から再実行する（途中再開は非対応）
 
 ### Stage 4: Doc Generation（自動）
@@ -105,7 +108,7 @@ Stage 4: Doc Generation（自動）
 
 ```
 実行内容:
-1. プロジェクト分析（tech stack 推定、.knowledge/ 読み込み）
+1. プロジェクト分析（tech stack 推定、.blueprint/ 読み込み）
 2. 自動抽出フェーズ（グループ A → B）
 3. 補足入力フェーズ（グループ C、ユーザー対話）
 4. トレーサビリティ検証
@@ -144,19 +147,27 @@ Stage 4: Doc Generation（自動）
 - 統合時は最も高い severity を採用（P0 > P1 > P2）
 - 複数エージェントの message は連結して保持
 
+**Severity ガバナンス**（`core/review-criteria.md` 参照）:
+- P1→P2 格下げ: 正当化理由 + 記録義務 + 影響範囲確認が必須
+- False positive: `disposition: false_positive` として記録（削除禁止）
+- Gate 判定時、`disposition: false_positive | wont_fix` の findings はカウントから除外
+
 ### findings 出力フォーマット
 
 各レビューエージェントが返すフォーマット:
 
 ```yaml
 reviewer: "Schema Validator"  # レビューエージェント名
-gate: "contract"              # contract | test | doc
+gate: "contract"              # contract | test | drift | doc
 findings:
   - severity: P1
     target: "CON-order-create"
     field: "input.body.items.quantity"
     message: "max 制約が未定義。テスト導出時に境界値テストが生成できない"
     suggestion: "max: 99 等の上限を追加"
+    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition_reason: null   # disposition が null でない場合は必須
+    original_severity: null    # downgraded の場合、元の severity を記録
   - severity: P2
     target: "CON-order-create"
     field: "links.implements"
@@ -209,6 +220,22 @@ REVISE 判定
 | Constraint Collision Checker | 制約干渉 | 境界値テスト（min-1, max+1）が他の制約を侵していないか、テストデータが valid base payload から 1 フィールドだけ変更しているか、干渉回避コメントが記載されているか |
 | Traceability Auditor | 追跡可能性 | 全テストファイルに `@generated`/`@contract`/`@implements` コメントがあるか、Level 2 の全 it ブロックに `Derived from:` コメントがあるか、Level 1 が全 Contract をカバーしているか |
 
+### Drift Gate（Stage 3 再開時、Stage 4 前）
+
+Contract YAML に宣言された制約と実装コードの乖離を検出する。
+テスト GREEN チェック（動作レベル）とは異なり、コード上の宣言が Contract と一致しているかを静的に検証する。
+
+| エージェント | 観点 | チェック項目 |
+|-------------|------|------------|
+| Schema Drift Checker | バリデーション層 | Zod/Joi 等のスキーマ定義が Contract の type/required/min/max/pattern/enum と一致しているか、固定値フィールド（value: "xxx"）がハードコードで一致しているか、missing constraint（Contract にあるがスキーマにない制約）がないか |
+| Route & Handler Checker | API/エンドポイント層 | api Contract の method/path がルート定義と一致しているか、external Contract の endpoint/provider がクライアント設定と一致しているか、error 定義の status/code が実装のエラーレスポンスと一致しているか |
+| Business Logic Checker | ビジネスルール層 | business_rules の各 BR-xxx に対応する実装ロジックが存在するか、state_transition の遷移ルールが実装に反映されているか、constraints の各 EC-xxx（冪等性、タイムアウト等）が実装されているか |
+
+**Drift Gate の特徴**:
+- テスト実行（GREEN チェック）が「動作の正しさ」を検証するのに対し、Drift Gate は「宣言の一致」を検証する
+- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Drift Gate が P1 を報告
+- Gate 判定は他の Review Gate と同じプロトコル（P0=0 かつ P1≤1 → PASS）
+
 ### Doc Review Gate（Stage 4 後）
 
 | エージェント | 観点 | チェック項目 |
@@ -222,43 +249,82 @@ REVISE 判定
 ### 状態スキーマ
 
 ```yaml
-# .knowledge/pipeline-state.yaml
-pipeline:
-  version: "1.0.0"
-  started_at: "YYYY-MM-DDTHH:MM:SSZ"
-  current_stage: spec | test_generation | implementation_pause | doc_generation | completed
-  options:
-    force: false          # --force で全ステージ強制実行
-  stages:
-    spec:
-      status: pending | in_progress | completed | skipped
-      completed_at: null
-      contracts_generated: []    # CON-xxx リスト
-      review_result: null        # PASS | REVISE
-      review_cycles: 0           # REVISE サイクル数
-    test_generation:
-      status: pending
-      completed_at: null
-      level1_count: 0
-      level2_count: 0
-      review_result: null
-      review_cycles: 0
-    implementation:
-      status: pending
-      started_at: null
-    doc_generation:
-      status: pending
-      completed_at: null
-      files_generated: 0
-      review_result: null
-      review_cycles: 0
+# .blueprint/pipeline-state.yaml
+# v5 Pipeline State — Auto-generated, do not edit manually
+pipeline_version: "1.0.0"
+project_root: "/path/to/project"
+started_at: "YYYY-MM-DDTHH:MM:SSZ"
+paused_at: null                    # Stage 3 一時停止時のタイムスタンプ
+
+stages:
+  stage_1_spec:
+    status: pending | in_progress | completed | skipped
+    reason: null                   # skipped 時の理由
+    contracts:                     # 生成/再利用した Contract リスト
+      - id: "CON-xxx"
+        path: ".blueprint/contracts/type/name.contract.yaml"
+        version: "1.0.0"
+
+  contract_review_gate:            # Stage 1 後のレビューゲート結果
+    status: pending | passed | failed
+    cycles: 0                      # REVISE サイクル数
+    final_counts: { p0: 0, p1: 0, p2: 0 }
+    notes: null
+
+  stage_2_test:
+    status: pending | in_progress | completed | skipped
+    test_files:
+      level1: []                   # テストファイルパスリスト
+      level2: []
+    helpers: []                    # ヘルパーファイルパスリスト
+    counts:
+      level1: { total: 0, green: 0, red: 0 }
+      level2: { total: 0, green: 0, red: 0 }
+      total: 0
+
+  test_review_gate:                # Stage 2 後のレビューゲート結果
+    status: pending | passed | failed
+    cycles: 0
+    final_counts: { p0: 0, p1: 0, p2: 0 }
+    notes: null
+
+  stage_3_pause:
+    status: pending | completed
+    message: null                  # 一時停止メッセージ
+
+  drift_review_gate:               # Stage 3 再開時（Stage 4 前）のドリフト検出結果
+    status: pending | passed | failed
+    cycles: 0
+    final_counts: { p0: 0, p1: 0, p2: 0 }
+    drift_items: []                # 検出されたドリフト詳細リスト
+    notes: null
+
+  stage_4_docs:
+    status: pending | in_progress | completed | skipped
+    generated_files: 0
+    skipped_files: 0
+    confidence: { high: 0, medium: 0, low: 0 }
+    todos: 0
+
+  doc_review_gate:                 # Stage 4 後のレビューゲート結果
+    status: pending | passed | failed
+    cycles: 0
+    final_counts: { p0: 0, p1: 0, p2: 0 }
+    notes: null
+
+completed_at: null                 # パイプライン完了時のタイムスタンプ
+final_status: pending | completed  # パイプライン最終ステータス
 ```
+
+**配置場所**: `.blueprint/pipeline-state.yaml`
+
+**設計判断**: Review Gate の結果をステージと同列に記録することで、ゲート判定の監査証跡が残る。`final_status` で完了判定を行い、`--resume` 時は各ステージの status から再開地点を決定する。
 
 ### Smart Skip ルール
 
 | ステージ | スキップ条件 | --force 時 |
 |---------|------------|-----------|
-| Stage 1 | `.knowledge/contracts/` に active/draft Contract ≥1 | 強制実行 |
+| Stage 1 | `.blueprint/contracts/` に active/draft Contract ≥1 | 強制実行 |
 | Stage 2 | `tests/contracts/` に `@generated` マーカー付きテスト ≥1 | 強制実行 |
 | Stage 3 | スキップ不可（常に一時停止） | スキップ不可 |
 | Stage 4 | `docs/` に設計書ファイル ≥1（`03_architecture/` 等） | 強制実行 |
@@ -268,26 +334,30 @@ pipeline:
 ### --resume フロー
 
 ```
-1. .knowledge/pipeline-state.yaml を読み込み
-2. current_stage を確認:
-   - implementation_pause → テスト GREEN チェック → Stage 4 から再開
-   - spec → Stage 1 から再開
-   - test_generation → Stage 2 から再開
-   - doc_generation → Stage 4 から再開
-   - completed → 「パイプラインは完了済み。--force で再実行してください」
-   - pipeline-state.yaml なし → エラー（/v5 で最初から実行するよう案内）
+1. .blueprint/pipeline-state.yaml を読み込み
+2. final_status と各ステージの status を確認:
+   - final_status: completed → 「パイプラインは完了済み。--force で再実行してください」
+   - stage_3_pause.status: completed かつ drift_review_gate.status: pending → Drift Gate から再開
+   - drift_review_gate.status: passed かつ stage_4_docs.status: pending → Stage 4 から再開
+   - stage_2_test.status: completed/skipped かつ stage_3_pause.status: pending → Stage 3 から再開
+   - stage_1_spec.status: completed/skipped かつ stage_2_test.status: pending → Stage 2 から再開
+   - stage_1_spec.status: pending/in_progress → Stage 1 から再開
+   - .blueprint/pipeline-state.yaml なし → エラー（/v5 で最初から実行するよう案内）
 3. 該当ステージから実行を再開
 ```
 
 **implementation_pause からの再開時**:
-- Level 2 テストを実行し、全テスト PASS であることを確認
-- FAIL が残っている場合: ユーザーに警告し、続行するか確認
-- テストフレームワークが検出できない場合: チェックをスキップして続行
+1. Level 2 テストを実行し、全テスト PASS であることを確認
+   - FAIL が残っている場合: ユーザーに警告し、続行するか確認
+   - テストフレームワークが検出できない場合: チェックをスキップして続行
+2. Drift Gate を実行（Contract↔実装の乖離検出）
+   - PASS → Stage 4 へ
+   - REVISE → ユーザーに乖離リストを提示、修正後に再実行
 
 ### --force フロー
 
 ```
-1. pipeline-state.yaml が存在する場合は上書き
+1. .blueprint/pipeline-state.yaml が存在する場合は上書き
 2. 全ステージを Stage 1 から強制実行（Smart Skip を無視）
 3. レビューゲートも通常通り実行
 ```
@@ -320,10 +390,11 @@ pipeline:
 |------|----|----|----|----- |---------|
 | Contract | 0 | 0 | 2 | PASS | 1 |
 | Test | 0 | 1 | 3 | PASS | 1 |
+| Drift | 0 | 1 | 2 | PASS | 1 |
 | Doc | 0 | 0 | 1 | PASS | 1 |
 
 ### 生成ファイル
-- .knowledge/contracts/ (3 files)
+- .blueprint/contracts/ (3 files)
 - tests/contracts/ (6 files)
 - docs/ (15 files)
 
@@ -337,11 +408,11 @@ pipeline:
 | エラー | 対応 |
 |--------|------|
 | git リポジトリでない | エラー報告、`git init` を案内 |
-| /spec 中にユーザーが中断 | pipeline-state.yaml に current_stage: spec で保存、次回 /v5 で再開可能 |
+| /spec 中にユーザーが中断 | .blueprint/pipeline-state.yaml に stage_1_spec.status: in_progress で保存、次回 /v5 で再開可能 |
 | Review Gate で REVISE 2 回超過 | ユーザーに介入要請、findings リストを提示 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |
-| --resume で pipeline-state.yaml なし | エラー報告、`/v5` で最初から実行するよう案内 |
-| --resume で current_stage が completed | 「パイプラインは完了済み。--force で再実行してください」と案内 |
+| --resume で .blueprint/pipeline-state.yaml なし | エラー報告、`/v5` で最初から実行するよう案内 |
+| --resume で final_status が completed | 「パイプラインは完了済み。--force で再実行してください」と案内 |
 | Stage 4 で docs/ が既に存在 | `@generated` マーカー付きは上書き、なしはユーザー確認 |
 | 部分的なステージ失敗 | 成功分は保持、失敗分を報告して続行 |
 
@@ -352,6 +423,6 @@ pipeline:
 | 直列パイプライン | ステージ間は直列実行。各ステージの出力が次の入力になる |
 | Review Gate 必須 | 全ステージ後にレビュー。スキップ時も既存成果物をレビュー |
 | 最小介入 | Stage 1 は対話的。Stage 2/4 は準自動（フレームワーク未検出時や Smart Skip 時のみユーザー確認） |
-| 状態永続化 | pipeline-state.yaml でパイプラインの状態を保持し、再開可能にする |
+| 状態永続化 | .blueprint/pipeline-state.yaml でパイプラインの状態を保持し、再開可能にする |
 | 冪等実行 | --force で何度でも再実行可能。`@generated` マーカー付きファイルは上書き |
 | 段階的品質向上 | Review Gate で REVISE → 修正 → 再レビューのサイクルで品質を上げる |
