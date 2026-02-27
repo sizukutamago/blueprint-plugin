@@ -115,10 +115,17 @@ findings:
     field: "input.body.quantity.max"
     message: "max 制約が未定義"
     suggestion: "max: 99 等の上限を追加"
-    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition: null          # null | false_positive | wont_fix | downgraded | deferred
     disposition_reason: null   # disposition が null でない場合は必須
+    deferred_to: null          # deferred の場合、繰越先ステージ（例: "stage_3"）
     original_severity: null    # downgraded の場合、元の severity を記録
 ```
+
+**disposition 値の説明**:
+- `false_positive`: 誤検出。Gate カウントから除外
+- `wont_fix`: 意図的に対応しない。Gate カウントから除外
+- `downgraded`: 重大度を下げた（例: P1→P2）。`original_severity` 必須
+- `deferred`: 別ステージに繰り越し（例: テスト P1 だが実装側の問題→Stage 3 で対応）。`deferred_to` 必須。Gate カウントから除外
 
 ## Gate 判定基準
 

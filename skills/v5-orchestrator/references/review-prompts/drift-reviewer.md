@@ -29,7 +29,7 @@ findings:
     impl_file: "src/xxx.ts:42"
     message: "乖離の説明"
     suggestion: "修正提案"
-    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition: null          # null | false_positive | wont_fix | downgraded | deferred
     disposition_reason: null   # disposition が null でない場合は必須
     original_severity: null    # downgraded の場合、元の severity を記録
 summary:

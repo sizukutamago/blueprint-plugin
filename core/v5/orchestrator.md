@@ -138,8 +138,8 @@ Stage 4: Doc Generation（自動）
    - PASS: P0=0 かつ P1≤1
    - REVISE: P0≥1 または P1≥2
 6. PASS → 次ステージへ
-7. REVISE → 該当ステージを修正して再レビュー（最大 2 サイクル）
-8. 2 サイクル超過 → ユーザーに介入要請
+7. REVISE → 該当ステージを修正して再レビュー（最大 3 サイクル、`core/review-criteria.md` と統一）
+8. 3 サイクル超過 → ユーザーに介入要請
 ```
 
 **重複正規化ルール**:
@@ -151,6 +151,7 @@ Stage 4: Doc Generation（自動）
 - P1→P2 格下げ: 正当化理由 + 記録義務 + 影響範囲確認が必須
 - False positive: `disposition: false_positive` として記録（削除禁止）
 - Gate 判定時、`disposition: false_positive | wont_fix` の findings はカウントから除外
+- **繰越指摘**: テストレビューの findings が実装側の問題の場合、`disposition: deferred` + `deferred_to: "stage_3"` として記録。Gate 判定のカウントからは除外（false_positive/wont_fix と同様）。pipeline-state.yaml の notes に繰越理由を記録すること。
 
 ### findings 出力フォーマット
 
@@ -165,8 +166,9 @@ findings:
     field: "input.body.items.quantity"
     message: "max 制約が未定義。テスト導出時に境界値テストが生成できない"
     suggestion: "max: 99 等の上限を追加"
-    disposition: null          # null | false_positive | wont_fix | downgraded
+    disposition: null          # null | false_positive | wont_fix | downgraded | deferred
     disposition_reason: null   # disposition が null でない場合は必須
+    deferred_to: null          # deferred の場合、繰越先ステージ（例: "stage_3"）
     original_severity: null    # downgraded の場合、元の severity を記録
   - severity: P2
     target: "CON-order-create"

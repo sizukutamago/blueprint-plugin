@@ -223,7 +223,7 @@ npx vitest tests/contracts/ --reporter=json 2>/dev/null
 # または: npx jest tests/contracts/ --json 2>/dev/null
 ```
 
-- 全 PASS → Stage 4 へ
+- 全 PASS → Step 7.5 (Drift Gate) へ
 - FAIL あり → ユーザーに警告:
 
 ```
@@ -237,7 +237,12 @@ N / M テストが FAIL しています:
 （未実装テストがあると、生成されるドキュメントに TODO が増えます）
 ```
 
-### Step 7.5: Drift Gate（Contract↔実装の乖離検出）
+### Step 7.5: Drift Gate（Contract↔実装の乖離検出）— 必須
+
+**重要**: テスト GREEN チェック（Step 7）は「動作の正しさ」を確認するだけ。
+Drift Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」を検証する。
+テストが GREEN でも、バリデーションスキーマに制約が欠落していればここで検出される。
+**テスト GREEN だけで Drift Gate をスキップしてはならない。**
 
 3 つの Task エージェントを**並列**起動:
 
@@ -251,8 +256,18 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の
 
 **Gate 判定**: Step 3 と同じプロトコル
 
-- PASS → Stage 4 へ
+- PASS → pipeline-state.yaml の `drift_review_gate` を更新して Stage 4 へ
 - REVISE → ユーザーに乖離リストを提示、修正後に再実行
+
+**pipeline-state.yaml 更新例（Drift Gate PASS 時）**:
+```yaml
+drift_review_gate:
+  status: passed
+  cycles: 1
+  final_counts: { p0: 0, p1: 0, p2: 2 }
+  drift_items: []
+  notes: "Schema/Route/Business 3-agent 検証完了"
+```
 
 ### Step 8: Stage 4 — Doc Generation 実行
 
