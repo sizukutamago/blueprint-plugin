@@ -30,17 +30,31 @@ alwaysApply: false
 └── decisions/
 ```
 
+### Step 2: スコープ確認 + config.yaml 生成
+
+ユーザーに対象機能を確認。`.blueprint/config.yaml` が存在しない場合:
+1. `package.json`, `tsconfig.json` 等からプロジェクトの技術構成を検出
+2. 検出結果をユーザーに提示して確認/修正
+3. `architecture.pattern` はユーザーに選択を求める（clean / layered / flat）
+4. `.blueprint/config.yaml` を書き出し
+
+詳細は `@core/spec.md` Step 2 と `@core/implement.md` の config.yaml スキーマを参照。
+
 ### Step 3: ブレインストーミング
 
 ユーザーと対話してビジネスルールを深掘り。最大 10 質問。
 質問の観点は `@core/spec.md` Step 3 を参照。
 
-### Step 5: Contract YAML 生成
+### Step 5: Contract YAML 生成 + implementation セクション
 
 Contract テンプレートを参照:
 - API: `@skills/spec/references/contract-templates/api.yaml`
 - External: `@skills/spec/references/contract-templates/external.yaml`
 - File: `@skills/spec/references/contract-templates/file.yaml`
+
+各 Contract の基本フィールド生成後、implementation セクション（data_sources + flow）を
+ユーザーと対話して決定する。詳細は `@core/spec.md` Step 5 と `@core/contract-schema.md` を参照。
+ユーザーが「スキップ」と回答した場合は省略可。
 
 ### ID 体系
 

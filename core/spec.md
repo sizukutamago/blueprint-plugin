@@ -35,6 +35,55 @@ Contract YAML をブレインストーミングから生成するワークフロ
 
 既存 Contract がある場合、関連する Contract を一覧で提示する。
 
+#### config.yaml 生成（初回のみ）
+
+`.blueprint/config.yaml` が存在しない場合、プロジェクトの技術スタックを検出・確認して生成する。
+既に存在する場合はスキップ。
+
+```
+検出ロジック:
+1. package.json, tsconfig.json, lock ファイル等からプロジェクトの技術構成を検出
+2. 検出結果をユーザーに提示して確認
+3. 未検出項目はユーザーに選択を求める
+4. architecture.pattern はユーザーに選択を求める（clean / layered / flat）
+```
+
+```
+ユーザーへの提示フォーマット:
+## プロジェクト設定 (.blueprint/config.yaml)
+
+| 項目 | 検出値 | 確認 |
+|------|--------|------|
+| language | typescript | ✓ 自動検出 |
+| runtime | node | ✓ 自動検出 |
+| framework | hono | ✓ 自動検出 |
+| orm | drizzle | ✓ 自動検出 |
+| validation | zod | ✓ 自動検出 |
+| test | vitest | ✓ 自動検出 |
+| architecture | — | ← ユーザー選択: clean / layered / flat |
+
+→ 変更がなければ Enter、修正がある項目を教えてください。
+```
+
+**検出方法の詳細**:
+
+| 検出対象 | 検出方法 |
+|---------|---------|
+| language | `tsconfig.json` の存在 → typescript、なければ javascript |
+| package_manager | `pnpm-lock.yaml` / `yarn.lock` / `package-lock.json` / `bun.lockb` |
+| framework | `package.json` の dependencies キーワード |
+| orm | `package.json` の dependencies + `prisma/schema.prisma` 等 |
+| validation | `package.json` の dependencies |
+| test | `package.json` の devDependencies |
+| lint | `biome.json` / `.eslintrc*` の存在 |
+| ci | `.github/workflows/` の存在 |
+
+スキーマの詳細は `implement.md` の config.yaml スキーマを参照。
+
+**greenfield の場合**（package.json もない場合）:
+- 全項目をユーザーに質問
+- デフォルト推奨: TypeScript + Hono + Zod + Vitest + pnpm + Clean Architecture
+
 ### Step 3: ブレインストーミング
 
 ユーザーと対話してビジネスルール、エッジケース、エラーパターンを深掘りする。
@@ -84,7 +133,8 @@ Contract YAML をブレインストーミングから生成するワークフロ
 2. ブレスト結果から各フィールドを埋める
 3. links の depends_on / impacts を設定
 4. business_rules / constraints / processing_rules を設定
-5. ファイルに書き出す
+5. implementation セクションを対話で決定（下記参照）
+6. ファイルに書き出す
 ```
 
 **配置先**:
@@ -93,6 +143,41 @@ Contract YAML をブレインストーミングから生成するワークフロ
 - `file` → `.blueprint/contracts/files/{name}.contract.yaml`
 
 **SemVer 初期値**: `1.0.0`（新規の場合）
+
+#### implementation セクション対話（オプション）
+
+各 Contract の基本フィールド（input/output/errors/business_rules）を埋めた後、
+実装に必要な内部設計情報（data_sources + flow）をユーザーと対話して決定する。
+
+> スキーマの詳細は `contract-schema.md` の「implementation セクション」を参照。
+
+```
+対話フロー（各 Contract ごと）:
+
+1. data_sources の特定:
+   「この Contract の business_rules を実行するために、
+     どのデータソースからデータを取得しますか？」
+   - 各 business_rule / processing_rule / constraint に対して:
+     - 「{rule の内容} を実行するために必要なデータは？」
+     - entity（取得元エンティティ）、field（フィールド名）を確認
+     - access 方法（db / api / cache / config）を確認
+     - 排他制御や結合条件などの notes を確認
+
+2. flow の特定:
+   「この Contract の処理フローを順番に教えてください」
+   - ユーザーの回答から step 番号と action を構造化
+   - 各ステップに対応する business_rule を紐付け
+   - 外部 Contract 呼び出し（calls）があればリンク
+   - トランザクション境界を確認:
+     「このステップ群はトランザクションで囲む必要がありますか？」
+
+3. ユーザー確認:
+   構造化した implementation セクションを提示して確認
+```
+
+**スキップ条件**:
+- ユーザーが「implementation は後で」「スキップ」と回答した場合
+- `/implement` で AI が推定するが、精度は下がる旨を告知
 
 ### Step 6: 副産物生成
 

@@ -27,6 +27,7 @@ Contract YAML のスキーマは `core/contract-schema.md` を参照。
 
 | ファイル | 説明 |
 |---------|------|
+| `.blueprint/config.yaml` | プロジェクト設定（初回のみ） |
 | `.blueprint/contracts/{type}/{name}.contract.yaml` | Contract YAML（メイン出力） |
 | `.blueprint/concepts/{name}.md` | ドメイン概念メモ（副産物） |
 | `.blueprint/decisions/DEC-{NNN}-{name}.md` | 設計判断記録（副産物） |
@@ -68,6 +69,29 @@ Glob(".blueprint/**/*.md")
 └── decisions/
 ```
 
+### Step 2: スコープ確認 + config.yaml 生成
+
+`core/spec.md` Step 2 に従いスコープを確認。
+
+**config.yaml 生成（初回のみ）**:
+`.blueprint/config.yaml` が存在しない場合に実行。
+
+```
+# 技術スタック検出
+Read("package.json")
+Read("tsconfig.json")
+Glob("*.lock*")
+Glob("biome.json")
+Glob(".eslintrc*")
+Glob(".github/workflows/*")
+
+# 検出結果をユーザーに提示して確認/修正
+# architecture.pattern はユーザーに選択を求める（clean / layered / flat）
+
+# config.yaml を書き出し
+Write(".blueprint/config.yaml")
+```
+
 ### Step 3: ブレインストーミング
 
 対話のコツ:
@@ -84,6 +108,11 @@ Glob(".blueprint/**/*.md")
 - `file.yaml` — ファイル連携
 
 テンプレートの `{{placeholder}}` をブレスト結果で埋める。
+
+**implementation セクション対話（オプション）**:
+
+各 Contract の基本フィールド生成後、`core/spec.md` Step 5 の implementation セクション対話に従い、
+data_sources と flow をユーザーと対話して決定する。ユーザーが「スキップ」と回答した場合は省略。
 
 ### Step 7: サマリー出力
 
