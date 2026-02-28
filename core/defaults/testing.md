@@ -25,7 +25,7 @@ tests/
 | 依存先 | モック方法 | 例 |
 |--------|----------|-----|
 | DB | インメモリ実装 or テスト DB | Repository の in-memory 実装 |
-| 外部 API | MSW（Mock Service Worker）or vitest mock | Stripe API のモック |
+| 外部 API | HTTP レベルでモック（MSW 等） | Stripe API のモック |
 | ファイルシステム | テスト用一時ディレクトリ | tmp/ にファイル生成 |
 | 時刻 | vi.useFakeTimers | 有効期限テスト |
 
@@ -70,3 +70,5 @@ export function buildOrder(overrides?: Partial<Order>): Order {
 | 1 テストファイル = 1 Contract | 対応関係を明確に保つ |
 | テスト間の依存禁止 | 各テストは独立実行可能であること |
 | スナップショットテスト不使用 | 変更に脆い。アサーションを明示的に書く |
+| external Contract は HTTP レベルでモック | 実装の内部構造に依存させない。MSW 等で HTTP リクエスト/レスポンスを差し替える |
+| DB テストは Repository の in-memory 実装を優先 | テスト速度と CI 再現性のため。テスト DB 接続はオプション |
