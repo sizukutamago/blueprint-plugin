@@ -1,7 +1,8 @@
 # Implement Workflow
 
 Contract YAML + RED テストから実装コードを生成するワークフロー。
-3 フェーズ（Scaffolder → Implementers → Integrator）で段階的に実装する。
+3 フェーズ（Implementers → Integrator → Refactorer）で段階的に実装し、
+最後に /simplify でコード品質を仕上げる。
 
 > **前提**: `contract-schema.md`、`test-from-contract.md`、`blueprint-structure.md` を参照。
 
@@ -29,9 +30,9 @@ Contract YAML + RED テストから実装コードを生成するワークフロ
 - 警告: 「CON-xxx に implementation セクションがありません。AI が処理フローを推定します」
 - 可能な限り business_rules と depends_on から推定するが、精度は下がる
 
-### Step 2: 実装計画の生成
+### Step 2: 実装計画の生成と承認
 
-Contract の依存関係から実装順序を決定する。
+Contract の依存関係から実装順序を決定し、ユーザー承認を得る。
 
 ```
 実行内容:
@@ -40,7 +41,8 @@ Contract の依存関係から実装順序を決定する。
 2. 並列実行可能なグループを特定
    - 依存なし Contract は同一グループ（並列実行可能）
    - 依存あり Contract は依存先の完了後に実行
-3. 実装計画をユーザーに提示
+3. 必要な依存パッケージを特定
+4. 実装計画をユーザーに提示
 
 提示フォーマット:
 | 順序 | Contract ID          | Type     | 依存先            | 並列グループ |
@@ -48,94 +50,35 @@ Contract の依存関係から実装順序を決定する。
 | 1    | CON-stripe-payment  | external | なし              | A          |
 | 2    | CON-order-create    | api      | CON-stripe-...   | B          |
 | 3    | CON-product-import  | file     | なし              | A          |
-```
 
-## Phase A: Scaffolder（1 エージェント、逐次実行）
-
-### Step 3: スキャフォールド生成
-
-config.yaml と Contract から プロジェクトの骨格を生成する。
-
-```
-実行内容:
-1. architecture pattern に基づくディレクトリ構造を生成
-2. 全 Contract の input/output から型定義を生成
-3. バリデーションスキーマの雛形を生成（tech_stack.validation に準拠）
-4. 各 Contract の Route/Handler ファイルの雛形を生成
-5. core/defaults/ の規約に基づいて命名・構造を決定
-6. 依存パッケージリストを生成
-
-オプション（config.yaml で有効化時のみ）:
-- lint 設定ファイル生成（biome.json, .eslintrc 等）
-- CI ワークフロー生成（.github/workflows/）
-```
-
-**ディレクトリ構造例（Clean Architecture + TypeScript + Hono）**:
-
-```
-src/
-  domain/{entity}/
-    types.ts              ← Contract input/output から型を導出
-    {entity}.repository.ts ← interface のみ（中身は Implementer）
-  usecase/{entity}/
-    {action}-{entity}.ts   ← UseCase interface + 雛形
-  infra/{entity}/
-    {entity}.repository.impl.ts  ← Repository 実装の雛形
-    {entity}.schema.ts            ← Zod スキーマの雛形
-  interface/{entity}/
-    {entity}.route.ts      ← Contract の method/path からルート定義
-```
-
-**依存パッケージリスト例**:
-
-```
-必須:
-- hono (framework)
-- zod (validation)
-- drizzle-orm (ORM)
-
-開発:
-- vitest (test)
-- @types/node
-
+追加パッケージ: hono, zod, drizzle-orm
 インストールコマンド: pnpm add hono zod drizzle-orm
-```
-
-### Step 3.5: 承認 1（スキャフォールド確認）
-
-ユーザーにスキャフォールド結果を提示して承認を得る。
-
-```
-提示内容:
-1. 生成したディレクトリ構造
-2. 型定義の一覧
-3. 依存パッケージリスト
-4. 実装計画（Step 2 の再掲）
 
 ユーザーの選択肢:
-- 承認: Phase B（実装）に進む
-- 修正: 具体的な修正指示を受けて再生成
+- 承認: 依存パッケージをインストールし Phase A に進む
+- 修正: 計画を修正
 - 中止: パイプラインを停止
 ```
 
-**承認後**: 依存パッケージをインストール（ユーザー確認済みのため自動実行）。
+## Phase A: Implementers（N エージェント、並列実行）
 
-## Phase B: Implementers（N エージェント、並列実行）
-
-### Step 4: Contract 単位の実装
+### Step 3: Contract 単位の実装
 
 各 Implementer は 1 つの Contract を担当し、RED テストを GREEN にする。
+ディレクトリ・ファイルの作成から実装まで全て Implementer が行う。
 
 ```
 各 Implementer の実行内容:
 1. 担当 Contract の implementation セクションを読み込み
-2. 対応する RED テスト（Level 2）を読み込み
-3. core/defaults/ の規約を参照
-4. implementation.flow の順序に従って実装:
-   a. バリデーション実装（Contract 制約 → スキーマ）
-   b. ビジネスロジック実装（business_rules + data_sources）
-   c. ルート/ハンドラ配線（method + path）
-5. 担当テストを実行して GREEN を確認
+2. core/defaults/ の規約を参照（naming, architecture-patterns, error-handling, di）
+3. 対応する RED テスト（Level 2）を読み込み
+4. 担当 Contract に必要な全ファイルを作成:
+   a. 型定義（Contract input/output から導出）
+   b. バリデーションスキーマ（Contract 制約 → スキーマ）
+   c. ビジネスロジック（business_rules → TDD で実装）
+   d. Repository interface + 実装（data_sources に基づく）
+   e. ルートファイル（method + path からルート定義）
+5. 担当テスト（Level 2）を実行して GREEN を確認
 ```
 
 **Implementer の入力**:
@@ -147,12 +90,36 @@ src/
 | 期待動作 | tests/contracts/ の RED テスト（Level 2） |
 | tech stack | .blueprint/config.yaml |
 | 命名・構造規約 | core/defaults/ |
-| 雛形コード | Scaffolder が生成したファイル |
 
-**並列実行ルール**:
+**business_rules の TDD**:
+
+Contract の `business_rules` に対応するロジックは TDD で実装する。
+
+```
+TDD 対象の判断基準:
+- Contract の business_rules に名前がついているロジック → TDD
+- 単純な配線（ルーティング、DI、スキーマ定義）→ 直接実装
+
+TDD 手順:
+1. ビジネスロジックのユニットテストを先に書く（RED）
+2. ロジックを実装（GREEN）
+3. 次の flow ステップへ
+
+ユニットテストの配置:
+tests/
+  contracts/          ← /test-from-contract 生成（触らない）
+  unit/               ← Implementer が生成
+    {entity}/
+      {logic-name}.test.ts
+```
+
+**名前空間分離（並列実行ルール）**:
+
+- 各 Implementer は自分の担当エンティティの名前空間のみ編集
+  - 例: `domain/order/`, `usecase/order/`, `infra/order/`, `interface/order/`
+- 共有ファイル（app entry, DI container）は作成しない → Integrator が担当
 - トポロジカルソートの同一グループは並列実行可能
-- 依存先が完了するまで待機（依存先がスキップされた場合は自身もスキップ）
-- 各エージェントは Scaffolder が生成した自分の担当ファイルのみ編集
+- 依存先が完了するまで待機
 
 **Contract タイプ別の実装内容**:
 
@@ -162,7 +129,12 @@ src/
 | external | API クライアント、リトライロジック、エラーハンドリング |
 | file | パーサー、行バリデーション、バルク処理 |
 
-### Step 4.5: ブロック処理
+**実装の進め方**:
+
+- `implementation.flow` がある場合: flow のステップ順に実装
+- `implementation.flow` がない場合: 一括実装（全ファイルを書いてからテスト実行）
+
+### Step 3.5: ブロック処理
 
 Implementer が実装できない場合の処理。
 
@@ -171,12 +143,14 @@ Implementer が実装できない場合の処理。
 - DB スキーマが未定義で data_source.access: db の実装ができない
 - 依存先 Contract がスキップされた
 - 外部 API のモック情報が不足
-- implementation セクションの情報が不足
+- implementation セクションの情報が不足で推定も困難
 
-ブロック時の処理:
-1. ブロック理由を記録
-2. 担当 Contract をスキップ
-3. 次の Contract の実装に移行（他の Implementer が処理）
+失敗時の挙動:
+1. テスト失敗 → 修正して再試行（回数制限なし）
+2. 同じエラーが 3 回連続 → ユーザーに報告
+   「CON-xxx のテスト X が GREEN にできません。エラー: ...」
+   → ユーザーが指示（ヒント提供 / 手動修正 / スキップ判断）
+3. 勝手にスキップしない
 ```
 
 **ブロック記録フォーマット**:
@@ -189,23 +163,61 @@ blocked:
     required_input: "DB スキーマ定義 or Prisma/Drizzle のスキーマファイル"
 ```
 
-## Phase C: Integrator（1 エージェント、逐次実行）
+## Phase B: Integrator（1 エージェント、逐次実行）
 
-### Step 5: 統合検証
+### Step 4: 統合検証
 
 全 Implementer の成果を統合して品質を確認する。
 
 ```
 実行内容:
-1. 全テスト一括実行（Level 1 + Level 2）
-   - 失敗テストがあれば修正を試みる（最大 3 回）
-   - 修正できない場合はユーザーに報告
-2. ブロックされた Contract のリスト提示
-3. import 循環の検出（レイヤー違反チェック）
-4. 明らかな重複コードの検出
+1. app entry の結線
+   - 各 Implementer が作成したルートファイルを app.ts にインポート・登録
+   - DI container の構成（必要な場合）
+   - 共通ミドルウェアの設定
+2. 全テスト一括実行（Level 1 + Level 2 + Unit）
+   - 失敗テストがあれば修正を試みる
+   - 同じエラーが 3 回連続したらユーザーに報告
+3. ブロックされた Contract のリスト提示
+4. import 循環の検出（レイヤー違反チェック）
 ```
 
-### Step 6: 承認 2（実装完了確認）
+## Phase C: Refactorer（1 エージェント、コンテキスト非共有）
+
+### Step 5: 構造リファクタリング
+
+Implementer・Integrator とコンテキストを共有しない独立エージェントが、
+フレッシュな視点でコード品質を改善する。
+
+```
+設計思想:
+- Code Review Gate と同じ「コンテキスト非共有」の原則
+- 書いた人の思考に引きずられず、構造の問題を発見する
+- core/defaults/ を自分で読み、設計規約を把握する
+
+実行内容:
+1. core/defaults/ を読み込み（naming, architecture-patterns, error-handling, di）
+2. 実装コード全体を読み込み
+3. 構造改善:
+   - Implementer 間で生まれた重複コードの排除
+   - 共通ロジックの抽出（ユーティリティ化）
+   - 命名の統一（core/defaults/naming.md 準拠）
+   - レイヤー構造の整合性確認
+4. 全テスト実行（リファクタで壊れていないことを確認）
+```
+
+### Step 6: コード簡素化
+
+/simplify を実行し、コードの可読性・効率・再利用性を最終チェックする。
+
+```
+実行内容:
+- 変更されたコードの品質レビュー
+- 不要な複雑性の排除
+- コードスタイルの統一
+```
+
+### Step 7: 承認 + pipeline-state 更新
 
 ユーザーに実装結果を提示して承認を得る。
 
@@ -219,7 +231,8 @@ blocked:
    - 各 Contract のブロック理由と必要な入力
 3. 品質レポート:
    - import 循環の有無
-   - 重複コード検出結果
+   - Refactorer の改善サマリー
+   - /simplify の改善サマリー
 
 ユーザーの選択肢:
 - 承認: Code Review Gate に進む
@@ -235,26 +248,27 @@ blocked:
 | partial | ブロックあり + 他は GREEN | ブロックリスト提示、ユーザー判断 |
 | failed | テスト修正不能 | ユーザーに報告、手動修正後 --resume |
 
-### Step 7: pipeline-state 更新
+**pipeline-state 更新**:
 
 ```yaml
 stage_3_implement:
   status: completed | partial | failed
-  scaffolder:
-    generated_dirs: N
-    generated_files: N
-    packages_installed: [...]
   implementers:
     total_contracts: N
     completed: N
-    skipped: N
     blocked: [...]                  # ブロックリスト
+    unit_tests_generated: N         # business_rules TDD で生成したテスト数
   integrator:
+    app_entry_wired: true | false
     test_results: { pass: N, fail: N }
     circular_imports: N
-    duplicate_code_warnings: N
-  approval_1: accepted | modified   # スキャフォールド承認結果
-  approval_2: accepted | modified   # 実装完了承認結果
+  refactorer:
+    duplicates_removed: N
+    extractions: N
+    naming_fixes: N
+  simplify:
+    improvements: N
+  approval: accepted | modified
 ```
 
 ## エラーハンドリング
@@ -264,13 +278,13 @@ stage_3_implement:
 | config.yaml が存在しない | エラー停止: `/spec` を先に実行するよう案内 |
 | Contract に implementation セクションがない | 警告 + AI 推定で続行 |
 | 循環依存の検出 | エラー停止: `/spec` で依存関係を修正するよう案内 |
-| テスト GREEN にできない（3 回試行後） | ユーザーに報告、手動修正を案内 |
+| テスト GREEN にできない（同一エラー 3 回連続） | ユーザーに報告、指示を仰ぐ |
 | 依存パッケージのインストール失敗 | エラー表示 + 手動インストールを案内 |
-| Implementer がタイムアウト | 該当 Contract をスキップ、ブロックリストに追加 |
+| Implementer がタイムアウト | ユーザーに報告、指示を仰ぐ |
 
 ## config.yaml スキーマ
 
-`/spec` の Step 2 で生成される。Scaffolder と Implementer が参照する。
+`/spec` の Step 2 で生成される。Implementer が参照する。
 
 ```yaml
 # .blueprint/config.yaml

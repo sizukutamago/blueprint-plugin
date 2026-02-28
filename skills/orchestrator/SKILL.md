@@ -162,23 +162,26 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の 
 implement スキル（`core/implement.md`）のワークフローを実行する。
 
 ```
-# Phase A: Scaffolder（メインエージェント自身）
+# Step 1-2: コンテキスト + 実装計画 + 承認 + deps インストール
 Read(".blueprint/config.yaml")
-Read("core/defaults/architecture-patterns/{pattern}.md")
-Read("core/defaults/naming.md")
-# → ディレクトリ構造 + 型定義 + 雛形生成
-# → [承認 1]
+# → トポロジカルソート → ユーザー承認 → パッケージインストール
 
-# Phase B: Implementers（Agent ツールで並列起動）
+# Phase A: Implementers（Agent ツールで並列起動）
 # depends_on のトポロジカルソート順に、グループごとに並列実行
 Agent(subagent_type: "general-purpose", prompt: "Contract CON-xxx を実装...")
 Agent(subagent_type: "general-purpose", prompt: "Contract CON-yyy を実装...")
-# → 各 Contract の RED→GREEN
+# → 各 Contract の RED→GREEN（business_rules は TDD）
 
-# Phase C: Integrator（メインエージェント自身）
-Bash("npx vitest tests/contracts/")
-# → 全テスト確認 + 品質チェック
-# → [承認 2]
+# Phase B: Integrator（メインエージェント自身）
+# → app entry 結線 + 全テスト一括実行
+
+# Phase C: Refactorer（Agent ツール、コンテキスト非共有）
+Agent(subagent_type: "general-purpose", prompt: "構造リファクタリング...")
+# → 重複排除、共通化、命名統一
+
+# /simplify 実行
+Skill("simplify")
+# → [承認]
 ```
 
 **pipeline-state の stage_3_implement を更新**:
@@ -186,14 +189,9 @@ Bash("npx vitest tests/contracts/")
 ```yaml
 stage_3_implement:
   status: completed | partial | failed
-  scaffolder:
-    generated_dirs: N
-    generated_files: N
-    packages_installed: [...]
   implementers:
     total_contracts: N
     completed: N
-    skipped: N
     blocked: []
   integrator:
     test_results: { pass: N, fail: N }

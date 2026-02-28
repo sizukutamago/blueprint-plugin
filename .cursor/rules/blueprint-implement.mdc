@@ -1,5 +1,5 @@
 ---
-description: "Blueprint - Implement workflow. Apply when implementing code from contracts, scaffolding project structure, making RED tests GREEN, or working with src/ directory alongside .blueprint/ contracts."
+description: "Blueprint - Implement workflow. Apply when implementing code from contracts, making RED tests GREEN, or working with src/ directory alongside .blueprint/ contracts."
 globs: "src/**,.blueprint/config.yaml,tests/contracts/**"
 alwaysApply: false
 ---
@@ -15,10 +15,12 @@ alwaysApply: false
 - `@core/defaults/naming.md` — 命名規約
 - `@core/defaults/error-handling.md` — エラー処理パターン
 - `@core/defaults/di.md` — DI 規約
+- `@core/defaults/validation-patterns.md` — Contract 制約 → スキーマ変換
 
 architecture pattern に応じて読み込み:
 - `@core/defaults/architecture-patterns/clean.md` — Clean Architecture
 - `@core/defaults/architecture-patterns/layered.md` — Layered Architecture
+- `@core/defaults/architecture-patterns/flat.md` — Flat（小規模プロジェクト）
 
 ## Cursor 固有の実行手順
 
@@ -32,47 +34,56 @@ architecture pattern に応じて読み込み:
 4. 既存コード構造の把握
 ```
 
-### Step 2: 実装計画
+### Step 2: 実装計画と承認
 
 depends_on でトポロジカルソートし、並列実行グループを算出。
-ユーザーに実装順序を提示して承認を得る。
+ユーザーに実装順序と追加パッケージを提示して承認を得る。
+承認後、依存パッケージをインストール。
 
-### Phase A: Scaffolder
-
-config.yaml の `architecture.pattern` に基づいてディレクトリ構造を生成。
-
-```
-生成物:
-- ディレクトリ構造（architecture pattern に準拠）
-- 型定義（Contract input/output から導出）
-- バリデーションスキーマ雛形
-- ルート/ハンドラ雛形
-- 共通エラー型（@core/defaults/error-handling.md 準拠）
-```
-
-★承認 1: スキャフォールド結果をユーザーに提示★
-
-### Phase B: Implementers
+### Phase A: Implementers
 
 Contract 単位で実装。各 Contract について:
 
 1. Contract の `implementation` セクションを読む
-2. `implementation.flow` の順序に従い実装
-3. `@core/defaults/` の規約に従う
-4. 対応する Level 2 テストを GREEN にする
+2. 必要な全ファイルを作成（型定義、スキーマ、ロジック、Repository、ルート）
+3. `business_rules` に対応するロジックは TDD（ユニットテスト先行）
+4. `implementation.flow` がある場合はその順序で実装
+5. `@core/defaults/` の規約に従う
+6. 対応する Level 2 テストを GREEN にする
 
-ブロック時はスキップ。
+名前空間分離: 各 Implementer は自分の `{entity}` 配下のみ編集。
+共有ファイル（app entry, DI container）は作成しない。
 
-### Phase C: Integrator
+失敗時: 同じエラーが 3 回連続したらユーザーに報告。勝手にスキップしない。
 
-全テスト一括実行。失敗テストがあれば修正を試みる。
+### Phase B: Integrator
 
-★承認 2: 実装サマリーをユーザーに提示★
+1. app entry の結線（ルートファイル → app.ts にインポート・登録）
+2. DI container の構成（必要な場合）
+3. 全テスト一括実行（Level 1 + Level 2 + Unit）
+4. import 循環の検出
+
+### Phase C: Refactorer
+
+コンテキスト非共有の独立した視点でコード品質を改善:
+
+1. `@core/defaults/` を読んで設計規約を把握
+2. 重複コードの排除、共通ロジックの抽出
+3. 命名の統一、レイヤー構造の整合性確認
+4. 全テスト実行（リファクタで壊れていないことを確認）
+
+### /simplify 実行
+
+コードの可読性・効率・再利用性を最終チェック。
+
+★承認: 実装サマリーをユーザーに提示★
 
 ### 品質基準
 
 - Contract の implementation.flow に従った処理順序
 - `@core/defaults/naming.md` の命名規約を遵守
 - `@core/defaults/di.md` のコンストラクタ注入パターン
+- business_rules は TDD（ユニットテスト先行）
 - テスト GREEN が実装完了の基準
-- スタブ生成は禁止（ブロック時はスキップ）
+- スタブ生成は禁止（ブロック時はユーザーに報告）
+- Refactorer はコンテキスト非共有（フレッシュな視点で評価）

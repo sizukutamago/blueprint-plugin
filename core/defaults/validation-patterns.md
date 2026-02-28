@@ -1,7 +1,7 @@
 # バリデーションスキーマ生成ルール
 
 Contract YAML の入力フィールド制約をバリデーションスキーマに変換する際のルール。
-Scaffolder がスキーマ雛形を生成し、Code Review Gate（Schema Compliance Checker）が検証に使用する。
+Implementer がスキーマを生成し、Code Review Gate（Schema Compliance Checker）が検証に使用する。
 
 > ライブラリ固有の API は AI が知っているため、ここでは**マッピングルール**のみ定義する。
 
@@ -58,10 +58,10 @@ Contract:
 → ネストされた各フィールドにも同じルールを再帰的に適用する。
 バリデーションスキーマも同じネスト構造で定義すること。
 
-## Scaffolder の責務
+## Implementer の責務
 
 1. Contract の input/request フィールドを走査
-2. 上記ルール表に従いスキーマ雛形を生成
+2. 上記ルール表に従いスキーマを生成
 3. ファイル配置は `naming.md` に従う（`{entity}.schema.ts`）
 
 ## Code Review Gate の検証基準

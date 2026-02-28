@@ -4,11 +4,11 @@
 
 - **Biome 推奨**: 設定が少なく高速。config.yaml で `lint: biome` がデフォルト。
 - **ESLint 対応**: brownfield プロジェクトで既存 ESLint がある場合はそれを尊重。
-- **Scaffolder が設定ファイルを生成**: config.yaml の quality.lint に基づく。
+- **Implementer が設定ファイルを生成**: config.yaml の quality.lint に基づく。
 
 ## Biome 設定（推奨）
 
-Scaffolder が生成する `biome.json`:
+Implementer が生成する `biome.json`:
 
 ```json
 {
@@ -39,7 +39,7 @@ Scaffolder が生成する `biome.json`:
 
 ## ESLint 設定（brownfield 用）
 
-既存の ESLint 設定がある場合、Scaffolder は設定ファイルを **生成しない**。
+既存の ESLint 設定がある場合、Implementer は設定ファイルを **生成しない**。
 Implementer は既存ルールに従って実装する。
 
 ## ルール

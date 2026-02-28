@@ -1,15 +1,15 @@
 ---
 name: implement
-description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "scaffold project", "implement from tests", "make tests green", "create implementation", or "run Stage 3". Orchestrates Scaffolder, Implementers, and Integrator agents to produce working code.
-version: 1.0.0
+description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "make tests green", "create implementation", or "run Stage 3". Orchestrates Implementers, Integrator, and Refactorer agents to produce working code.
+version: 2.0.0
 core_ref: core/implement.md
 ---
 
 # Implement スキル (Claude Code)
 
 Contract YAML と RED テストから実装コードを生成するスキル。
-3 フェーズ（Scaffolder → Implementers → Integrator）で段階的に実装し、
-ユーザー承認を 2 回挟む。
+3 フェーズ（Implementers → Integrator → Refactorer）で段階的に実装し、
+最後に /simplify でコード品質を仕上げる。
 
 ## 仕様参照
 
@@ -22,6 +22,7 @@ Contract スキーマは `core/contract-schema.md`（implementation セクショ
 - `di.md` — 依存性注入
 - `testing.md` — モック戦略、テスト規約
 - `db-access.md` — Repository パターン、トランザクション
+- `validation-patterns.md` — Contract 制約 → スキーマ変換ルール
 - `lint-rules.md` — Biome/ESLint 設定
 - `ci-pipeline.md` — GitHub Actions テンプレート
 
@@ -39,6 +40,7 @@ Contract スキーマは `core/contract-schema.md`（implementation セクショ
 | ディレクトリ | 内容 |
 |------------|------|
 | `src/` | 実装コード（architecture pattern に応じた構造） |
+| `tests/unit/` | business_rules の TDD で生成したユニットテスト |
 | `biome.json` 等 | Lint/Format 設定（オプション） |
 | `.github/workflows/` | CI 設定（オプション） |
 
@@ -50,7 +52,8 @@ Contract スキーマは `core/contract-schema.md`（implementation セクショ
 | Glob | Contract スキャン、既存コード検出、設定ファイル検出 |
 | Read | Contract YAML、config.yaml、テストファイル、core/defaults/ の読み込み |
 | Write | 実装コード、設定ファイルの書き出し |
-| Agent | Implementer エージェントの並列起動（Phase B） |
+| Agent | Implementer / Refactorer エージェントの起動 |
+| Skill | /simplify の実行 |
 
 ## ワークフロー（Claude Code 固有部分）
 
@@ -78,7 +81,7 @@ Glob("tests/contracts/level2/**/*.test.*")
 **implementation セクション未設定の Contract**:
 - 警告を出力し、business_rules と depends_on から推定する旨を伝える
 
-### Step 2: 実装計画の生成
+### Step 2: 実装計画の生成と承認
 
 ```
 # 依存関係のトポロジカルソート
@@ -86,6 +89,7 @@ Glob("tests/contracts/level2/**/*.test.*")
 2. DAG（有向非巡回グラフ）を構築
 3. 循環依存チェック → エラー時は /spec での修正を案内
 4. 並列実行グループを算出
+5. 必要な依存パッケージを特定
 
 ユーザーに実装計画を提示:
 
@@ -98,129 +102,177 @@ Glob("tests/contracts/level2/**/*.test.*")
 | 3    | CON-order-create    | api      | CON-stripe-...   | B       |
 
 グループ A は並列実行、グループ B は A の完了後に実行します。
+
+追加パッケージ: hono, zod, drizzle-orm
+インストールコマンド: pnpm add hono zod drizzle-orm
+
 この計画で進めますか？
 ```
 
-### Phase A: Scaffolder（メインエージェント自身が実行）
+**承認後**: 依存パッケージをインストール。
 
-### Step 3: スキャフォールド生成
-
-```
-# config.yaml に基づく規約の読み込み
-Read("core/defaults/architecture-patterns/{pattern}.md")
-Read("core/defaults/naming.md")
-Read("core/defaults/error-handling.md")
-Read("core/defaults/di.md")
+```bash
+# パッケージインストール（承認済みのため自動実行）
+pnpm add {packages}
 ```
 
-生成順序:
-1. ディレクトリ構造（`mkdir -p` で作成）
-2. 共通ファイル（`shared/errors.ts`, `shared/result.ts` 等）
-3. 各 Contract の型定義（`domain/{entity}/types.ts` 等）
-4. 各 Contract のバリデーションスキーマ雛形
-5. 各 Contract のルート/ハンドラ雛形
-6. 各 Contract の Repository interface（Clean Architecture の場合）
+### Phase A: Implementers（Agent ツールで並列起動）
 
-**依存パッケージの処理**:
-```
-# package.json から既存パッケージを確認
-Read("package.json")
+### Step 3: Contract 単位の実装
 
-# 不足パッケージをリスト化してユーザーに提示
-# 承認後にインストール
-Bash("pnpm add {packages}")
-```
-
-### Step 3.5: 承認 1
-
-```
-## スキャフォールド結果
-
-### 生成ディレクトリ
-src/
-  domain/order/
-    types.ts
-    order.repository.ts
-  usecase/order/
-    create-order.usecase.ts
-  ...
-
-### 生成ファイル: N 個
-### 追加パッケージ: hono, zod, drizzle-orm
-
-この構造で実装を進めますか？
-- 承認 → Phase B に進む
-- 修正 → 指示に従い再生成
-```
-
-### Phase B: Implementers（Agent ツールで並列起動）
-
-### Step 4: Contract 単位の実装
-
-各 Contract に対して Agent ツールで Implementer を起動:
+各 Contract に対して Agent ツールで Implementer を起動。
+**プロンプトにはハイブリッド方式で情報を渡す**: 核心情報はインライン、詳細はファイル参照。
 
 ```
 Agent({
   subagent_type: "general-purpose",
-  prompt: "Contract CON-xxx の実装を行ってください。
-    入力:
+  description: "Implement CON-{name}",
+  prompt: "
+    ## タスク
+    Contract CON-{name} の実装を行い、RED テストを GREEN にしてください。
+    ディレクトリ・ファイルの作成から実装まで全て行ってください。
+
+    ## Contract 情報（インライン）
+    - Contract ID: CON-{name}
+    - Type: {type}  (api | external | file)
+    - Tech Stack: {framework} + {validation} + {orm}
+    - Architecture: {pattern}
+    - 担当エンティティ: {entity}
+
+    ## 読み込むファイル
     - Contract YAML: .blueprint/contracts/{type}/{name}.contract.yaml
     - RED テスト: tests/contracts/level2/CON-{name}.test.ts
-    - 雛形コード: src/{layer}/{entity}/（Scaffolder 生成済み）
-    - 規約: core/defaults/ 配下
+    - 命名規約: core/defaults/naming.md
+    - アーキテクチャ: core/defaults/architecture-patterns/{pattern}.md
+    - エラー処理: core/defaults/error-handling.md
+    - DI: core/defaults/di.md
+    - バリデーション: core/defaults/validation-patterns.md
 
-    実行手順:
-    1. Contract の implementation セクションを読む
-    2. implementation.flow の順序に従い実装
-    3. core/defaults/ の命名・構造規約に従う
-    4. テスト実行: npx vitest tests/contracts/level2/CON-{name}.test.ts
-    5. 全テスト GREEN になるまで修正
+    ## 実装手順
+    1. 上記ファイルを全て読み込む
+    2. Contract の implementation.flow がある場合はその順序で実装
+       flow がない場合は一括で実装
+    3. 作成するファイル（{entity} 名前空間配下のみ）:
+       - 型定義（Contract input/output から導出）
+       - バリデーションスキーマ
+       - ビジネスロジック（business_rules は TDD: ユニットテストを先に書く）
+       - Repository interface + 実装
+       - ルートファイル（method + path からルート定義）
+    4. ユニットテストは tests/unit/{entity}/ に配置
+    5. テスト実行: npx vitest tests/contracts/level2/CON-{name}.test.ts
+    6. 全テスト GREEN になるまで修正を続ける
 
-    ブロック条件（スキップする場合）:
-    - DB スキーマが未定義で実装不能
-    - 依存先 Contract が未完了
-    - implementation セクションの情報不足で推定も困難"
+    ## 重要ルール
+    - app.ts や DI container など共有ファイルは作成しない（Integrator が担当）
+    - 自分の名前空間（{entity}）配下のファイルのみ作成・編集
+    - テストが GREEN にならない場合、同じエラーが 3 回連続したらその旨を報告
+    - 勝手にスキップしない
+  "
 })
 ```
 
 **並列実行の管理**:
-- 同一グループの Contract は並列で Agent を起動
+- 同一グループの Contract は並列で Agent を起動（1 つの応答で複数 Agent 呼び出し）
 - 各 Agent の完了を待ってから次グループを開始
-- Agent がブロックを報告した場合はスキップリストに追加
+- Agent がブロックを報告した場合はユーザーに確認
 
 **各 Implementer 完了時の出力**:
 ```
 ## CON-order-create 実装完了
 
 - 新規ファイル: 4
-- テスト結果: 31/31 GREEN
+- ユニットテスト: 2（business_rules TDD）
+- Level 2 テスト結果: 31/31 GREEN
 - 変更ファイル一覧:
   - src/domain/order/types.ts
   - src/usecase/order/create-order.usecase.ts
   - src/infra/order/order.repository.impl.ts
   - src/interface/order/order.route.ts
+  - tests/unit/order/calculate-total.test.ts
+  - tests/unit/order/validate-inventory.test.ts
 ```
 
-### Phase C: Integrator（メインエージェント自身が実行）
+### Phase B: Integrator（メインエージェント自身が実行）
 
-### Step 5: 統合検証
+### Step 4: 統合検証
+
+```
+実行内容:
+1. app entry の結線
+   - 各 Implementer が作成したルートファイルを app.ts にインポート・登録
+   - DI container の構成（必要な場合）
+   - 共通ミドルウェアの設定
+2. 全テスト一括実行
+```
 
 ```bash
-# 全テスト一括実行
-npx vitest tests/contracts/
+# 全テスト一括実行（Level 1 + Level 2 + Unit）
+npx vitest tests/
 ```
 
 失敗テストがある場合:
 1. 失敗テストの原因を分析
-2. 修正を試みる（最大 3 回）
-3. 修正できない場合はユーザーに報告
+2. 修正を試みる
+3. 同じエラーが 3 回連続したらユーザーに報告
 
-```
+```bash
 # import 循環の検出（オプション: dependency-cruiser がある場合）
 npx depcruise src/ --validate
 ```
 
-### Step 6: 承認 2
+### Phase C: Refactorer（Agent ツールで起動、コンテキスト非共有）
+
+### Step 5: 構造リファクタリング
+
+Implementer・Integrator とコンテキストを共有しない独立エージェントを起動。
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "Refactor implementation",
+  prompt: "
+    ## タスク
+    実装コードの構造リファクタリングを行ってください。
+    あなたは実装プロセスのコンテキストを持ちません。
+    フレッシュな視点でコード品質を改善してください。
+
+    ## 読み込むファイル
+    - 設計規約:
+      - core/defaults/naming.md
+      - core/defaults/architecture-patterns/{pattern}.md（config.yaml から取得）
+      - core/defaults/error-handling.md
+      - core/defaults/di.md
+    - 実装コード: src/ 配下全体
+    - テスト: tests/ 配下全体
+
+    ## 実行内容
+    1. core/defaults/ を読んで設計規約を把握
+    2. src/ 配下の全コードを読み込み
+    3. 以下の観点で改善:
+       - 複数ファイルに重複するロジックの共通化
+       - 共通ユーティリティの抽出
+       - 命名の統一（naming.md 準拠）
+       - レイヤー構造の整合性（architecture-patterns 準拠）
+    4. リファクタ後、全テスト実行: npx vitest tests/
+    5. テストが壊れた場合は修正（リファクタで機能を壊さない）
+
+    ## 重要ルール
+    - テストを壊さない（全 GREEN を維持）
+    - 機能の追加・削除はしない（構造改善のみ）
+    - 大きな変更を行う場合は変更理由をコメントで残す
+  "
+})
+```
+
+### Step 6: コード簡素化
+
+```
+Skill("simplify")
+```
+
+/simplify を実行し、コードの可読性・効率・再利用性を最終チェックする。
+
+### Step 7: 承認 + pipeline-state 更新
 
 ```
 ## 実装結果サマリー
@@ -232,6 +284,7 @@ npx depcruise src/ --validate
 ### テスト結果
 - Level 1: 45/45 GREEN
 - Level 2: 93/93 GREEN
+- Unit: 12/12 GREEN
 
 ### 生成ファイル
 | ディレクトリ | ファイル数 |
@@ -240,16 +293,15 @@ npx depcruise src/ --validate
 | src/usecase/ | 3 |
 | src/infra/ | 6 |
 | src/interface/ | 3 |
-| src/shared/ | 2 |
+| tests/unit/ | 4 |
 
 ### 品質
 - import 循環: なし
-- 重複コード警告: 0
+- Refactorer: 重複 2 件排除、命名 3 件修正
+- /simplify: 改善 1 件
 
 Code Review Gate に進みますか？
 ```
-
-### Step 7: pipeline-state 更新
 
 ```
 # pipeline-state.yaml を更新
@@ -265,8 +317,10 @@ Write(".blueprint/pipeline-state.yaml")
 | Contract が source of truth | implementation セクションに従い、AI の推測は最小限にする |
 | テストが合否判定 | Level 2 テストの GREEN が実装完了の基準 |
 | 規約に従う | core/defaults/ の命名・構造・パターンを遵守 |
-| スキップ > スタブ | 実装できない Contract はスタブ生成せずスキップ |
-| 承認 2 回 | スキャフォールド後 + 全完了後。途中は自動 |
+| 名前空間分離 | 各 Implementer は自分のエンティティ配下のみ編集 |
+| business_rules は TDD | Contract の business_rules に対応するロジックはユニットテスト先行 |
+| コンテキスト非共有 | Refactorer は実装プロセスの文脈を持たずフレッシュに評価 |
+| 諦めない | テスト失敗時はスキップせず、同一エラー 3 回でユーザーに報告 |
 
 ## エラーハンドリング
 
@@ -277,5 +331,5 @@ Write(".blueprint/pipeline-state.yaml")
 | RED テストなし | `/test-from-contract` を先に実行するよう案内 |
 | 循環依存 | エラー停止: `/spec` で depends_on を修正するよう案内 |
 | パッケージインストール失敗 | 手動インストールを案内して続行 |
-| テスト GREEN 不能（3 回試行後） | ユーザーに報告、手動修正後 `--resume` |
-| Implementer タイムアウト | スキップリストに追加、ユーザーに報告 |
+| テスト GREEN 不能（同一エラー 3 回連続） | ユーザーに報告、指示を仰ぐ |
+| Implementer タイムアウト | ユーザーに報告、指示を仰ぐ |

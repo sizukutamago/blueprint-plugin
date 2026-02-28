@@ -1,6 +1,6 @@
 # 命名規約
 
-Scaffolder と Implementer が従うファイル名・クラス名・変数名の規約。
+Implementer と Refactorer が従うファイル名・クラス名・変数名の規約。
 
 ## ファイル名
 

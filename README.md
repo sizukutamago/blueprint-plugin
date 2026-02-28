@@ -49,7 +49,7 @@ Stage 4: /generate-docs（準自動）→ Doc Review Gate
 | orchestrator | パイプラインオーケストレータ（Review Swarm 統合） |
 | spec | ブレスト + Contract YAML 生成 |
 | test-from-contract | Contract → Level 1/2 TDD テスト生成 |
-| implement | Contract + RED テスト → 実装コード生成（Scaffolder/Implementers/Integrator） |
+| implement | Contract + RED テスト → 実装コード生成（Implementers/Integrator/Refactorer） |
 | generate-docs | 実装コードから設計書を後追い生成 |
 | gap-analysis | 既存システム分析（brownfield プロジェクト用） |
 | research | 技術調査（WebSearch/WebFetch） |

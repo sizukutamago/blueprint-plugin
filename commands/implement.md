@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement code from Contract YAML and RED tests. Runs Scaffolder, Implementers, and Integrator to produce working code with all tests GREEN.
+description: Implement code from Contract YAML and RED tests. Runs Implementers, Integrator, Refactorer, and /simplify to produce working code with all tests GREEN.
 ---
 
 # Implement Command
@@ -16,17 +16,17 @@ Contract YAML と RED テストから実装コードを生成する。
 ## ワークフロー
 
 1. **コンテキスト読み込み** - config.yaml + Contract + RED テスト確認
-2. **実装計画** - depends_on でトポロジカルソート、並列グループ算出
-3. **Scaffolder** - ディレクトリ構造 + 型定義 + 雛形生成 ★承認 1★
-4. **Implementers** - Contract 単位で RED→GREEN（並列実行）
-5. **Integrator** - 全テスト実行 + 品質チェック ★承認 2★
-6. **pipeline-state 更新** - 進捗記録
+2. **実装計画 + 承認** - depends_on でトポロジカルソート、並列グループ算出、パッケージインストール
+3. **Implementers** - Contract 単位で RED→GREEN（並列実行、business_rules は TDD）
+4. **Integrator** - app entry 結線 + 全テスト実行
+5. **Refactorer** - コンテキスト非共有で構造リファクタリング
+6. **/simplify** - コード品質の最終チェック
+7. **承認** - 実装サマリー提示 + pipeline-state 更新
 
 ## 出力先
 
 - `src/` — 実装コード（architecture pattern に応じた構造）
-- `biome.json` 等 — Lint/Format 設定（オプション）
-- `.github/workflows/` — CI 設定（オプション）
+- `tests/unit/` — business_rules の TDD で生成したユニットテスト
 
 ## 前提
 

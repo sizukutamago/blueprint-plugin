@@ -8,7 +8,7 @@
 
 ## GitHub Actions テンプレート
 
-Scaffolder が `.github/workflows/ci.yml` を生成:
+Integrator が `.github/workflows/ci.yml` を生成（config.yaml で有効化時のみ）:
 
 ```yaml
 name: CI

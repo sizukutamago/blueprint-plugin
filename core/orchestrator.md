@@ -80,24 +80,24 @@ Stage 4: Doc Generation（自動）
 
 ```
 実行内容:
-Phase A: Scaffolder
-  1. config.yaml + Contract 読み込み
-  2. 実装計画生成（トポロジカルソート）
-  3. ディレクトリ構造 + 型定義 + 雛形生成
-  4. [承認 1: スキャフォールド確認]
+Step 1-2: コンテキスト読み込み + 実装計画 + [承認]
 
-Phase B: Implementers（並列）
-  5. Contract 単位で RED→GREEN を実行
-  6. ブロック時はスキップ
+Phase A: Implementers（並列）
+  Contract 単位で RED→GREEN を実行（business_rules は TDD）
+  名前空間分離で並列実行
 
-Phase C: Integrator
-  7. 全テスト一括実行 + 品質チェック
-  8. [承認 2: 実装完了確認]
+Phase B: Integrator
+  app entry 結線 + 全テスト一括実行
+
+Phase C: Refactorer（コンテキスト非共有）
+  構造リファクタリング + テスト再実行
+
+/simplify 実行 + [承認: 実装完了確認]
 ```
 
 **オーケストレーターモード時の自動化**:
 - Step 2 の実装計画: ユーザーに提示して承認を得る（省略不可）
-- 承認 1 / 承認 2: 省略不可（Stage 3 の 2 回の承認は常に必要）
+- 最終承認: 省略不可
 
 **Smart Skip 条件**:
 - `src/` に実装ファイルが存在し、Level 2 テストが全 GREEN
@@ -310,18 +310,21 @@ stages:
 
   stage_3_implement:
     status: pending | in_progress | completed | partial | failed
-    scaffolder:
-      generated_dirs: 0
-      generated_files: 0
-      packages_installed: []
     implementers:
       total_contracts: 0
       completed: 0
-      skipped: 0
       blocked: []                  # { contract_id, reason, detail, required_input }
+      unit_tests_generated: 0      # business_rules TDD で生成したテスト数
     integrator:
+      app_entry_wired: false
       test_results: { pass: 0, fail: 0 }
       circular_imports: 0
+    refactorer:
+      duplicates_removed: 0
+      extractions: 0
+      naming_fixes: 0
+    simplify:
+      improvements: 0
       duplicate_code_warnings: 0
     approval_1: null               # accepted | modified
     approval_2: null               # accepted | modified
