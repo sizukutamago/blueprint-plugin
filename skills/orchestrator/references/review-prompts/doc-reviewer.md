@@ -11,6 +11,7 @@
 - `tests/contracts/` のテストファイル（chain 検証用）
 - `core/output-structure.md`（必須ファイル一覧参照）
 - `core/review-criteria.md`（5 段階レビュー基準参照）
+- `core/doc-format-standards.md`（設計書フォーマット・必須セクション基準）
 
 ## 共通出力フォーマット
 

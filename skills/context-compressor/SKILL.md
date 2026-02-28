@@ -14,8 +14,8 @@ model: haiku
 
 | タイミング | 入力 | 圧縮戦略 |
 |-----------|------|---------|
-| Wave Aggregator 内 | 統合されたコンテキスト | Entity Signature Only |
-| Phase 8 (Review) | 全設計書 | Decision Summary |
+| コンテキスト統合時 | 統合されたコンテキスト | Entity Signature Only |
+| レビュー準備 | 全設計書 | Decision Summary |
 | 既存コード分析 | ソースコード | Semantic Pruning |
 
 ## 圧縮戦略
@@ -153,7 +153,7 @@ ADR と設計情報から決定事項のみを抽出する。
 | レベル | 圧縮率 | 用途 |
 |--------|--------|------|
 | Light | 30% | 軽微な削減、詳細維持 |
-| Medium | 50% | Wave 間引き継ぎ |
+| Medium | 50% | ステージ間引き継ぎ |
 | Heavy | 70% | Review 時の全体把握 |
 | Extreme | 80%+ | トークン制限が厳しい場合 |
 
@@ -180,7 +180,7 @@ ADR と設計情報から決定事項のみを抽出する。
 
 ## 入出力例
 
-### Wave Aggregator での使用
+### コンテキスト統合時の使用
 
 **入力（コンテキスト全体: 50k トークン）:**
 ```yaml
