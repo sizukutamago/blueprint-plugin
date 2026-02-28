@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", or "blueprint one-command". Automates /spec → /test-from-contract → implementation pause → /generate-docs with Review Swarm gates between each stage.
+description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", or "blueprint one-command". Automates /spec → /test-from-contract → /implement → /generate-docs with Review Swarm gates between each stage.
 version: 1.0.0
 core_ref: core/orchestrator.md
 ---
@@ -16,6 +16,7 @@ core_ref: core/orchestrator.md
 各ステージの詳細仕様:
 - Stage 1: `core/spec.md`
 - Stage 2: `core/test-from-contract.md`
+- Stage 3: `core/implement.md`
 - Stage 4: `core/generate-docs.md`
 
 Review Swarm プロンプト: `{baseDir}/references/review-prompts/`
@@ -66,7 +67,7 @@ Read(".blueprint/pipeline-state.yaml")
 
 **--resume モード判定**:
 - ユーザーが `--resume` を指定 → `.blueprint/pipeline-state.yaml` を読み込み、中断点から再開:
-  - `stage_3_pause` 完了 → テスト GREEN チェック → Code Review Gate → Stage 4 へ
+  - `stage_3_implement` completed → テスト GREEN チェック → Code Review Gate → Stage 4 へ
   - `code_review_gate` 失敗 → Code Review Gate から再実行
   - 各ステージが `pending`/`in_progress` → 該当ステージの最初から再実行
   - `final_status: completed` → 「完了済み。--force で再実行してください」
@@ -124,8 +125,8 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md 
 1. 3 エージェントの findings を集約
 2. 重複正規化（同一 target + field をマージ、最高 severity を採用、message は連結保持）
 3. P0=0 かつ P1≤1 → PASS → Step 4 へ
-4. P0≥1 or P1≥2 → REVISE → findings をもとに修正 → Step 3 再実行（最大 2 サイクル）
-5. 2 サイクル超過 → ユーザーに介入要請
+4. P0≥1 or P1≥2 → REVISE → findings をもとに修正 → Step 3 再実行（最大 3 サイクル）
+5. 3 サイクル超過 → ユーザーに介入要請
 
 ### Step 4: Stage 2 — Test Generation 実行
 
@@ -156,104 +157,69 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の 
 
 **Gate 判定**: Step 3 と同じプロトコル
 
-### Step 6: Stage 3 — Implementation Pause
+### Step 6: Stage 3 — Implementation
 
-1. パイプライン状態を保存:
+implement スキル（`core/implement.md`）のワークフローを実行する。
+
+```
+# Phase A: Scaffolder（メインエージェント自身）
+Read(".blueprint/config.yaml")
+Read("core/defaults/architecture-patterns/{pattern}.md")
+Read("core/defaults/naming.md")
+# → ディレクトリ構造 + 型定義 + 雛形生成
+# → [承認 1]
+
+# Phase B: Implementers（Agent ツールで並列起動）
+# depends_on のトポロジカルソート順に、グループごとに並列実行
+Agent(subagent_type: "general-purpose", prompt: "Contract CON-xxx を実装...")
+Agent(subagent_type: "general-purpose", prompt: "Contract CON-yyy を実装...")
+# → 各 Contract の RED→GREEN
+
+# Phase C: Integrator（メインエージェント自身）
+Bash("npx vitest tests/contracts/")
+# → 全テスト確認 + 品質チェック
+# → [承認 2]
+```
+
+**pipeline-state の stage_3_implement を更新**:
 
 ```yaml
-# Write(".blueprint/pipeline-state.yaml")
-pipeline_version: "1.0.0"
-project_root: "{git root}"
-started_at: "{開始タイムスタンプ}"
-paused_at: "{now()}"
-stages:
-  stage_1_spec:
-    status: completed
-    contracts: [{ id: "CON-xxx", path: "...", version: "1.0.0" }]
-  contract_review_gate:
-    status: passed
-    cycles: N
-    final_counts: { p0: 0, p1: N, p2: N }
-  stage_2_test:
-    status: completed
-    test_files: { level1: [...], level2: [...] }
-    counts: { level1: {...}, level2: {...}, total: N }
-  test_review_gate:
-    status: passed
-    cycles: N
-    final_counts: { p0: 0, p1: N, p2: N }
-  stage_3_pause:
-    status: completed
-    message: "Implementation pause - resume with /blueprint --resume"
-  code_review_gate:
-    status: pending
-  stage_4_docs:
-    status: pending
-  doc_review_gate:
-    status: pending
-completed_at: null
-final_status: pending
+stage_3_implement:
+  status: completed | partial | failed
+  scaffolder:
+    generated_dirs: N
+    generated_files: N
+    packages_installed: [...]
+  implementers:
+    total_contracts: N
+    completed: N
+    skipped: N
+    blocked: []
+  integrator:
+    test_results: { pass: N, fail: N }
+    circular_imports: N
+    duplicate_code_warnings: N
+  approval_1: accepted
+  approval_2: accepted
 ```
 
-2. ユーザーに実装指示を出力:
-
-```
-## Stage 3: Implementation Pause
-
-パイプラインを一時停止します。以下のステップで実装を進めてください:
-
-1. Level 1 テストを実行して全 GREEN を確認:
-   npx vitest tests/contracts/level1
-
-2. Level 2 の RED スタブを 1 つずつ実装して GREEN にする:
-   npx vitest tests/contracts/level2
-
-3. 全テスト GREEN 後、ドキュメント生成を再開:
-   /blueprint --resume
-```
-
-### Step 7: --resume 時の GREEN チェック
-
-```bash
-# テストフレームワークを検出
-Glob("**/vitest.config.*")
-Glob("**/jest.config.*")
-
-# テスト実行（検出されたフレームワークで）
-npx vitest tests/contracts/ --reporter=json 2>/dev/null
-# または: npx jest tests/contracts/ --json 2>/dev/null
-```
-
-- 全 PASS → Step 7.5 (Code Review Gate) へ
-- FAIL あり → ユーザーに警告:
-
-```
-## テスト結果
-
-N / M テストが FAIL しています:
-- tests/contracts/level2/CON-order-create.test.ts: 5 FAIL
-- ...
-
-このまま Stage 4 (Doc Generation) に進みますか？
-（未実装テストがあると、生成されるドキュメントに TODO が増えます）
-```
-
-### Step 7.5: Code Review Gate（Contract↔実装の乖離検出）— 必須
+### Step 7: Code Review Gate（Contract↔実装の乖離検出）— 必須
 
 **重要**: テスト GREEN チェック（Step 7）は「動作の正しさ」を確認するだけ。
-Code Review Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」を検証する。
+Code Review Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」+「コード品質」を検証する。
 テストが GREEN でも、バリデーションスキーマに制約が欠落していればここで検出される。
 **テスト GREEN だけで Code Review Gate をスキップしてはならない。**
 
-3 つの Task エージェントを**並列**起動:
+4 つの Task エージェントを**並列**起動:
 
 ```
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 1 プロンプト}")
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 2 プロンプト}")
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 3 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 4 プロンプト}")
 ```
 
-**入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ
+**入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ + config.yaml + core/defaults/
 
 **Gate 判定**: Step 3 と同じプロトコル
 
@@ -348,7 +314,7 @@ final_status: completed
 |--------|------|
 | `.blueprint/` なし + `/blueprint` | Stage 1 から開始（正常フロー） |
 | `--resume` で .blueprint/pipeline-state.yaml なし | `/blueprint` で最初から実行するよう案内 |
-| Review Gate で REVISE 2 回超過 | findings リストを提示してユーザーに介入要請 |
+| Review Gate で REVISE 3 回超過 | findings リストを提示してユーザーに介入要請 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |
 | Stage 途中でエラー | 成功分は保持、.blueprint/pipeline-state.yaml に現在のステージを記録して停止 |
 | テスト実行失敗（--resume 時） | ユーザーに警告し、続行するか確認 |

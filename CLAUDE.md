@@ -5,7 +5,7 @@
 
 ## 概要
 
-- **ワークフロー**: `/spec` → `/test-from-contract` → 実装 → `/generate-docs`
+- **ワークフロー**: `/spec` → `/test-from-contract` → `/implement` → `/generate-docs`
 - **`.blueprint/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
 - **Contract YAML**: 3 タイプ (api/external/file) の機械可読 I/O 境界仕様
 - **Review Swarm**: 各ステージ完了時に 3 エージェント並列レビュー（P0/P1/P2 Gate 判定）
@@ -26,28 +26,41 @@ blueprint-plugin/
 │   ├── doc-format-standards.md  #   設計書フォーマット基準
 │   ├── id-system.md             #   ID 採番規約
 │   ├── review-criteria.md       #   5段階レビュー + Gate 判定
-│   └── traceability.md          #   トレーサビリティルール
+│   ├── traceability.md          #   トレーサビリティルール
+│   ├── implement.md             #   /implement ワークフロー
+│   └── defaults/                #   実装規約（命名、DI、エラー処理等）
+│       ├── architecture-patterns/  # Clean / Layered パターン定義
+│       ├── naming.md            #   命名規約
+│       ├── error-handling.md    #   エラー処理パターン
+│       ├── di.md                #   DI 規約
+│       ├── testing.md           #   テスト規約
+│       ├── db-access.md         #   DB アクセス規約
+│       ├── lint-rules.md        #   Lint ルール
+│       └── ci-pipeline.md       #   CI テンプレート
 │
 ├── .cursor/rules/               # ★ Cursor 用ラッパー（.mdc ルール）
 │   ├── blueprint-always.mdc     #   共通規約（alwaysApply: true）
 │   ├── blueprint-orchestrator.mdc #  パイプライン全体制御
 │   ├── blueprint-spec.mdc       #   /spec ワークフロー
 │   ├── blueprint-generate-docs.mdc # /generate-docs ワークフロー
-│   └── blueprint-test-from-contract.mdc # /test-from-contract ワークフロー
+│   ├── blueprint-test-from-contract.mdc # /test-from-contract ワークフロー
+│   └── blueprint-implement.mdc  #   /implement ワークフロー
 │
 ├── .claude-plugin/              # Claude Code プラグインメタデータ
 ├── commands/                    # Claude Code コマンド定義
 │   ├── blueprint.md             #   /blueprint（パイプライン全体）
 │   ├── spec.md                  #   /spec
 │   ├── test-from-contract.md    #   /test-from-contract
+│   ├── implement.md             #   /implement
 │   └── generate-docs.md         #   /generate-docs
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── orchestrator/            #   パイプラインオーケストレーター
 │   │   └── references/
 │   │       └── review-prompts/  #   Review Swarm プロンプト（4 gates）
 │   ├── spec/                    #   ブレスト + Contract 生成
-│   ├── generate-docs/           #   コードから設計書生成
 │   ├── test-from-contract/      #   Contract から TDD テスト生成
+│   ├── implement/               #   Contract + RED テスト → 実装
+│   ├── generate-docs/           #   コードから設計書生成
 │   ├── gap-analysis/            #   既存システム分析
 │   ├── research/                #   技術調査
 │   ├── context-compressor/      #   コンテキスト圧縮
@@ -161,11 +174,12 @@ claude --plugin-dir /path/to/blueprint-plugin
 ### スキル呼び出し（Claude Code）
 
 ```bash
-/blueprint              # 全パイプライン自動実行（/spec → テスト → docs）
-/blueprint --resume     # 実装後に Stage 4 から再開
+/blueprint              # 全パイプライン自動実行（/spec → テスト → 実装 → docs）
+/blueprint --resume     # 中断点から再開
 /blueprint --force      # 全ステージ強制再実行
 /spec                   # ブレスト → Contract YAML 生成
 /test-from-contract     # Contract から TDD テスト生成
+/implement              # Contract + RED テスト → 実装コード生成
 /generate-docs          # コードから設計書を後追い生成
 ```
 

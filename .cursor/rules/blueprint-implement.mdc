@@ -1,0 +1,78 @@
+---
+description: "Blueprint - Implement workflow. Apply when implementing code from contracts, scaffolding project structure, making RED tests GREEN, or working with src/ directory alongside .blueprint/ contracts."
+globs: "src/**,.blueprint/config.yaml,tests/contracts/**"
+alwaysApply: false
+---
+
+# Implement ワークフロー (Cursor)
+
+## 仕様参照
+
+以下の仕様ファイルを必ず読み込むこと:
+
+- `@core/implement.md` — ワークフロー定義（3 フェーズ + 7 ステップ）
+- `@core/contract-schema.md` — Contract YAML スキーマ（implementation セクション含む）
+- `@core/defaults/naming.md` — 命名規約
+- `@core/defaults/error-handling.md` — エラー処理パターン
+- `@core/defaults/di.md` — DI 規約
+
+architecture pattern に応じて読み込み:
+- `@core/defaults/architecture-patterns/clean.md` — Clean Architecture
+- `@core/defaults/architecture-patterns/layered.md` — Layered Architecture
+
+## Cursor 固有の実行手順
+
+### Step 1: コンテキスト読み込み
+
+```
+確認事項:
+1. .blueprint/config.yaml の読み込み（tech stack、architecture pattern）
+2. .blueprint/contracts/ の全 Contract スキャン
+3. tests/contracts/level2/ の RED テスト確認
+4. 既存コード構造の把握
+```
+
+### Step 2: 実装計画
+
+depends_on でトポロジカルソートし、並列実行グループを算出。
+ユーザーに実装順序を提示して承認を得る。
+
+### Phase A: Scaffolder
+
+config.yaml の `architecture.pattern` に基づいてディレクトリ構造を生成。
+
+```
+生成物:
+- ディレクトリ構造（architecture pattern に準拠）
+- 型定義（Contract input/output から導出）
+- バリデーションスキーマ雛形
+- ルート/ハンドラ雛形
+- 共通エラー型（@core/defaults/error-handling.md 準拠）
+```
+
+★承認 1: スキャフォールド結果をユーザーに提示★
+
+### Phase B: Implementers
+
+Contract 単位で実装。各 Contract について:
+
+1. Contract の `implementation` セクションを読む
+2. `implementation.flow` の順序に従い実装
+3. `@core/defaults/` の規約に従う
+4. 対応する Level 2 テストを GREEN にする
+
+ブロック時はスキップ。
+
+### Phase C: Integrator
+
+全テスト一括実行。失敗テストがあれば修正を試みる。
+
+★承認 2: 実装サマリーをユーザーに提示★
+
+### 品質基準
+
+- Contract の implementation.flow に従った処理順序
+- `@core/defaults/naming.md` の命名規約を遵守
+- `@core/defaults/di.md` のコンストラクタ注入パターン
+- テスト GREEN が実装完了の基準
+- スタブ生成は禁止（ブロック時はスキップ）

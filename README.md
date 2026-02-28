@@ -2,7 +2,7 @@
 
 Contract-first の設計ワークフロープラグイン（Claude Code / Cursor 対応）
 
-ブレスト → Contract YAML → TDD テスト → 設計書生成のパイプラインを提供します。
+ブレスト → Contract YAML → TDD テスト → 実装 → 設計書生成のパイプラインを提供します。
 Review Swarm による品質ゲート（P0/P1/P2 判定）付き。
 
 ## インストール
@@ -25,9 +25,10 @@ claude --plugin-dir /path/to/blueprint-plugin
 | コマンド | 説明 |
 |----------|------|
 | `/blueprint` | 全パイプライン自動実行（推奨） |
-| `/blueprint --resume` | 実装後に Stage 4 から再開 |
+| `/blueprint --resume` | 中断点から再開 |
 | `/spec` | Stage 1: ブレスト → Contract YAML 生成 |
 | `/test-from-contract` | Stage 2: Contract → TDD テスト生成 |
+| `/implement` | Stage 3: Contract + RED テスト → 実装コード生成 |
 | `/generate-docs` | Stage 4: コードから設計書を後追い生成 |
 
 ## パイプライン
@@ -35,7 +36,7 @@ claude --plugin-dir /path/to/blueprint-plugin
 ```
 Stage 1: /spec（対話的）→ Contract Review Gate
 Stage 2: /test-from-contract（準自動）→ Test Review Gate
-Stage 3: Implementation Pause → Code Review Gate
+Stage 3: /implement（承認 2 回）→ Code Review Gate
 Stage 4: /generate-docs（準自動）→ Doc Review Gate
 ```
 
@@ -48,6 +49,7 @@ Stage 4: /generate-docs（準自動）→ Doc Review Gate
 | orchestrator | パイプラインオーケストレータ（Review Swarm 統合） |
 | spec | ブレスト + Contract YAML 生成 |
 | test-from-contract | Contract → Level 1/2 TDD テスト生成 |
+| implement | Contract + RED テスト → 実装コード生成（Scaffolder/Implementers/Integrator） |
 | generate-docs | 実装コードから設計書を後追い生成 |
 | gap-analysis | 既存システム分析（brownfield プロジェクト用） |
 | research | 技術調査（WebSearch/WebFetch） |
@@ -71,10 +73,10 @@ Contract は `.blueprint/contracts/` に格納。詳細は `core/output-structur
 
 ## Cursor での使用
 
-`.cursor/rules/` に 5 つのルールファイルが自動適用:
+`.cursor/rules/` に 6 つのルールファイルが自動適用:
 - `blueprint-always.mdc` — 共通規約
 - `blueprint-orchestrator.mdc` — パイプライン全体制御
-- `blueprint-spec.mdc` / `blueprint-test-from-contract.mdc` / `blueprint-generate-docs.mdc`
+- `blueprint-spec.mdc` / `blueprint-test-from-contract.mdc` / `blueprint-implement.mdc` / `blueprint-generate-docs.mdc`
 
 ## アップデート
 

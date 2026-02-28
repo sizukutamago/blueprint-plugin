@@ -182,6 +182,115 @@ example: |                       # オプション: サンプルデータ
 - `processing_rules` → 各ルール ID ごとに正常系 + 異常系
 - `result.error` → エラーレスポンス形式
 
+## implementation セクション（全タイプ共通、オプション）
+
+実装に必要な内部設計情報を記録する。`/spec` 実行時にユーザーと対話して決定する。
+テスト導出には使用しない（Implementer 専用の情報）。
+
+```yaml
+implementation:
+  data_sources:
+    - id: DS-{NNN}
+      target: "BR-{NNN}"           # 対象の business_rule / processing_rule / constraint
+      entity: "エンティティ名"      # 取得元のエンティティ（例: Product, User）
+      field: "フィールド名"         # 取得するフィールド（例: stock, price）
+      access: db | api | cache | config  # データアクセス方法
+      notes: "補足情報"            # オプション（排他制御、結合条件等）
+
+  flow:
+    - step: N                      # ステップ番号（実行順序）
+      action: "アクション名"        # 処理内容（validate_input, check_stock 等）
+      rule: "BR-{NNN}"            # オプション: 対応する business_rule
+      calls: "CON-xxx"            # オプション: 呼び出す Contract
+      data_sources: [DS-{NNN}]    # オプション: 使用する data_source
+  transaction: [N, N, ...]        # オプション: トランザクションで囲むステップ番号
+```
+
+**data_sources のフィールド**:
+
+| フィールド | 必須 | 説明 |
+|-----------|------|------|
+| `id` | はい | 一意識別子（DS-001 等） |
+| `target` | はい | 対象ルール ID（BR-001, PR-001, EC-001） |
+| `entity` | はい | 取得元エンティティ名 |
+| `field` | はい | 取得フィールド名 |
+| `access` | はい | `db`（DB直接）/ `api`（外部API）/ `cache`（キャッシュ）/ `config`（設定値） |
+| `notes` | いいえ | 排他制御、結合条件、キャッシュ TTL 等の補足 |
+
+**flow のフィールド**:
+
+| フィールド | 必須 | 説明 |
+|-----------|------|------|
+| `step` | はい | 実行順序の番号 |
+| `action` | はい | 処理内容のラベル |
+| `rule` | いいえ | 対応する business_rule / processing_rule ID |
+| `calls` | いいえ | 呼び出す Contract ID（外部連携等） |
+| `data_sources` | いいえ | このステップで使用する data_source ID リスト |
+| `transaction` | いいえ | flow 直下に配置。トランザクション境界のステップ番号リスト |
+
+**例（api タイプ: 注文作成）**:
+
+```yaml
+implementation:
+  data_sources:
+    - id: DS-001
+      target: "BR-001"
+      entity: "Product"
+      field: "stock"
+      access: db
+      notes: "排他ロック必須（SELECT FOR UPDATE）"
+    - id: DS-002
+      target: "BR-002"
+      entity: "Product"
+      field: "price"
+      access: db
+
+  flow:
+    - step: 1
+      action: "validate_input"
+    - step: 2
+      action: "fetch_products"
+      data_sources: [DS-001, DS-002]
+    - step: 3
+      action: "check_stock"
+      rule: BR-001
+    - step: 4
+      action: "calculate_total"
+      rule: BR-002
+    - step: 5
+      action: "create_payment"
+      calls: CON-stripe-payment-intent
+    - step: 6
+      action: "save_order"
+  transaction: [2, 3, 4, 5, 6]
+```
+
+**例（file タイプ: 商品一括インポート）**:
+
+```yaml
+implementation:
+  data_sources:
+    - id: DS-001
+      target: "PR-001"
+      entity: "Product"
+      field: "sku"
+      access: db
+      notes: "重複チェック用（UNIQUE 制約）"
+
+  flow:
+    - step: 1
+      action: "parse_file"
+    - step: 2
+      action: "validate_rows"
+    - step: 3
+      action: "check_duplicates"
+      rule: PR-001
+      data_sources: [DS-001]
+    - step: 4
+      action: "bulk_upsert"
+  transaction: [3, 4]
+```
+
 ## テスト導出パターン一覧
 
 Contract のフィールドからテストを機械的に導出する:

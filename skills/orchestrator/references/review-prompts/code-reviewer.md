@@ -1,7 +1,7 @@
 # Code Review Swarm プロンプト
 
 パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Code Review Gate のレビュープロンプト。
-Contract YAML に宣言された制約と実装コードの乖離を 3 エージェントが並列で検出する。
+Contract YAML に宣言された制約と実装コードの乖離、およびコード品質を 4 エージェントが並列で検出する。
 
 **テスト GREEN チェックとの違い**:
 - GREEN チェック: テストが PASS するか（動作の正しさ）
@@ -191,4 +191,54 @@ Contract に定義された business_rules, state_transition, constraints が
    各 file Contract の processing_rules について:
    a. PR-xxx の rule 記述に対応する実装ロジックが存在するか → 欠落: P1
    b. result 構造（success/error）が実装のレスポンスと一致しているか → 不一致: P1
+```
+
+---
+
+## Agent 4: Code Quality Checker
+
+### 役割
+
+実装コードの構造品質（レイヤー違反、重複、複雑度、命名規約）を検証する。
+Contract との一致ではなく、`core/defaults/` の実装規約への準拠を確認する。
+
+### チェック手順
+
+```
+1. レイヤー依存方向の検証:
+
+   .blueprint/config.yaml の architecture.pattern を確認し、
+   core/defaults/architecture-patterns/{pattern}.md の依存方向ルールに基づいて:
+   a. 禁止方向の import があるか:
+      - Clean: domain → infra, domain → interface, usecase → infra（直接）
+      - Layered: models → services, models → routes
+      → 違反: P1
+   b. 循環 import があるか → 存在: P1
+
+2. 巨大関数の検出:
+
+   関数/メソッドの行数を確認:
+   a. 50 行超 → P2（分割を推奨）
+   b. 100 行超 → P1（分割が必要）
+   ※ テストファイルは除外
+
+3. 重複コードの検出:
+
+   Contract 間で類似した実装パターンを検出:
+   a. 10 行以上の同一/類似ブロック → P2（共通化を推奨）
+   b. 同一ロジックが 3 箇所以上 → P1（共通化が必要）
+
+4. 命名規約の検証:
+
+   core/defaults/naming.md の規約に基づいて:
+   a. ファイル名が kebab-case + 正しいサフィックスか → 違反: P2
+   b. エクスポート名が規約に従っているか → 違反: P2
+   c. 変数名が camelCase / UPPER_SNAKE_CASE か → 違反: P2
+
+5. エラーハンドリングの検証:
+
+   core/defaults/error-handling.md の規約に基づいて:
+   a. catch ブロックでエラーが握りつぶされていないか → 握りつぶし: P1
+   b. 外部 API エラーが AppError にラップされているか → 未ラップ: P2
+   c. バリデーションエラーが ValidationError に変換されているか → 未変換: P2
 ```
