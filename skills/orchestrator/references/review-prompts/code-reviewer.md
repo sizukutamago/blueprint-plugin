@@ -16,6 +16,7 @@ Contract YAML に宣言された制約と実装コードの乖離、およびコ
 - バリデーションスキーマ（Zod, Joi, Yup 等の定義ファイル）
 - テストファイル（`tests/contracts/` — 参考情報として）
 - `core/contract-schema.md` の内容（Contract フィールド定義参照）
+- `core/review-criteria.md` の内容（P0/P1/P2 定義、Gate 判定基準、Severity ガバナンスルール）
 
 ## 共通出力フォーマット
 

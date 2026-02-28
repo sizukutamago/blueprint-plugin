@@ -119,7 +119,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md 
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md の Agent 3 プロンプト}")
 ```
 
-**入力**: Contract YAML ファイルパスリスト + contract-schema.md の内容
+**入力**: Contract YAML ファイルパスリスト + contract-schema.md + review-criteria.md の内容
 
 **Gate 判定**:
 1. 3 エージェントの findings を集約
@@ -153,7 +153,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の 
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の Agent 3 プロンプト}")
 ```
 
-**入力**: テストファイルパスリスト + Contract YAML + test-from-contract.md
+**入力**: テストファイルパスリスト + Contract YAML + test-from-contract.md + review-criteria.md
 
 **Gate 判定**: Step 3 と同じプロトコル
 
@@ -197,8 +197,8 @@ stage_3_implement:
     test_results: { pass: N, fail: N }
     circular_imports: N
     duplicate_code_warnings: N
-  approval_1: accepted
-  approval_2: accepted
+  plan_approval: accepted            # 実装計画承認
+  final_approval: accepted           # 実装完了承認
 ```
 
 ### Step 7: Code Review Gate（Contract↔実装の乖離検出）— 必須
@@ -217,7 +217,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の 
 Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 4 プロンプト}")
 ```
 
-**入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ + config.yaml + core/defaults/
+**入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ + config.yaml + core/defaults/ + review-criteria.md
 
 **Gate 判定**: Step 3 と同じプロトコル
 
@@ -231,7 +231,7 @@ code_review_gate:
   cycles: 1
   final_counts: { p0: 0, p1: 0, p2: 2 }
   code_review_items: []
-  notes: "Schema/Route/Business 3-agent 検証完了"
+  notes: "Schema/Route/Business/Quality 4-agent 検証完了"
 ```
 
 ### Step 8: Stage 4 — Doc Generation 実行

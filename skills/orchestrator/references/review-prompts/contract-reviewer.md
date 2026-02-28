@@ -8,6 +8,7 @@
 各エージェントに以下を渡す:
 - Contract YAML ファイルパスリスト（`.blueprint/contracts/**/*.contract.yaml`）
 - `core/contract-schema.md` の内容（スキーマ参照）
+- `core/review-criteria.md` の内容（P0/P1/P2 定義、Gate 判定基準、Severity ガバナンスルール）
 
 ## 共通出力フォーマット
 

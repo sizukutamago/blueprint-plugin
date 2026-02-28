@@ -268,7 +268,8 @@ stage_3_implement:
     naming_fixes: N
   simplify:
     improvements: N
-  approval: accepted | modified
+  plan_approval: accepted | modified       # 実装計画承認
+  final_approval: accepted | modified      # 実装完了承認
 ```
 
 ## エラーハンドリング

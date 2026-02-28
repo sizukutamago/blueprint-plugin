@@ -326,8 +326,8 @@ stages:
     simplify:
       improvements: 0
       duplicate_code_warnings: 0
-    approval_1: null               # accepted | modified
-    approval_2: null               # accepted | modified
+    plan_approval: null             # accepted | modified（実装計画承認）
+    final_approval: null            # accepted | modified（実装完了承認）
 
   code_review_gate:               # Stage 3 後（Stage 4 前）の Code Review 結果
     status: pending | passed | failed
