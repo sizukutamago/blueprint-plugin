@@ -1,6 +1,6 @@
-# v5 Orchestrator Workflow
+# Orchestrator Workflow
 
-v5 パイプラインをワンコマンドで自動実行するオーケストレーター。
+パイプラインをワンコマンドで自動実行するオーケストレーター。
 `/spec` → `/test-from-contract` → 実装（一時停止）→ `/generate-docs` の 4 ステージを直列に実行し、
 各ステージ後に Review Swarm（複数エージェント並列レビュー）で品質を担保する。
 
@@ -84,7 +84,7 @@ Stage 4: Doc Generation（自動）
 2. ユーザーに次のステップを案内:
    - Level 1 テストを実行して全 GREEN を確認
    - Level 2 の RED スタブを 1 つずつ実装して GREEN にする
-   - 全テスト GREEN 後: /v5 --resume で Stage 4 を再開
+   - 全テスト GREEN 後: /blueprint --resume で Stage 4 を再開
 3. パイプラインを停止
 ```
 
@@ -252,7 +252,7 @@ Contract YAML に宣言された制約と実装コードの乖離を検出する
 
 ```yaml
 # .blueprint/pipeline-state.yaml
-# v5 Pipeline State — Auto-generated, do not edit manually
+# Pipeline State — Auto-generated, do not edit manually
 pipeline_version: "1.0.0"
 project_root: "/path/to/project"
 started_at: "YYYY-MM-DDTHH:MM:SSZ"
@@ -344,7 +344,7 @@ final_status: pending | completed  # パイプライン最終ステータス
    - stage_2_test.status: completed/skipped かつ stage_3_pause.status: pending → Stage 3 から再開
    - stage_1_spec.status: completed/skipped かつ stage_2_test.status: pending → Stage 2 から再開
    - stage_1_spec.status: pending/in_progress → Stage 1 から再開
-   - .blueprint/pipeline-state.yaml なし → エラー（/v5 で最初から実行するよう案内）
+   - .blueprint/pipeline-state.yaml なし → エラー（/blueprint で最初から実行するよう案内）
 3. 該当ステージから実行を再開
 ```
 
@@ -368,16 +368,16 @@ final_status: pending | completed  # パイプライン最終ステータス
 
 | オプション | 説明 |
 |-----------|------|
-| `/v5` | パイプライン実行（Smart Skip 適用） |
-| `/v5 --resume` | 中断点から再開（任意ステージ対応） |
-| `/v5 --force` | 全ステージ強制実行（Smart Skip 無視） |
+| `/blueprint` | パイプライン実行（Smart Skip 適用） |
+| `/blueprint --resume` | 中断点から再開（任意ステージ対応） |
+| `/blueprint --force` | 全ステージ強制実行（Smart Skip 無視） |
 
 ## サマリー出力
 
 パイプライン完了時（Stage 4 の Doc Review Gate 通過後）に最終サマリーを出力する。
 
 ```
-## v5 パイプライン完了
+## パイプライン完了
 
 ### ステージ結果
 | ステージ | 結果 | 成果物 |
@@ -410,10 +410,10 @@ final_status: pending | completed  # パイプライン最終ステータス
 | エラー | 対応 |
 |--------|------|
 | git リポジトリでない | エラー報告、`git init` を案内 |
-| /spec 中にユーザーが中断 | .blueprint/pipeline-state.yaml に stage_1_spec.status: in_progress で保存、次回 /v5 で再開可能 |
+| /spec 中にユーザーが中断 | .blueprint/pipeline-state.yaml に stage_1_spec.status: in_progress で保存、次回 /blueprint で再開可能 |
 | Review Gate で REVISE 2 回超過 | ユーザーに介入要請、findings リストを提示 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |
-| --resume で .blueprint/pipeline-state.yaml なし | エラー報告、`/v5` で最初から実行するよう案内 |
+| --resume で .blueprint/pipeline-state.yaml なし | エラー報告、`/blueprint` で最初から実行するよう案内 |
 | --resume で final_status が completed | 「パイプラインは完了済み。--force で再実行してください」と案内 |
 | Stage 4 で docs/ が既に存在 | `@generated` マーカー付きは上書き、なしはユーザー確認 |
 | 部分的なステージ失敗 | 成功分は保持、失敗分を報告して続行 |

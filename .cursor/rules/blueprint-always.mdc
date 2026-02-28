@@ -22,11 +22,6 @@ alwaysApply: true
 設計ドキュメントは `docs/` 配下に生成する。
 詳細は @core/output-structure.md を参照。
 
-## Blackboard
-
-`docs/project-context.yaml` がプロジェクトの共有状態管理ファイル。
-スキーマは @core/blackboard-schema.yaml を参照。
-
 ## レビュー基準
 
 P0/P1/P2 の重大度分類と Gate 判定基準は @core/review-criteria.md を参照。

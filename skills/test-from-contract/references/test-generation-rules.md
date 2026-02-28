@@ -3,7 +3,7 @@
 Contract YAML からテストコードを生成する際のルール集。
 AI はこのドキュメントを参照してテストを生成する。
 
-> **参照**: `core/v5/contract-schema.md` のテスト導出パターン表、`core/v5/test-from-contract.md` のワークフロー
+> **参照**: `core/contract-schema.md` のテスト導出パターン表、`core/test-from-contract.md` のワークフロー
 
 ## Level 1: 構造検証テスト
 

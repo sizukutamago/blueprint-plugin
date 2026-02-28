@@ -42,4 +42,4 @@ Contract YAML から TDD テストコードを自動生成する。
 
 - `/spec` — Contract YAML 生成（上流）
 - `/generate-docs` — 設計書生成（下流）
-- test-from-contract スキル（`core/v5/test-from-contract.md` でワークフロー定義）
+- test-from-contract スキル（`core/test-from-contract.md` でワークフロー定義）

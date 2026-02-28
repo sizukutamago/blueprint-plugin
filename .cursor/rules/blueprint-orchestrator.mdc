@@ -1,27 +1,27 @@
 ---
-description: "Blueprint v5 - Orchestrator. Apply when running the full v5 pipeline, working with .blueprint/pipeline-state.yaml, or coordinating /spec → /test-from-contract → /generate-docs workflow."
+description: "Blueprint - Orchestrator. Apply when running the full pipeline, working with .blueprint/pipeline-state.yaml, or coordinating /spec → /test-from-contract → /generate-docs workflow."
 globs: ".blueprint/**,tests/contracts/**,docs/**,src/**,routes/**,app/**"
 alwaysApply: false
 ---
 
-# v5 Orchestrator ワークフロー (Cursor)
+# Orchestrator ワークフロー (Cursor)
 
 ## 仕様参照
 
 以下の仕様ファイルを必ず読み込むこと:
 
-- `@core/v5/orchestrator.md` — パイプライン定義（4 ステージ + Review Swarm）
-- `@core/v5/spec.md` — Stage 1: Spec ワークフロー
-- `@core/v5/test-from-contract.md` — Stage 2: Test Generation ワークフロー
-- `@core/v5/generate-docs.md` — Stage 4: Doc Generation ワークフロー
-- `@core/v5/contract-schema.md` — Contract YAML スキーマ
+- `@core/orchestrator.md` — パイプライン定義（4 ステージ + Review Swarm）
+- `@core/spec.md` — Stage 1: Spec ワークフロー
+- `@core/test-from-contract.md` — Stage 2: Test Generation ワークフロー
+- `@core/generate-docs.md` — Stage 4: Doc Generation ワークフロー
+- `@core/contract-schema.md` — Contract YAML スキーマ
 - `@core/review-criteria.md` — レビュー基準（5 段階 + P0/P1/P2）
 
 Review Swarm プロンプト:
-- `@skills/v5-orchestrator/references/review-prompts/contract-reviewer.md`
-- `@skills/v5-orchestrator/references/review-prompts/test-reviewer.md`
-- `@skills/v5-orchestrator/references/review-prompts/drift-reviewer.md`
-- `@skills/v5-orchestrator/references/review-prompts/doc-reviewer.md`
+- `@skills/orchestrator/references/review-prompts/contract-reviewer.md`
+- `@skills/orchestrator/references/review-prompts/test-reviewer.md`
+- `@skills/orchestrator/references/review-prompts/drift-reviewer.md`
+- `@skills/orchestrator/references/review-prompts/doc-reviewer.md`
 
 ## Cursor 固有の実行手順
 

@@ -1,9 +1,8 @@
 # Generate Docs Workflow
 
-実装済みコードから v4 相当の設計書を `docs/` 配下に後追い生成するワークフロー。
-v4 が「未来の設計書を予測して書く」のに対し、v5 は「実在するコードの事実を記録する」。
+実装済みコードから設計書を `docs/` 配下に後追い生成するワークフロー。
 
-> **前提**: `blueprint-structure.md` を参照。v4 の `core/phases/*.md` と `core/output-structure.md` を品質基準として参照。
+> **前提**: `core/blueprint-structure.md` と `core/doc-format-standards.md` を品質基準として参照。
 
 ## ワークフロー（5 ステップ）
 
@@ -111,7 +110,7 @@ low 確信度のセクションは `<!-- TODO: 要確認 -->` マーカーを付
 
 ### Step 5: レビュー + サマリー
 
-v4 Phase 8 相当の整合性チェックを実行し、サマリーを出力する。
+整合性チェックを実行し、サマリーを出力する。
 
 ```
 レビューレベル:
@@ -162,18 +161,9 @@ v4 Phase 8 相当の整合性チェックを実行し、サマリーを出力す
 
 > 上記は代表例。実際のプロジェクト構成に応じて柔軟に対応する。
 
-## v4 品質基準の参照
+## 設計書フォーマット基準
 
-各設計書のフォーマット・品質基準は v4 の `core/phases/*.md` をそのまま引用する:
-
-| 設計書カテゴリ | 参照する v4 仕様 |
-|-------------|----------------|
-| アーキテクチャ | `core/phases/architecture-skeleton.md`, `core/phases/architecture-detail.md` |
-| データ構造 | `core/phases/database.md` |
-| API 設計 | `core/phases/api.md` |
-| 画面設計 | `core/phases/design-inventory.md`, `core/phases/design-detail.md` |
-| 実装準備 | `core/phases/impl-standards.md`, `core/phases/impl-test.md`, `core/phases/impl-ops.md` |
-| レビュー | `core/phases/review.md`, `core/review-criteria.md` |
+各設計書のフォーマット・品質基準は `core/doc-format-standards.md` を参照する。
 
 ## 原則
 
@@ -181,7 +171,7 @@ v4 Phase 8 相当の整合性チェックを実行し、サマリーを出力す
 |------|------|
 | 事実を記録 | コードにないものを推測して書かない。不明な箇所は TODO にする |
 | 確信度を明示 | 各セクションの情報源と確信度を明記する |
-| v4 互換 | 出力フォーマットは v4 の docs/ 構造に準拠する |
+| 標準フォーマット | 出力フォーマットは docs/ 構造に準拠する |
 | 段階的生成 | 全ファイルを一度に完成させなくてよい。TODO を残して次回に回せる |
 | 対話で補完 | コードから不明な部分はユーザーに質問する |
 

@@ -50,15 +50,13 @@ id: "{PREFIX}-{name}"      # 一意識別子
 
 contract は追加で: `type`, `version`, `status`, `owner`, `updated_at`
 
-## v5 ID 体系
+## ID 体系
 
 | プレフィックス | 用途 | 形式 | 例 |
 |---------------|------|------|-----|
 | CON- | Contract | CON-{name} | CON-order-create |
 | CONCEPT- | Concept | CONCEPT-{name} | CONCEPT-order |
 | DEC- | Decision | DEC-{NNN}-{name} | DEC-001-payment-provider |
-
-> v4 の ID 体系（FR, NFR, SC, API, ENT, ADR）とは名前空間が分離されており、共存可能。
 
 ## Link Types
 

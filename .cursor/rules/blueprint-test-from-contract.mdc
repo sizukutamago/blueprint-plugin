@@ -1,5 +1,5 @@
 ---
-description: "Blueprint v5 - Test from Contract. Apply when generating tests from contracts, creating TDD test stubs, working with tests/contracts/ directory, or editing .blueprint/contracts/."
+description: "Blueprint - Test from Contract. Apply when generating tests from contracts, creating TDD test stubs, working with tests/contracts/ directory, or editing .blueprint/contracts/."
 globs: "tests/contracts/**,.blueprint/contracts/**"
 alwaysApply: false
 ---
@@ -10,9 +10,9 @@ alwaysApply: false
 
 以下の仕様ファイルを必ず読み込むこと:
 
-- `@core/v5/test-from-contract.md` — ワークフロー定義（6 ステップ）
-- `@core/v5/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
-- `@core/v5/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
+- `@core/test-from-contract.md` — ワークフロー定義（6 ステップ）
+- `@core/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
+- `@core/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 テスト生成ルール:
 - `@skills/test-from-contract/references/test-generation-rules.md`

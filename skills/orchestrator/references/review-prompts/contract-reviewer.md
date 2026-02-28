@@ -1,13 +1,13 @@
 # Contract Review Swarm プロンプト
 
-v5 パイプライン Stage 1 後の Contract Review Gate で使用するレビュープロンプト。
+パイプライン Stage 1 後の Contract Review Gate で使用するレビュープロンプト。
 3 エージェントが並列でレビューし、findings を返す。
 
 ## 共通入力
 
 各エージェントに以下を渡す:
 - Contract YAML ファイルパスリスト（`.blueprint/contracts/**/*.contract.yaml`）
-- `core/v5/contract-schema.md` の内容（スキーマ参照）
+- `core/contract-schema.md` の内容（スキーマ参照）
 
 ## 共通出力フォーマット
 

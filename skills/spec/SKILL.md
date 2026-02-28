@@ -2,7 +2,7 @@
 name: spec
 description: Create I/O boundary contracts through brainstorming. Use when the user wants to "create contract", "define spec", "brainstorm API design", "design I/O boundary", "define external integration", "specify file format", or "start knowledge base". Combines interactive brainstorming with structured contract YAML generation.
 version: 1.0.0
-core_ref: core/v5/spec.md
+core_ref: core/spec.md
 ---
 
 # Spec スキル (Claude Code)
@@ -12,9 +12,9 @@ core_ref: core/v5/spec.md
 
 ## 仕様参照
 
-本スキルのワークフローは `core/v5/spec.md` に定義。
-Contract YAML のスキーマは `core/v5/contract-schema.md` を参照。
-`.blueprint/` の構造規約は `core/v5/blueprint-structure.md` を参照。
+本スキルのワークフローは `core/spec.md` に定義。
+Contract YAML のスキーマは `core/contract-schema.md` を参照。
+`.blueprint/` の構造規約は `core/blueprint-structure.md` を参照。
 
 ## 前提条件
 
@@ -42,7 +42,7 @@ Contract YAML のスキーマは `core/v5/contract-schema.md` を参照。
 
 ## ワークフロー（Claude Code 固有部分）
 
-`core/v5/spec.md` の 7 ステップに従う。以下は Claude Code 固有の実行詳細:
+`core/spec.md` の 7 ステップに従う。以下は Claude Code 固有の実行詳細:
 
 ### Step 1: コンテキスト読み込み
 

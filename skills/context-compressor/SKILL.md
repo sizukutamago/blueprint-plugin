@@ -14,7 +14,7 @@ model: haiku
 
 | タイミング | 入力 | 圧縮戦略 |
 |-----------|------|---------|
-| Wave Aggregator 内 | 統合された Blackboard | Entity Signature Only |
+| Wave Aggregator 内 | 統合されたコンテキスト | Entity Signature Only |
 | Phase 8 (Review) | 全設計書 | Decision Summary |
 | 既存コード分析 | ソースコード | Semantic Pruning |
 
@@ -63,7 +63,7 @@ async function getUser(userId: string): Promise<User>
 
 ### 2. Entity Signature Only（エンティティ簡略化）
 
-Blackboard のエンティティ情報を属性リストに圧縮する。
+エンティティ情報を属性リストに圧縮する。
 
 **入力例（200 トークン）:**
 ```yaml
@@ -122,7 +122,7 @@ entities:
 
 ### 4. Decision Summary（決定事項のみ）
 
-ADR と Blackboard から決定事項のみを抽出する。
+ADR と設計情報から決定事項のみを抽出する。
 
 **出力形式:**
 ```markdown
@@ -182,9 +182,9 @@ ADR と Blackboard から決定事項のみを抽出する。
 
 ### Wave Aggregator での使用
 
-**入力（Blackboard 全体: 50k トークン）:**
+**入力（コンテキスト全体: 50k トークン）:**
 ```yaml
-blackboard:
+context:
   decisions:
     architecture: {...}  # 10k
     entities: [...]      # 15k
@@ -194,7 +194,7 @@ blackboard:
 
 **出力（圧縮後: 15k トークン）:**
 ```yaml
-blackboard_summary:
+context_summary:
   architecture:
     tech_stack: [Next.js, PostgreSQL, Prisma]
     auth: JWT/RS256
@@ -206,29 +206,6 @@ blackboard_summary:
   screens: [SC-001..SC-030]
     # 詳細: 06_screen_design/screen_list.md
 ```
-
-## SendMessage 完了報告
-
-圧縮完了時に以下の YAML 形式で呼び出し元（通常は Aggregator）に結果を返す:
-
-```yaml
-status: ok
-severity: null
-artifacts: []
-contract_outputs:
-  - key: compressed_context
-    value: {...}
-  - key: compression_stats
-    value:
-      original_tokens: 50000
-      compressed_tokens: 15000
-      compression_ratio: 0.70
-      preserved_ids: [FR-001, SC-001, ...]
-open_questions: []
-blockers: []
-```
-
-**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。
 
 ## エラーハンドリング
 

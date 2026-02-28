@@ -1,7 +1,6 @@
-# v5 出力構造
+# 出力構造
 
-v5 の `/generate-docs` で生成する設計書の出力先構造。
-v4 の `core/output-structure.md` と互換性を持つ。
+`/generate-docs` で生成する設計書の出力先構造。
 
 ## docs/ 配下の構造
 
@@ -42,16 +41,6 @@ docs/
     ├── consistency_check.md        #   整合性チェック結果
     └── project_completion.md       #   完了サマリー + 確信度レポート
 ```
-
-## v4 との差分
-
-| 項目 | v4 | v5 |
-|------|-----|-----|
-| requirements/ | 必須（Phase 1-2 出力） | なし（Contract が代替） |
-| project-context.yaml | 必須（Blackboard） | なし（.blueprint/ が代替） |
-| 生成方向 | 要件→設計書 (top-down) | コード→設計書 (bottom-up) |
-| 06_screen_design/ | 必須 | 条件付き（フロントエンドなしならスキップ） |
-| 確信度 | なし | あり（high/medium/low） |
 
 ## 生成条件
 

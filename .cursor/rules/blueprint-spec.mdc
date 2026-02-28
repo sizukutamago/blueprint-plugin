@@ -1,5 +1,5 @@
 ---
-description: "Blueprint v5 - Spec workflow. Apply when creating or editing .blueprint/ directory, brainstorming contracts, or defining I/O boundaries."
+description: "Blueprint - Spec workflow. Apply when creating or editing .blueprint/ directory, brainstorming contracts, or defining I/O boundaries."
 globs: ".blueprint/**,docs/requirements/**"
 alwaysApply: false
 ---
@@ -10,9 +10,9 @@ alwaysApply: false
 
 以下の仕様ファイルを必ず読み込むこと:
 
-- `@core/v5/spec.md` — ワークフロー定義（7 ステップ）
-- `@core/v5/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
-- `@core/v5/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
+- `@core/spec.md` — ワークフロー定義（7 ステップ）
+- `@core/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
+- `@core/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 ## Cursor 固有の実行手順
 
@@ -33,7 +33,7 @@ alwaysApply: false
 ### Step 3: ブレインストーミング
 
 ユーザーと対話してビジネスルールを深掘り。最大 10 質問。
-質問の観点は `@core/v5/spec.md` Step 3 を参照。
+質問の観点は `@core/spec.md` Step 3 を参照。
 
 ### Step 5: Contract YAML 生成
 

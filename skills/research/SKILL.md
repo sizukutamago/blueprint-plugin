@@ -15,20 +15,13 @@ WebSearch/WebFetchを活用して最新情報を調査し、research.mdに記録
 | 条件 | 必須 | 説明 |
 |------|------|------|
 | 調査対象の明確化 | ○ | 調査すべき技術/パターン/依存関係 |
-| docs/requirements/user-stories.md | △ | 要件がある場合は参照（web-requirements 出力） |
+| docs/requirements/user-stories.md | △ | 要件がある場合は参照 |
 
 ## 出力ファイル
 
 | ファイル | テンプレート | 説明 |
 |---------|-------------|------|
 | docs/00_analysis/research.md | {baseDir}/references/research.md | 調査結果 |
-
-## 依存関係
-
-| 種別 | 対象 |
-|------|------|
-| 前提スキル | web-requirements（任意） |
-| 後続スキル | architecture, gap-analysis |
 
 ## ワークフロー
 
@@ -130,24 +123,3 @@ WebSearch/WebFetchを活用して最新情報を調査し、research.mdに記録
 | 情報が古い | 公式ソースの最新版を確認 |
 | 矛盾する情報 | 複数ソースでクロスチェック |
 
-## SendMessage 完了報告
-
-タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
-
-```yaml
-status: ok
-severity: null
-artifacts:
-  - docs/00_analysis/research.md
-contract_outputs:
-  - key: research_summary.key_technologies
-    value: [...]
-  - key: research_summary.architecture_pattern
-    value: "..."
-  - key: research_summary.identified_risks
-    value: [...]
-open_questions: []
-blockers: []
-```
-
-**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。

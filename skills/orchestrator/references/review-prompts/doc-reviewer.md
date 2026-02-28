@@ -1,6 +1,6 @@
 # Doc Review Swarm プロンプト
 
-v5 パイプライン Stage 4 後の Doc Review Gate で使用するレビュープロンプト。
+パイプライン Stage 4 後の Doc Review Gate で使用するレビュープロンプト。
 3 エージェントが並列でレビューし、findings を返す。
 
 ## 共通入力
@@ -55,7 +55,7 @@ Level 1: 構造チェック
    - data_structure.md: エンティティ一覧、ER 図 → 欠落: P1
    - api_design.md: エンドポイント一覧 → 欠落: P1
    - test_strategy.md: テスト方針、カバレッジ目標 → 欠落: P1
-   - 各ファイルの必須セクションは core/phases/*.md の Contract YAML を参照
+   - 各ファイルの必須セクションは core/doc-format-standards.md を参照
 
 Level 2: 整合性チェック
 
@@ -156,7 +156,7 @@ Level 5: 運用準備チェック（review-criteria.md 参照）
 ### 役割
 
 設計書の内容がソースコードの実態と一致しているかを検証する。
-v5 の原則「事実を記録する」（generate-docs.md）に照らし、乖離を検出する。
+原則「事実を記録する」（generate-docs.md）に照らし、乖離を検出する。
 
 ### チェック手順
 

@@ -2,7 +2,7 @@
 name: test-from-contract
 description: Generate TDD tests from Contract YAML files. Use when the user wants to "generate tests from contracts", "create TDD tests", "test from contract", "generate test stubs", "create Level 1 and Level 2 tests", "derive tests from spec", "write contract tests", or "TDD from contracts". Reads .blueprint/contracts/ and produces Level 1 (structure validation) and Level 2 (implementation stubs) test files.
 version: 1.0.0
-core_ref: core/v5/test-from-contract.md
+core_ref: core/test-from-contract.md
 ---
 
 # Test From Contract スキル (Claude Code)
@@ -12,8 +12,8 @@ Level 1（構造検証、即 GREEN）+ Level 2（実装検証、RED スタブ）
 
 ## 仕様参照
 
-本スキルのワークフローは `core/v5/test-from-contract.md` に定義。
-Contract スキーマは `core/v5/contract-schema.md` を参照。
+本スキルのワークフローは `core/test-from-contract.md` に定義。
+Contract スキーマは `core/contract-schema.md` を参照。
 テスト生成ルールは `{baseDir}/references/test-generation-rules.md` を参照。
 
 ## 前提条件
@@ -43,7 +43,7 @@ Contract スキーマは `core/v5/contract-schema.md` を参照。
 
 ## ワークフロー（Claude Code 固有部分）
 
-`core/v5/test-from-contract.md` の 6 ステップに従う。以下は Claude Code 固有の実行詳細:
+`core/test-from-contract.md` の 6 ステップに従う。以下は Claude Code 固有の実行詳細:
 
 ### Step 1: コンテキスト読み込み
 

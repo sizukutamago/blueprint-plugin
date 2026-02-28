@@ -39,11 +39,11 @@ traceability:
 | 孤児 API | 定義されているが FR/SC から参照されていない | P2 |
 | 孤児 SC | 定義されているが FR から参照されていない | P2 |
 
-## 各フェーズでのトレーサビリティ責務
+## トレーサビリティ責務
 
-| フェーズ | 登録するマッピング |
+| 設計領域 | 登録するマッピング |
 |---------|------------------|
-| database | fr_to_ent |
-| design-inventory | fr_to_sc |
-| api | fr_to_api, api_to_ent, api_to_sc |
-| impl-test | fr_to_test, nfr_to_test |
+| データ構造設計 | fr_to_ent |
+| 画面設計 | fr_to_sc |
+| API 設計 | fr_to_api, api_to_ent, api_to_sc |
+| テスト設計 | fr_to_test, nfr_to_test |

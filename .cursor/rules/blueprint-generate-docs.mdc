@@ -1,5 +1,5 @@
 ---
-description: "Blueprint v5 - Generate Docs. Apply when generating design documents from code, reverse engineering architecture, or working with docs/ directory."
+description: "Blueprint - Generate Docs. Apply when generating design documents from code, reverse engineering architecture, or working with docs/ directory."
 globs: "docs/03_architecture/**,docs/04_data_structure/**,docs/05_api_design/**,docs/06_screen_design/**,docs/07_implementation/**,docs/08_review/**"
 alwaysApply: false
 ---
@@ -10,15 +10,15 @@ alwaysApply: false
 
 以下の仕様ファイルを必ず読み込むこと:
 
-- `@core/v5/generate-docs.md` — ワークフロー定義（5 ステップ）
-- `@core/v5/output-structure-v5.md` — 出力構造仕様
-- `@core/v5/blueprint-structure.md` — .blueprint/ 構造（トレーサビリティ用）
+- `@core/generate-docs.md` — ワークフロー定義（5 ステップ）
+- `@core/output-structure.md` — 出力構造仕様
+- `@core/blueprint-structure.md` — .blueprint/ 構造（トレーサビリティ用）
 
 抽出ルール:
 - `@skills/generate-docs/references/extraction-rules.md`
 
 各設計書のフォーマット・品質基準:
-- `@core/phases/*.md` — v4 の各フェーズ仕様
+- `@core/doc-format-standards.md` — 設計書フォーマット標準
 
 ## Cursor 固有の実行手順
 
@@ -41,10 +41,10 @@ alwaysApply: false
 
 ### Step 4-5: 検証 + レビュー
 
-トレーサビリティ検証と v4 Phase 8 相当のレビューを実行。
+トレーサビリティ検証とレビューを実行。
 
 ## 品質基準
 
 - コードにない情報は推測しない（TODO にする）
 - 確信度 low のセクションには TODO マーカーを付ける
-- v4 の出力フォーマットに準拠
+- 出力フォーマットに準拠

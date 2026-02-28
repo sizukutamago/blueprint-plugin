@@ -1,6 +1,6 @@
 # Drift Review Swarm プロンプト
 
-v5 パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Drift Gate のレビュープロンプト。
+パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Drift Gate のレビュープロンプト。
 Contract YAML に宣言された制約と実装コードの乖離を 3 エージェントが並列で検出する。
 
 **テスト GREEN チェックとの違い**:
@@ -15,7 +15,7 @@ Contract YAML に宣言された制約と実装コードの乖離を 3 エージ
 - ソースコード（`src/`, `app/`, `routes/` 等のメインコードディレクトリ）
 - バリデーションスキーマ（Zod, Joi, Yup 等の定義ファイル）
 - テストファイル（`tests/contracts/` — 参考情報として）
-- `core/v5/contract-schema.md` の内容（Contract フィールド定義参照）
+- `core/contract-schema.md` の内容（Contract フィールド定義参照）
 
 ## 共通出力フォーマット
 

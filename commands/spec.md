@@ -36,4 +36,4 @@ description: Create I/O boundary contracts through brainstorming. Generates Cont
 
 ## 関連
 
-- spec スキル（`core/v5/spec.md` でワークフロー定義）
+- spec スキル（`core/spec.md` でワークフロー定義）

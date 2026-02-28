@@ -13,7 +13,7 @@ version: 1.0.0
 
 | 条件 | 必須 | 説明 |
 |------|------|------|
-| docs/requirements/user-stories.md | ○ | 分析対象の要件（web-requirements 出力） |
+| docs/requirements/user-stories.md | ○ | 分析対象の要件 |
 | 既存ソースコード | ○ | ギャップ分析対象 |
 
 ## 出力ファイル
@@ -21,13 +21,6 @@ version: 1.0.0
 | ファイル | テンプレート | 説明 |
 |---------|-------------|------|
 | docs/00_analysis/gap_analysis.md | {baseDir}/references/gap_analysis.md | ギャップ分析結果 |
-
-## 依存関係
-
-| 種別 | 対象 |
-|------|------|
-| 前提スキル | web-requirements |
-| 後続スキル | architecture-skeleton, design-inventory |
 
 ## ワークフロー
 
@@ -141,24 +134,3 @@ version: 1.0.0
 | ソースコードなし | 対象ディレクトリ確認を促す |
 | 複雑な統合が不明確 | "Research Needed" としてフラグ、設計フェーズで詳細調査 |
 
-## SendMessage 完了報告
-
-タスク完了時に以下の YAML 形式で Lead に SendMessage を送信する:
-
-```yaml
-status: ok
-severity: null
-artifacts:
-  - docs/00_analysis/gap_analysis.md
-contract_outputs:
-  - key: analysis.effort
-    value: S/M/L/XL
-  - key: analysis.risk
-    value: High/Medium/Low
-  - key: analysis.recommended_approach
-    value: A/B/C
-open_questions: []
-blockers: []
-```
-
-**注意**: project-context.yaml には直接書き込まない（Aggregator の責務）。

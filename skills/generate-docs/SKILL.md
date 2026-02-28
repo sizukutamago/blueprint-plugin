@@ -1,20 +1,20 @@
 ---
 name: generate-docs
-description: Generate design documents from existing code. Use when the user wants to "generate design docs", "create documentation from code", "reverse engineer architecture", "extract design documents", "document existing system", or "create docs from implementation". Analyzes source code and generates v4-compatible design documentation.
+description: Generate design documents from existing code. Use when the user wants to "generate design docs", "create documentation from code", "reverse engineer architecture", "extract design documents", "document existing system", or "create docs from implementation". Analyzes source code and generates design documentation.
 version: 1.0.0
-core_ref: core/v5/generate-docs.md
+core_ref: core/generate-docs.md
 ---
 
 # Generate Docs スキル (Claude Code)
 
-実装済みコードから v4 相当の設計書を `docs/` 配下に後追い生成するスキル。
+実装済みコードから設計書を `docs/` 配下に後追い生成するスキル。
 コードの事実を記録し、不明な点は TODO として残すか、ユーザーに確認する。
 
 ## 仕様参照
 
-本スキルのワークフローは `core/v5/generate-docs.md` に定義。
-出力構造は `core/v5/output-structure-v5.md` を参照。
-各設計書のフォーマットは v4 の `core/phases/*.md` を参照。
+本スキルのワークフローは `core/generate-docs.md` に定義。
+出力構造は `core/output-structure.md` を参照。
+各設計書のフォーマットは `core/doc-format-standards.md` を参照。
 抽出ルールは `{baseDir}/references/extraction-rules.md` を参照。
 
 ## 前提条件
@@ -48,7 +48,7 @@ core_ref: core/v5/generate-docs.md
 
 ## ワークフロー（Claude Code 固有部分）
 
-`core/v5/generate-docs.md` の 5 ステップに従う。以下は Claude Code 固有の実行詳細:
+`core/generate-docs.md` の 5 ステップに従う。以下は Claude Code 固有の実行詳細:
 
 ### Step 1: プロジェクト分析
 
@@ -117,7 +117,7 @@ Glob(".blueprint/**/*.md")
 |------|------|
 | 事実記録 | コードにない情報は推測しない。TODO にする |
 | 確信度明示 | 各セクションに high/medium/low を付与 |
-| v4 互換出力 | docs/ 構造・フォーマットは v4 準拠 |
+| 標準出力 | docs/ 構造・フォーマットは doc-format-standards.md 準拠 |
 | 段階的生成 | 1 回で完成しなくてよい。繰り返し実行で TODO を埋める |
 
 ## エラーハンドリング

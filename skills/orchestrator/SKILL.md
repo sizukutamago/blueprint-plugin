@@ -1,25 +1,25 @@
 ---
-name: v5-orchestrator
-description: Run the full v5 workflow pipeline. Use when the user wants to "run v5 workflow", "automate spec to docs", "orchestrate v5 pipeline", "run the full v5 pipeline", "execute v5", "start v5", or "v5 one-command". Automates /spec → /test-from-contract → implementation pause → /generate-docs with Review Swarm gates between each stage.
+name: orchestrator
+description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", or "blueprint one-command". Automates /spec → /test-from-contract → implementation pause → /generate-docs with Review Swarm gates between each stage.
 version: 1.0.0
-core_ref: core/v5/orchestrator.md
+core_ref: core/orchestrator.md
 ---
 
-# v5 Orchestrator スキル (Claude Code)
+# Orchestrator スキル (Claude Code)
 
-v5 パイプラインをワンコマンドで自動実行するオーケストレーター。
+パイプラインをワンコマンドで自動実行するオーケストレーター。
 4 ステージの直列パイプラインを実行し、各ステージ後に Review Swarm（4 Gate）で品質を担保する。
 
 ## 仕様参照
 
-本スキルのワークフローは `core/v5/orchestrator.md` に定義。
+本スキルのワークフローは `core/orchestrator.md` に定義。
 各ステージの詳細仕様:
-- Stage 1: `core/v5/spec.md`
-- Stage 2: `core/v5/test-from-contract.md`
-- Stage 4: `core/v5/generate-docs.md`
+- Stage 1: `core/spec.md`
+- Stage 2: `core/test-from-contract.md`
+- Stage 4: `core/generate-docs.md`
 
 Review Swarm プロンプト: `{baseDir}/references/review-prompts/`
-Contract スキーマ: `core/v5/contract-schema.md`
+Contract スキーマ: `core/contract-schema.md`
 レビュー基準: `core/review-criteria.md`
 
 ## 前提条件
@@ -34,9 +34,9 @@ Contract スキーマ: `core/v5/contract-schema.md`
 
 | オプション | 説明 |
 |-----------|------|
-| `/v5` | パイプライン実行（Smart Skip 適用） |
-| `/v5 --resume` | 中断点から再開 |
-| `/v5 --force` | 全ステージ強制実行（Smart Skip 無視） |
+| `/blueprint` | パイプライン実行（Smart Skip 適用） |
+| `/blueprint --resume` | 中断点から再開 |
+| `/blueprint --force` | 全ステージ強制実行（Smart Skip 無視） |
 
 ## ツール
 
@@ -50,7 +50,7 @@ Contract スキーマ: `core/v5/contract-schema.md`
 
 ## ワークフロー（Claude Code 固有部分）
 
-`core/v5/orchestrator.md` のパイプラインに従う。以下は Claude Code 固有の実行詳細:
+`core/orchestrator.md` のパイプラインに従う。以下は Claude Code 固有の実行詳細:
 
 ### Step 0: 初期化
 
@@ -71,6 +71,7 @@ Read(".blueprint/pipeline-state.yaml")
   - 各ステージが `pending`/`in_progress` → 該当ステージの最初から再実行
   - `final_status: completed` → 「完了済み。--force で再実行してください」
 - `--force` を指定 → 新規パイプラインとして全ステージ実行
+
 - 指定なし → Smart Skip を適用して実行
 
 ### Step 1: Smart Skip 判定
@@ -96,7 +97,7 @@ Glob("docs/03_architecture/**")
 
 ### Step 2: Stage 1 — Spec 実行
 
-`core/v5/spec.md` の 7 ステップワークフローを直接実行する。
+`core/spec.md` の 7 ステップワークフローを直接実行する。
 
 1. `.blueprint/` コンテキスト読み込み
 2. スコープ確認（ユーザー対話）
@@ -128,7 +129,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md 
 
 ### Step 4: Stage 2 — Test Generation 実行
 
-`core/v5/test-from-contract.md` の 6 ステップワークフローを実行する。
+`core/test-from-contract.md` の 6 ステップワークフローを実行する。
 
 **オーケストレーターモード自動化**:
 - Contract 選択: ユーザー確認を省略、active + draft 全件を自動選択
@@ -183,7 +184,7 @@ stages:
     final_counts: { p0: 0, p1: N, p2: N }
   stage_3_pause:
     status: completed
-    message: "Implementation pause - resume with /v5 --resume"
+    message: "Implementation pause - resume with /blueprint --resume"
   drift_review_gate:
     status: pending
   stage_4_docs:
@@ -208,7 +209,7 @@ final_status: pending
    npx vitest tests/contracts/level2
 
 3. 全テスト GREEN 後、ドキュメント生成を再開:
-   /v5 --resume
+   /blueprint --resume
 ```
 
 ### Step 7: --resume 時の GREEN チェック
@@ -271,7 +272,7 @@ drift_review_gate:
 
 ### Step 8: Stage 4 — Doc Generation 実行
 
-`core/v5/generate-docs.md` の 5 ステップワークフローを実行する。
+`core/generate-docs.md` の 5 ステップワークフローを実行する。
 
 1. プロジェクト分析
 2. 自動抽出フェーズ（グループ A → B）
@@ -296,7 +297,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 ### Step 10: 最終サマリー出力
 
 ```
-## v5 パイプライン完了
+## パイプライン完了
 
 ### ステージ結果
 | ステージ | 結果 | 成果物 |
@@ -345,8 +346,8 @@ final_status: completed
 
 | エラー | 対応 |
 |--------|------|
-| `.blueprint/` なし + `/v5` | Stage 1 から開始（正常フロー） |
-| `--resume` で .blueprint/pipeline-state.yaml なし | `/v5` で最初から実行するよう案内 |
+| `.blueprint/` なし + `/blueprint` | Stage 1 から開始（正常フロー） |
+| `--resume` で .blueprint/pipeline-state.yaml なし | `/blueprint` で最初から実行するよう案内 |
 | Review Gate で REVISE 2 回超過 | findings リストを提示してユーザーに介入要請 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |
 | Stage 途中でエラー | 成功分は保持、.blueprint/pipeline-state.yaml に現在のステージを記録して停止 |

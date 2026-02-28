@@ -2,16 +2,16 @@
 
 ## ID プレフィックス一覧
 
-| プレフィックス | 用途 | 形式 | 採番元フェーズ | 例 |
-|---------------|------|------|-------------|-----|
-| FR | 機能要件 | FR-XXX (3桁) | web-requirements | FR-001, FR-042 |
-| NFR | 非機能要件 | NFR-{CAT}-XXX | web-requirements | NFR-PERF-001 |
-| SC | 画面 | SC-XXX (3桁) | design-inventory | SC-001 |
-| API | API リソース | API-XXX (3桁) | api | API-001 |
-| ENT | エンティティ | ENT-{PascalCase} | database | ENT-User, ENT-OrderItem |
-| ADR | 設計決定記録 | ADR-XXXX (4桁) | architecture-skeleton/detail | ADR-0001 |
+| プレフィックス | 用途 | 形式 | 採番元 | 例 |
+|---------------|------|------|--------|-----|
+| FR | 機能要件 | FR-XXX (3桁) | 要件定義 | FR-001, FR-042 |
+| NFR | 非機能要件 | NFR-{CAT}-XXX | 要件定義 | NFR-PERF-001 |
+| SC | 画面 | SC-XXX (3桁) | 画面設計 | SC-001 |
+| API | API リソース | API-XXX (3桁) | API 設計 | API-001 |
+| ENT | エンティティ | ENT-{PascalCase} | データ構造設計 | ENT-User, ENT-OrderItem |
+| ADR | 設計決定記録 | ADR-XXXX (4桁) | アーキテクチャ設計 | ADR-0001 |
 
-> **v5 拡張**: CON-*, CONCEPT-*, DEC-* プレフィックスは `core/v5/blueprint-structure.md` を参照。
+> CON-*, CONCEPT-*, DEC-* プレフィックスは `core/blueprint-structure.md` を参照。
 
 ## NFR カテゴリ
 
@@ -28,30 +28,7 @@
 
 ## 採番ルール
 
-1. **名前空間分離**: 各フェーズが担当する ID プレフィックスは重複しない
+1. **名前空間分離**: 各設計領域が担当する ID プレフィックスは重複しない
 2. **連番**: 同一プレフィックス内で連番（欠番なし）
 3. **不変性**: 一度採番された ID は変更・再利用しない
-4. **参照整合性**: ID を参照する際は必ず採番元フェーズの出力に存在することを確認
-
-## Blackboard での ID 管理
-
-```yaml
-id_registry:
-  fr:
-    next: 1          # 次に採番する番号
-    allocated: []     # 採番済みリスト
-  nfr:
-    next: 1
-    allocated: []
-  sc:
-    next: 1
-    allocated: []
-  api:
-    next: 1
-    allocated: []
-  ent:
-    allocated: []     # PascalCase なので next 不要
-  adr:
-    next: 1
-    allocated: []
-```
+4. **参照整合性**: ID を参照する際は必ず採番元の出力に存在することを確認
