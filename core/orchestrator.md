@@ -14,7 +14,7 @@ Stage 1: Spec（対話的）
 Stage 2: Test Generation（自動）
     → Test Review Gate（3 並列レビュー）
 Stage 3: Implementation Pause（ユーザーが実装）
-    → Drift Gate（3 並列レビュー：Contract↔実装の乖離検出）
+    → Code Review Gate（3 並列レビュー：Contract↔実装の乖離検出）
 Stage 4: Doc Generation（自動）
     → Doc Review Gate（3 並列レビュー）
 ```
@@ -26,7 +26,7 @@ Stage 4: Doc Generation（自動）
 | Stage 1 | ユーザーのビジネス知識 | `.blueprint/contracts/`, `.blueprint/concepts/`, `.blueprint/decisions/` |
 | Stage 2 | `.blueprint/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/` |
 | Stage 3 | `tests/contracts/level2/`（RED スタブ） | 実装コード + GREEN テスト |
-| Drift Gate | `.blueprint/contracts/` + ソースコード | findings（Contract↔実装の乖離リスト） |
+| Code Review Gate | `.blueprint/contracts/` + ソースコード | findings（Contract↔実装の乖離リスト） |
 | Stage 4 | ソースコード + `.blueprint/` | `docs/` |
 
 ## ステージ詳細
@@ -95,7 +95,7 @@ Stage 4: Doc Generation（自動）
    - Level 2 テストを実行し、全テスト PASS であることを確認
    - FAIL が残っている場合: ユーザーに警告し、続行するか確認
    - テストフレームワークが検出できない場合: チェックをスキップして続行
-4. Drift Gate を実行（Contract↔実装の乖離検出）
+4. Code Review Gate を実行（Contract↔実装の乖離検出）
 5. Stage 4 から実行を再開
 
 **一般再開**（任意ステージから）:
@@ -159,7 +159,7 @@ Stage 4: Doc Generation（自動）
 
 ```yaml
 reviewer: "Schema Validator"  # レビューエージェント名
-gate: "contract"              # contract | test | drift | doc
+gate: "contract"              # contract | test | code | doc
 findings:
   - severity: P1
     target: "CON-order-create"
@@ -222,20 +222,20 @@ REVISE 判定
 | Constraint Collision Checker | 制約干渉 | 境界値テスト（min-1, max+1）が他の制約を侵していないか、テストデータが valid base payload から 1 フィールドだけ変更しているか、干渉回避コメントが記載されているか |
 | Traceability Auditor | 追跡可能性 | 全テストファイルに `@generated`/`@contract`/`@implements` コメントがあるか、Level 2 の全 it ブロックに `Derived from:` コメントがあるか、Level 1 が全 Contract をカバーしているか |
 
-### Drift Gate（Stage 3 再開時、Stage 4 前）
+### Code Review Gate（Stage 3 再開時、Stage 4 前）
 
 Contract YAML に宣言された制約と実装コードの乖離を検出する。
 テスト GREEN チェック（動作レベル）とは異なり、コード上の宣言が Contract と一致しているかを静的に検証する。
 
 | エージェント | 観点 | チェック項目 |
 |-------------|------|------------|
-| Schema Drift Checker | バリデーション層 | Zod/Joi 等のスキーマ定義が Contract の type/required/min/max/pattern/enum と一致しているか、固定値フィールド（value: "xxx"）がハードコードで一致しているか、missing constraint（Contract にあるがスキーマにない制約）がないか |
+| Schema Compliance Checker | バリデーション層 | Zod/Joi 等のスキーマ定義が Contract の type/required/min/max/pattern/enum と一致しているか、固定値フィールド（value: "xxx"）がハードコードで一致しているか、missing constraint（Contract にあるがスキーマにない制約）がないか |
 | Route & Handler Checker | API/エンドポイント層 | api Contract の method/path がルート定義と一致しているか、external Contract の endpoint/provider がクライアント設定と一致しているか、error 定義の status/code が実装のエラーレスポンスと一致しているか |
 | Business Logic Checker | ビジネスルール層 | business_rules の各 BR-xxx に対応する実装ロジックが存在するか、state_transition の遷移ルールが実装に反映されているか、constraints の各 EC-xxx（冪等性、タイムアウト等）が実装されているか |
 
-**Drift Gate の特徴**:
-- テスト実行（GREEN チェック）が「動作の正しさ」を検証するのに対し、Drift Gate は「宣言の一致」を検証する
-- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Drift Gate が P1 を報告
+**Code Review Gate の特徴**:
+- テスト実行（GREEN チェック）が「動作の正しさ」を検証するのに対し、Code Review Gate は「宣言の一致」を検証する
+- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Code Review Gate が P1 を報告
 - Gate 判定は他の Review Gate と同じプロトコル（P0=0 かつ P1≤1 → PASS）
 
 ### Doc Review Gate（Stage 4 後）
@@ -294,11 +294,11 @@ stages:
     status: pending | completed
     message: null                  # 一時停止メッセージ
 
-  drift_review_gate:               # Stage 3 再開時（Stage 4 前）のドリフト検出結果
+  code_review_gate:               # Stage 3 再開時（Stage 4 前）の Code Review 結果
     status: pending | passed | failed
     cycles: 0
     final_counts: { p0: 0, p1: 0, p2: 0 }
-    drift_items: []                # 検出されたドリフト詳細リスト
+    code_review_items: []          # 検出された乖離の詳細リスト
     notes: null
 
   stage_4_docs:
@@ -339,8 +339,8 @@ final_status: pending | completed  # パイプライン最終ステータス
 1. .blueprint/pipeline-state.yaml を読み込み
 2. final_status と各ステージの status を確認:
    - final_status: completed → 「パイプラインは完了済み。--force で再実行してください」
-   - stage_3_pause.status: completed かつ drift_review_gate.status: pending → Drift Gate から再開
-   - drift_review_gate.status: passed かつ stage_4_docs.status: pending → Stage 4 から再開
+   - stage_3_pause.status: completed かつ code_review_gate.status: pending → Code Review Gate から再開
+   - code_review_gate.status: passed かつ stage_4_docs.status: pending → Stage 4 から再開
    - stage_2_test.status: completed/skipped かつ stage_3_pause.status: pending → Stage 3 から再開
    - stage_1_spec.status: completed/skipped かつ stage_2_test.status: pending → Stage 2 から再開
    - stage_1_spec.status: pending/in_progress → Stage 1 から再開
@@ -352,7 +352,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 1. Level 2 テストを実行し、全テスト PASS であることを確認
    - FAIL が残っている場合: ユーザーに警告し、続行するか確認
    - テストフレームワークが検出できない場合: チェックをスキップして続行
-2. Drift Gate を実行（Contract↔実装の乖離検出）
+2. Code Review Gate を実行（Contract↔実装の乖離検出）
    - PASS → Stage 4 へ
    - REVISE → ユーザーに乖離リストを提示、修正後に再実行
 
@@ -392,7 +392,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 |------|----|----|----|----- |---------|
 | Contract | 0 | 0 | 2 | PASS | 1 |
 | Test | 0 | 1 | 3 | PASS | 1 |
-| Drift | 0 | 1 | 2 | PASS | 1 |
+| Code | 0 | 1 | 2 | PASS | 1 |
 | Doc | 0 | 0 | 1 | PASS | 1 |
 
 ### 生成ファイル

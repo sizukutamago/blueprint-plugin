@@ -1,12 +1,12 @@
-# Drift Review Swarm プロンプト
+# Code Review Swarm プロンプト
 
-パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Drift Gate のレビュープロンプト。
+パイプライン Stage 3（実装）完了後、Stage 4 前に実行する Code Review Gate のレビュープロンプト。
 Contract YAML に宣言された制約と実装コードの乖離を 3 エージェントが並列で検出する。
 
 **テスト GREEN チェックとの違い**:
 - GREEN チェック: テストが PASS するか（動作の正しさ）
-- Drift Gate: Contract の宣言がコードに反映されているか（宣言の一致）
-- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Drift Gate が検出
+- Code Review Gate: Contract の宣言がコードに反映されているか（宣言の一致）
+- 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Code Review Gate が検出
 
 ## 共通入力
 
@@ -21,7 +21,7 @@ Contract YAML に宣言された制約と実装コードの乖離を 3 エージ
 
 ```yaml
 reviewer: "{エージェント名}"
-gate: "drift"
+gate: "code"
 findings:
   - severity: P0 | P1 | P2
     target: "CON-xxx"
@@ -40,7 +40,7 @@ summary:
 
 ---
 
-## Agent 1: Schema Drift Checker
+## Agent 1: Schema Compliance Checker
 
 ### 役割
 

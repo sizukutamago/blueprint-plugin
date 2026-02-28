@@ -66,8 +66,8 @@ Read(".blueprint/pipeline-state.yaml")
 
 **--resume モード判定**:
 - ユーザーが `--resume` を指定 → `.blueprint/pipeline-state.yaml` を読み込み、中断点から再開:
-  - `stage_3_pause` 完了 → テスト GREEN チェック → Drift Gate → Stage 4 へ
-  - `drift_review_gate` 失敗 → Drift Gate から再実行
+  - `stage_3_pause` 完了 → テスト GREEN チェック → Code Review Gate → Stage 4 へ
+  - `code_review_gate` 失敗 → Code Review Gate から再実行
   - 各ステージが `pending`/`in_progress` → 該当ステージの最初から再実行
   - `final_status: completed` → 「完了済み。--force で再実行してください」
 - `--force` を指定 → 新規パイプラインとして全ステージ実行
@@ -185,7 +185,7 @@ stages:
   stage_3_pause:
     status: completed
     message: "Implementation pause - resume with /blueprint --resume"
-  drift_review_gate:
+  code_review_gate:
     status: pending
   stage_4_docs:
     status: pending
@@ -224,7 +224,7 @@ npx vitest tests/contracts/ --reporter=json 2>/dev/null
 # または: npx jest tests/contracts/ --json 2>/dev/null
 ```
 
-- 全 PASS → Step 7.5 (Drift Gate) へ
+- 全 PASS → Step 7.5 (Code Review Gate) へ
 - FAIL あり → ユーザーに警告:
 
 ```
@@ -238,35 +238,35 @@ N / M テストが FAIL しています:
 （未実装テストがあると、生成されるドキュメントに TODO が増えます）
 ```
 
-### Step 7.5: Drift Gate（Contract↔実装の乖離検出）— 必須
+### Step 7.5: Code Review Gate（Contract↔実装の乖離検出）— 必須
 
 **重要**: テスト GREEN チェック（Step 7）は「動作の正しさ」を確認するだけ。
-Drift Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」を検証する。
+Code Review Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」を検証する。
 テストが GREEN でも、バリデーションスキーマに制約が欠落していればここで検出される。
-**テスト GREEN だけで Drift Gate をスキップしてはならない。**
+**テスト GREEN だけで Code Review Gate をスキップしてはならない。**
 
 3 つの Task エージェントを**並列**起動:
 
 ```
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 1 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 2 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{drift-reviewer.md の Agent 3 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 1 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 2 プロンプト}")
+Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ
 
 **Gate 判定**: Step 3 と同じプロトコル
 
-- PASS → pipeline-state.yaml の `drift_review_gate` を更新して Stage 4 へ
+- PASS → pipeline-state.yaml の `code_review_gate` を更新して Stage 4 へ
 - REVISE → ユーザーに乖離リストを提示、修正後に再実行
 
-**pipeline-state.yaml 更新例（Drift Gate PASS 時）**:
+**pipeline-state.yaml 更新例（Code Review Gate PASS 時）**:
 ```yaml
-drift_review_gate:
+code_review_gate:
   status: passed
   cycles: 1
   final_counts: { p0: 0, p1: 0, p2: 2 }
-  drift_items: []
+  code_review_items: []
   notes: "Schema/Route/Business 3-agent 検証完了"
 ```
 
@@ -312,7 +312,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 |------|----|----|----|----- |---------|
 | Contract | 0 | 0 | N | PASS | 1 |
 | Test | 0 | N | N | PASS | 1 |
-| Drift | 0 | N | N | PASS | 1 |
+| Code | 0 | N | N | PASS | 1 |
 | Doc | 0 | N | N | PASS | 1 |
 
 ### P2 要対応リスト

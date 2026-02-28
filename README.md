@@ -35,7 +35,7 @@ claude --plugin-dir /path/to/blueprint-plugin
 ```
 Stage 1: /spec（対話的）→ Contract Review Gate
 Stage 2: /test-from-contract（準自動）→ Test Review Gate
-Stage 3: Implementation Pause → Drift Gate
+Stage 3: Implementation Pause → Code Review Gate
 Stage 4: /generate-docs（準自動）→ Doc Review Gate
 ```
 

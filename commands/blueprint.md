@@ -20,7 +20,7 @@ description: Run the full workflow pipeline with Review Swarm quality gates. Aut
 ```
 Stage 1: /spec → Contract Review Gate
 Stage 2: /test-from-contract → Test Review Gate
-Stage 3: Implementation Pause（ユーザーが実装）→ Drift Gate
+Stage 3: Implementation Pause（ユーザーが実装）→ Code Review Gate
 Stage 4: /generate-docs → Doc Review Gate
 ```
 
