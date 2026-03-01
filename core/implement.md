@@ -128,6 +128,8 @@ tests/
 | api | ルート定義、バリデーション、UseCase、Repository |
 | external | API クライアント、リトライロジック、エラーハンドリング |
 | file | パーサー、行バリデーション、バルク処理 |
+| internal (service) | ドメインサービス、状態管理、副作用ロジック |
+| internal (repository) | データ永続化、CRUD メソッド、ストレージアクセス |
 
 **実装の進め方**:
 

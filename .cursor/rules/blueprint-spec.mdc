@@ -11,7 +11,7 @@ alwaysApply: false
 以下の仕様ファイルを必ず読み込むこと:
 
 - `@core/spec.md` — ワークフロー定義（7 ステップ）
-- `@core/contract-schema.md` — Contract YAML スキーマ（3 タイプ）
+- `@core/contract-schema.md` — Contract YAML スキーマ（4 タイプ）
 - `@core/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 ## Cursor 固有の実行手順

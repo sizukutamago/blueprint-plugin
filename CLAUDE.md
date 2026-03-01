@@ -7,7 +7,7 @@
 
 - **ワークフロー**: `/spec` → `/test-from-contract` → `/implement` → `/generate-docs`
 - **`.blueprint/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
-- **Contract YAML**: 3 タイプ (api/external/file) の機械可読 I/O 境界仕様
+- **Contract YAML**: 4 タイプ (api/external/file/internal) の機械可読 I/O 境界仕様
 - **Review Swarm**: 各ステージ完了時に 3 エージェント並列レビュー（P0/P1/P2 Gate 判定）
 - **設計書はコードから後追い生成**: `/generate-docs` でコード → docs/
 

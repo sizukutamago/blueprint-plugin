@@ -225,7 +225,7 @@ REVISE 判定
 
 | エージェント | 観点 | チェック項目 |
 |-------------|------|------------|
-| Schema Validator | YAML 構造 | パース可能性、必須メタデータ（id, type, version, status, owner, updated_at）、タイプ別必須フィールド（api: method/path/input/output/business_rules、external: provider/endpoint/request/response/constraints、file: direction/format/columns/processing_rules/result）、SemVer 形式、id が CON-* プレフィックス |
+| Schema Validator | YAML 構造 | パース可能性、必須メタデータ（id, type, version, status, owner, updated_at）、タイプ別必須フィールド（api: method/path/input/output/business_rules、external: provider/endpoint/request/response/constraints、file: direction/format/columns/processing_rules/result、internal: subtype/description/input/rules）、SemVer 形式、id が CON-* プレフィックス |
 | Completeness Checker | 完全性 | links 設定（implements/depends_on/decided_by/impacts が適切に設定されているか）、depends_on の参照先が実在するか、全入力フィールドに型/制約があるか、business_rules/constraints/processing_rules に ID が付与されているか |
 | Testability Auditor | テスト可能性 | 全入力フィールドにテスト導出可能な制約（required/min/max/pattern/enum/default のいずれか）があるか、曖昧な記述（「適切に」「など」）がないか、errors に status/code が定義されているか |
 

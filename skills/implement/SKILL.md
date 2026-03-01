@@ -134,7 +134,7 @@ Agent({
 
     ## Contract 情報（インライン）
     - Contract ID: CON-{name}
-    - Type: {type}  (api | external | file)
+    - Type: {type}  (api | external | file | internal)
     - Tech Stack: {framework} + {validation} + {orm}
     - Architecture: {pattern}
     - 担当エンティティ: {entity}

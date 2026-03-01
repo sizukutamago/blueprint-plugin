@@ -114,12 +114,16 @@ Contract YAML をブレインストーミングから生成するワークフロ
 |---|------------|--------|------|--------|
 | 1 | CON-order-create | api | 注文作成 API | CON-stripe-payment-intent |
 | 2 | CON-stripe-payment-intent | external | Stripe 決済 | — |
+| 3 | CON-order-repository | internal (repository) | 注文永続化 | — |
 ```
 
 **タイプ判定基準**:
 - 自社が HTTP エンドポイントを公開する → `api`
 - 他社 API を呼び出す → `external`
 - ファイルの入出力 → `file`
+- 外部に公開しないモジュール間の I/O 境界 → `internal`
+  - ドメインサービス・ユーティリティ → `subtype: service`
+  - データ永続化（Repository） → `subtype: repository`
 
 ユーザーの承認を得てから次へ進む。
 
@@ -141,6 +145,7 @@ Contract YAML をブレインストーミングから生成するワークフロ
 - `api` → `.blueprint/contracts/api/{name}.contract.yaml`
 - `external` → `.blueprint/contracts/external/{name}.contract.yaml`
 - `file` → `.blueprint/contracts/files/{name}.contract.yaml`
+- `internal` → `.blueprint/contracts/internal/{name}.contract.yaml`
 
 **SemVer 初期値**: `1.0.0`（新規の場合）
 

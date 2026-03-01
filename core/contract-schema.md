@@ -7,7 +7,8 @@ Contract は I/O 境界（API、外部連携、ファイル）の機械可読な
 
 ```yaml
 id: CON-{name}                    # 一意識別子
-type: api | external | file       # I/O タイプ
+type: api | external | file | internal  # I/O タイプ
+subtype: service | repository     # internal の場合のみ（必須）
 version: "1.0.0"                  # SemVer
 status: draft | active | deprecated
 owner: "@handle"                  # 責任者
@@ -182,6 +183,80 @@ example: |                       # オプション: サンプルデータ
 - `processing_rules` → 各ルール ID ごとに正常系 + 異常系
 - `result.error` → エラーレスポンス形式
 
+### internal — 内部サービス・リポジトリ
+
+外部に公開しないモジュール間の I/O 境界。`subtype` で分類する。
+
+#### 共通フィールド（全 subtype 必須）
+
+```yaml
+subtype: service | repository     # 必須
+description: "モジュールの概要"
+
+input:
+  {method_name}:
+    description: "メソッドの説明"
+    params:
+      {param_name}:
+        type: string | number | boolean | object | array
+        required: true | false
+        description: "説明"
+    returns:
+      type: {return_type}
+      description: "戻り値の説明"
+
+rules:
+  - id: R-{NNN}
+    description: "ルールの説明"
+```
+
+#### subtype: service — ドメインサービス・ユーティリティ
+
+振る舞いベースの内部ロジック。状態遷移や副作用を持つ場合がある。
+
+```yaml
+# service 固有フィールド（オプション）
+state:
+  manages: "管理する状態の説明"
+  lifecycle: "start → running → stopped"  # 状態遷移（あれば）
+
+side_effects:
+  - "副作用の説明"                         # 外部への影響（あれば）
+```
+
+**テスト導出ポイント**:
+- `input.{method}.params` の `required`/`type` → 引数バリデーションテスト
+- `rules[]` → 各ルール ID ごとに正常系 + 異常系
+- `state.lifecycle` → 状態遷移テスト（許可遷移 + 拒否遷移）
+- `side_effects` → 副作用の発生/不発生テスト
+- `returns` → 戻り値の型・構造テスト
+
+#### subtype: repository — データ永続化
+
+CRUD ベースのデータアクセス。ストレージへの読み書きの I/O 境界。
+
+```yaml
+# repository 固有フィールド（オプション）
+storage:
+  type: file | db | cache            # ストレージ種別
+  path: "保存先パス or テーブル名"    # オプション
+  format: json | csv | sql           # オプション
+
+entity:
+  name: "エンティティ名"
+  schema:
+    {field_name}:
+      type: string | number | boolean | array | object
+      description: "フィールドの説明"
+```
+
+**テスト導出ポイント**:
+- `input.{method}` → 各 CRUD メソッドの正常系テスト（roundtrip）
+- `input.{method}.returns: null` → 存在しないキー → null テスト
+- `rules[]` → 各ルール ID ごとのテスト（アトミック書き込み、冪等削除等）
+- `storage.type` → ストレージ固有のテスト（ファイル存在確認、DB 接続等）
+- `entity.schema` → 保存/取得データの構造一致テスト
+
 ## implementation セクション（全タイプ共通、オプション）
 
 実装に必要な内部設計情報を記録する。`/spec` 実行時にユーザーと対話して決定する。
@@ -308,6 +383,11 @@ Contract のフィールドからテストを機械的に導出する:
 | `constraints[]` | 各制約 ID ごとに検証 |
 | `state_transition` | 初期状態、許可遷移、拒否遷移 |
 | `errors[]` | 各エラーコードのレスポンス形式 |
+| `rules[]` (internal) | 各ルール ID ごとに正常系 + 異常系 |
+| `state.lifecycle` (internal/service) | 状態遷移テスト |
+| `side_effects` (internal/service) | 副作用の発生/不発生テスト |
+| `input.{method}.returns: null` (internal/repository) | 存在しないキー → null テスト |
+| `storage` (internal/repository) | ストレージ固有テスト（roundtrip） |
 
 > **制約干渉に注意**: テスト生成時、他の制約（例: `max: 99`）を超えない値を使う。
 > 例: 在庫不足テストで `quantity: 99999` は `max: 99` に先に引っかかる → `quantity: 10`（有効範囲内）で低在庫商品を使う。

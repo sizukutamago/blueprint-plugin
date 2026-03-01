@@ -63,6 +63,7 @@ Glob(".blueprint/contracts/**/*.contract.yaml")
 - `contracts/api/` → api
 - `contracts/external/` → external
 - `contracts/files/` → file（注意: 複数形 `files/`）
+- `contracts/internal/` → internal（subtype で テスト生成パターン分岐）
 
 ### Step 2: Contract 選択
 
@@ -136,6 +137,8 @@ Glob("src/**/*.test.*")
      - api: Input Validation / Business Rules / State Transitions / Error Handling / Response Validation
      - external: Request Construction / Constraints / Error Handling / Response Validation
      - file: Input Validation (columns) / File-Level Constraints / Processing Rules / Error Handling / Result Validation
+     - internal (service): Method Input / Rules / State Lifecycle / Side Effects / Return Values
+     - internal (repository): CRUD Roundtrip / Not Found Handling / Rules / Overwrite / Storage Specifics
    - `Write()` で `tests/contracts/level2/CON-{name}.test.ts` に出力
 2. タイプ別ヘルパーを生成（`tests/contracts/helpers/{type}-helpers.ts`）
 
