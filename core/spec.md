@@ -79,7 +79,8 @@ Contract YAML をブレインストーミングから生成するワークフロ
 | ci | `.github/workflows/` の存在 |
 | frontend.framework | `package.json` の dependencies（react/vue/svelte/next 等） |
 | frontend.ui_library | `package.json` の dependencies（@shadcn/ui/@mui/material/antd 等） |
-| frontend.test_tool | `package.json` の devDependencies（@testing-library/react/playwright 等） |
+| frontend.test_tool | `package.json` の devDependencies（@testing-library/react 等） |
+| frontend.e2e_tool | `package.json` の devDependencies（@playwright/test / cypress 等） |
 
 スキーマの詳細は `implement.md` の config.yaml スキーマを参照。
 
@@ -92,10 +93,16 @@ tech_stack:
     framework: react | vue | svelte | next | none  # package.json から自動検出
     ui_library: shadcn | mui | antd | none
     test_tool: testing-library | playwright | none  # デフォルト: testing-library
+    e2e_tool: playwright | cypress | none           # デフォルト: none（自動検出）
 ```
 
 frontend セクションは screen Contract が 1 つ以上生成される場合のみ追加する。
 screen が存在しない場合はスキップ（バックエンド専用プロジェクトに余分なフィールドを追加しない）。
+
+`e2e_tool` の検出ロジック:
+- `package.json` の devDependencies に `@playwright/test` → `playwright`
+- `package.json` の devDependencies に `cypress` → `cypress`
+- 未検出の場合 → `none`
 
 **greenfield の場合**（package.json もない場合）:
 - 全項目をユーザーに質問

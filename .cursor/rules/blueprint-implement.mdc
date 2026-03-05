@@ -84,8 +84,14 @@ Contract 単位で実装。各 Contract について:
 
 1. app entry の結線（ルートファイル → app.ts にインポート・登録）
 2. DI container の構成（必要な場合）
-3. 全テスト一括実行（Level 1 + Level 2 + Unit + UI テスト）
-4. import 循環の検出
+3. フロントエンドエントリーポイント生成（screen Contract が 1 件以上ある場合）:
+   - `index.html` / `src/main.tsx` / `src/App.tsx` を存在しない場合のみ生成
+   - App.tsx は「コンテナパターン」: screen Implementer が生成した Props-based コンポーネントに
+     実際の fetch 実装を注入するラッパーコンポーネントを生成
+   - react-router-dom が未インストールなら追加
+   - `vite.config.ts` に `/api` プロキシ設定を追加（バックエンドポートに転送）
+4. 全テスト一括実行（Level 1 + Level 2 + Unit + UI テスト）
+5. import 循環の検出
 
 ### Phase C: Refactorer
 
@@ -115,7 +121,22 @@ bash .blueprint/scripts/verify-web-app.sh
 
 HTML を返すエンドポイントがある場合はブラウザで表示確認・コンソールエラーチェック（追加）。
 
-失敗時: 修正を試みる。解決不可の場合はユーザーに報告して承認フェーズへ進む。
+失敗時: 修正を試みる。解決不可の場合はユーザーに報告して Step 6.8 へ進む。
+
+### E2E テスト実行（条件付き）
+
+`config.yaml` の `tech_stack.frontend.e2e_tool` が `playwright` または `cypress` の場合のみ実行:
+
+```bash
+# Playwright ブラウザインストール（初回のみ）
+npx playwright install chromium
+
+# E2E テスト実行
+npx playwright test --reporter=list
+```
+
+失敗時: App.tsx fetch wiring / vite.config.ts proxy 設定 / テストデータを確認・修正して再実行。
+同じエラーが 3 回連続したらユーザーに報告して承認フェーズへ進む（Code Review Gate はブロックしない）。
 
 ### Code Review Gate + 承認
 

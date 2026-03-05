@@ -112,3 +112,27 @@ AI がタスクを実行する際のコンテキスト取得順序:
 4. **concepts で補足**: ドメイン理解が不足していれば関連 concept を読む
 
 > 全ノードを一括読み込みしない。対象 Contract 起点で必要な分だけ取得する。
+
+## テスト出力ディレクトリ構造
+
+`/test-from-contract` と `/implement` が生成するテストコードの配置先:
+
+```
+tests/
+├── contracts/                        # Contract ベーステスト
+│   ├── level1/                       # 構造検証（即 GREEN）— 全 Contract タイプ
+│   │   └── CON-{name}.test.ts
+│   ├── level2/                       # 実装検証（RED スタブ）— api/external/file/internal
+│   │   └── CON-{name}.test.ts
+│   └── helpers/                      # 共通ヘルパー
+│       ├── contract-loader.ts
+│       └── {type}-helpers.ts
+├── ui/                               # UI コンポーネントテスト — screen Contract のみ
+│   └── {screen-name}/
+│       └── {ScreenName}Page.test.tsx
+└── e2e/                              # E2E テスト — screen Contract + e2e_tool 設定時
+    └── {screen-name}.spec.ts
+```
+
+テスト生成の詳細は `test-from-contract.md` を参照。
+E2E テスト設定（playwright.config.ts）はプロジェクトルートに生成される。

@@ -37,10 +37,13 @@ Contract スキーマは `core/contract-schema.md`（implementation セクショ
 
 ## 出力ファイル
 
-| ディレクトリ | 内容 |
-|------------|------|
+| ディレクトリ / ファイル | 内容 |
+|----------------------|------|
 | `src/` | 実装コード（architecture pattern に応じた構造） |
 | `tests/unit/` | business_rules の TDD で生成したユニットテスト |
+| `index.html` | Vite エントリー（screen Contract がある場合、存在しない時のみ生成） |
+| `src/main.tsx` | React マウントポイント（screen Contract がある場合、存在しない時のみ生成） |
+| `src/App.tsx` | ルーティング + コンテナ層（screen Contract がある場合、存在しない時のみ生成） |
 | `biome.json` 等 | Lint/Format 設定（オプション） |
 | `.github/workflows/` | CI 設定（オプション） |
 
@@ -187,7 +190,21 @@ Agent({
    - 各 Implementer が作成したルートファイルを app.ts にインポート・登録
    - DI container の構成（必要な場合）
    - 共通ミドルウェアの設定
-2. 全テスト一括実行
+
+2. フロントエンドエントリーポイント生成（screen Contract が 1 件以上ある場合）
+   以下は存在しない場合のみ生成する（既存ファイルは上書きしない）:
+
+   Glob("index.html") → 存在しない場合のみ Write("index.html")
+   Glob("src/main.tsx") → 存在しない場合のみ Write("src/main.tsx")
+   Glob("src/App.tsx") → 存在しない場合のみ Write("src/App.tsx")
+
+   App.tsx 生成時の考慮事項:
+   - screen Contract の route.path を Route path に反映
+   - 各 {ScreenName}Page に対して fetch wiring のコンテナコンポーネントを生成
+   - react-router-dom が package.json になければ npm install して追加
+   - Vite proxy 設定（vite.config.ts）でバックエンドへの /api プロキシを設定
+
+3. 全テスト一括実行
 ```
 
 ```bash
@@ -253,7 +270,30 @@ Skill("agent-browser")
 # → コンソールエラーを確認・スクリーンショット添付
 ```
 
-**失敗時**: サーバーログを確認して修正を試みる。解決不可の場合はユーザーに報告して Step 7 へ進む（Code Review Gate はブロックしない）。
+**失敗時**: サーバーログを確認して修正を試みる。解決不可の場合はユーザーに報告して Step 6.8 / Step 7 へ進む（Code Review Gate はブロックしない）。
+
+### Step 6.8: E2E テスト実行（条件付き）
+
+```
+# config.yaml から e2e_tool を確認
+Read(".blueprint/config.yaml")
+# → tech_stack.frontend.e2e_tool が none または未定義 → スキップして Step 7 へ
+
+# playwright.config.ts の存在確認
+Glob("playwright.config.ts")
+# → 存在しない場合: 「/test-from-contract を先に実行してください」と案内
+
+# Playwright ブラウザインストール（初回のみ）
+npx playwright install chromium
+
+# E2E テスト実行
+npx playwright test --reporter=list
+```
+
+**失敗時**:
+1. エラーログを確認して原因を分析（fetch URL ミス / サーバー起動タイミング / テストデータ問題）
+2. App.tsx の fetch wiring や vite.config.ts の proxy 設定を修正して再実行
+3. 同じエラーが 3 回連続したらユーザーに報告して Step 7 へ進む（Code Review Gate はブロックしない）
 
 ### Step 7: 実装結果サマリー + Code Review Gate
 

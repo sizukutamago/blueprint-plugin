@@ -231,6 +231,63 @@ screen 固有（screen_type で分岐、出力先: tests/ui/{screen-name}/）:
 // Derived from: input.body.items (required: true)
 ```
 
+### Step 5.5: E2E テスト生成（条件付き）
+
+条件: `.blueprint/config.yaml` の `tech_stack.frontend.e2e_tool` が `playwright` または `cypress` かつ
+screen Contract が 1 件以上ある場合。
+**条件を満たさない場合はスキップしてStep 6へ進む。**
+
+```
+生成内容:
+1. playwright.config.ts（プロジェクトルート、存在しない場合のみ生成）
+   - testDir: './tests/e2e'
+   - use.baseURL: フロントエンドサーバー URL（デフォルト: http://localhost:5173）
+   - webServer 2台:
+     - バックエンド: package.json の dev スクリプト（デフォルト: http://localhost:3000）
+     - フロントエンド: package.json の dev:client スクリプト（デフォルト: http://localhost:5173）
+   - reuseExistingServer: !process.env.CI
+
+2. tests/e2e/{screen-name}.spec.ts（screen Contract 1件につき 1ファイル）
+```
+
+**E2E テスト導出元**:
+
+screen Contract 1件につき 1ファイル生成する。
+**必須セクション**（smoke test）と**品質保証セクション**（business_rules 由来）の 2 層で構成する。
+
+```
+--- 必須セクション（全 screen Contract に必ず生成） ---
+describe('smoke', () => {
+  - ページが正常にロードされる（HTTP 200 / not crash）
+  - 主要 UI 要素が表示されている（タイトル、ナビゲーション、主要ボタン）
+})
+
+--- 品質保証セクション（business_rules / events から導出） ---
+重点テストパターン（E2E でしか検証できないもの）:
+1. フォーム送信 → 別画面に遷移 → 結果が反映されている（end-to-end フロー）
+2. 削除確認ダイアログ → 実行 → 一覧から消える（DB状態変更の確認）
+3. フィルター/検索 → API が適切なパラメータで呼ばれ、結果が反映される
+4. ページ遷移後にデータが永続化されているか（セッションまたは DB 経由）
+
+対象外（コンポーネントテストで十分なもの、重複を避ける）:
+- バリデーションエラーの表示（単一画面内 UI 状態）
+- ローディング表示
+- フィールドの入力制約（disabled, maxlength 等）
+```
+
+**テストデータ一意化**:
+
+```typescript
+// Date.now() suffix でタイトルを一意化（DB リセット不要）
+const uniqueTitle = `テストデータ-${Date.now()}`
+```
+
+**最小テスト数の目安**: smoke 1〜2 件 + business_rules 由来 2〜4 件 = screen 1件につき 3〜6 件
+
+出力:
+- `playwright.config.ts`（新規、存在する場合はスキップ）
+- `tests/e2e/{screen-name}.spec.ts`（screen Contract 1件につき 1ファイル）
+
 ### Step 6: RED スタブ確認
 
 Level 2 / UI テストが意図通り FAIL していることを確認する（警告のみ、ブロックはしない）。
@@ -276,11 +333,19 @@ passed が 1 件以上ある場合は警告を出力する:
 |----------|---------|------|
 | CON-order-form | 12 | validation:5, submit:3, auth:2, ... |
 
+### E2E テスト（screen Contract - ページ横断フロー）
+| Contract | テスト数 | 内訳 |
+|----------|---------|------|
+| CON-order-form | 2 | submit→navigate:1, error:1 |
+※ e2e_tool が none の場合は "スキップ（e2e_tool: none）" と表示
+
 ### 生成ファイル
 - tests/contracts/level1/CON-{name}.test.ts
 - tests/contracts/level2/CON-{name}.test.ts  （screen 除く）
 - tests/contracts/helpers/contract-loader.ts
 - tests/ui/{screen-name}/{ScreenName}Page.test.tsx  （screen のみ）
+- playwright.config.ts  （e2e_tool: playwright の場合のみ）
+- tests/e2e/{screen-name}.spec.ts  （e2e_tool 設定時のみ）
 
 ### 制約干渉の警告（検出時）
 - CON-order-create: quantity max (99) と stock check が干渉する可能性
@@ -289,10 +354,11 @@ passed が 1 件以上ある場合は警告を出力する:
 1. Level 1 テストを実行して全 GREEN を確認
 2. Level 2 の RED スタブを 1 つずつ実装して GREEN にする
 3. tests/ui/ の RED スタブも同様に実装（screen Contract がある場合）
-4. 全テスト GREEN 後: /generate-docs で設計書を後追い生成
+4. 全テスト GREEN 後: /implement で App.tsx + 実装コードを生成
+5. E2E テスト実行: npx playwright test（e2e_tool 設定時）
 
 ### 統計
-- 総テスト数: N (Level 1: X, Level 2: Y, UI: Z)
+- 総テスト数: N (Level 1: X, Level 2: Y, UI: Z, E2E: W)
 ```
 
 ## 出力ディレクトリ構造
@@ -307,15 +373,19 @@ tests/
 │   └── helpers/
 │       ├── contract-loader.ts        # YAML パースユーティリティ（共通）
 │       └── {type}-helpers.ts         # タイプ別テストヘルパー（スタブ）
-└── ui/                              # screen Contract の UI テスト（NEW）
-    └── {screen-name}/
-        └── {ScreenName}Page.test.tsx  # RED スタブ（testing-library / playwright）
+├── ui/                              # screen Contract の UI テスト
+│   └── {screen-name}/
+│       └── {ScreenName}Page.test.tsx  # コンポーネントテスト（testing-library）
+└── e2e/                             # E2E テスト（e2e_tool 設定時のみ）
+    └── {screen-name}.spec.ts         # ページ横断フローテスト（playwright / cypress）
+
+playwright.config.ts                  # E2E 設定（プロジェクトルート、e2e_tool: playwright 時）
 ```
 
-> screen テストをバックエンドの Level 2 と分離する理由: フロントエンドのテストフレームワーク
-> （@testing-library, Playwright）がバックエンド（vitest + supertest）と異なるため。
-> 混在すると実行設定が複雑になる。`config.yaml` の `tech_stack.frontend.test_tool` から
-> 使用するフレームワークを決定する（デフォルト: testing-library）。
+> screen テストを 2 レイヤーに分ける理由:
+> - `tests/ui/` (@testing-library): 単一コンポーネントの UI ロジック、高速
+> - `tests/e2e/` (Playwright): ページ横断フロー、実際の HTTP 通信、低速
+> 両者を混在させると実行速度と設定が複雑になるため分離する。
 
 ## 原則
 
