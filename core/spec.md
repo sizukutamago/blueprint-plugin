@@ -253,6 +253,20 @@ links:
 
 > concepts/decisions はブレスト中に自然に出てくるもの。「何を作るか」ではなく「なぜそうするか」の記録。
 
+**`.claude/rules/` 生成（初回のみ）**:
+
+`.claude/rules/` が存在しない場合、`config.yaml` の `tech_stack` に基づいてコード規約ファイルを生成する。
+
+| 生成条件 | 出力ファイル | 内容 |
+|---------|------------|------|
+| 常時 | `.claude/rules/base.md` | アーキテクチャ依存ルール、Contract整合性、レビューチェックリスト |
+| `language: typescript` | `.claude/rules/typescript.md` | TypeScript 型安全・命名規約 |
+| `frontend.framework: react\|next` | `.claude/rules/react.md` | React コンポーネント設計規約 |
+| `frontend.test_tool: testing-library` | `.claude/rules/testing-library.md` | @testing-library テスト規約 |
+
+生成したファイルはユーザーが自由に編集・追記できる。
+`.claude/rules/` が既に存在する場合はスキップする（既存の規約を上書きしない）。
+
 ### Step 7: サマリー出力
 
 生成結果をまとめて次のアクションを提示する。
