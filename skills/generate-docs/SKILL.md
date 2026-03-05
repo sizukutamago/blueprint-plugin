@@ -94,6 +94,24 @@ Glob(".blueprint/**/*.md")
 3. ...」
 ```
 
+> コンポーネント命名が一意でない場合（Order → Order List か Order Detail か？）は
+> ユーザー確認が必須。AI の推測では画面目的を特定できない。
+
+### Step 4: トレーサビリティ検証（`.blueprint/` がある場合）
+
+`.blueprint/` が存在する場合のみ実行。なければスキップして Step 5 へ。
+
+```
+実行内容:
+1. Glob(".blueprint/contracts/**/*.yaml") で Contract 一覧取得
+2. tests/contracts/level2/*.test.ts を Glob → テストとの対応を確認
+3. 不整合を検出した場合、docs/07_implementation/traceability_matrix.md に記録:
+   - Contract 存在 → テストなし: ⚠️ テスト未生成
+   - テスト存在 → Contract なし: ⚠️ Contract 削除済みの可能性
+   - Contract 存在 → 実装ファイルなし: ⚠️ 実装未完了
+4. 全 Contract → テスト → 実装 の3点セットが揃っている場合: ✅ 整合確認済み
+```
+
 ### Step 5: レビュー + サマリー
 
 ```

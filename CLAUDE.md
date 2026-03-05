@@ -94,7 +94,10 @@ blueprint-plugin/
 
 ### 言語ポリシー
 
-- **frontmatter description**: 英語（Claude/Cursor のトリガー検出用）
+- **frontmatter description**: 英語 + 日本語トリガーフレーズ可（Claude/Cursor のトリガー検出用）
+  - 英語フレーズ: 主要な動作説明（必須）
+  - 日本語フレーズ: ユーザーが日本語で入力した際のトリガー補強（推奨）
+  - 例: `"... Also use when the user says \"仕様を作る\", \"APIを設計する\""`
 - **本文**: 日本語（開発者向け）
 - **コード例**: コンテキストに応じて混在可
 
