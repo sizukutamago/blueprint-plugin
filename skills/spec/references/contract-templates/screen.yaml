@@ -1,0 +1,77 @@
+# Screen Contract Template
+# UI 画面設計（フォーム・一覧・詳細・ダッシュボード）の仕様
+# {{placeholder}} をユーザー入力で置き換える
+# screen_type に応じて該当セクションのみ残し、不要なセクションは削除する
+
+id: CON-{{name}}
+type: screen
+screen_type: {{screen_type}}           # form | list | detail | dashboard
+version: 1.0.0
+status: draft
+owner: "{{owner}}"
+updated_at: "{{date}}"
+
+links:
+  implements: [{{fr_ids}}]
+  depends_on: [{{depends_on}}]         # /spec が form.submit_action / data_source から自動同期
+  decided_by: []
+  impacts: []
+
+route:
+  path: "{{path}}"                     # /orders/:id 等
+  auth_required: {{auth_required}}     # true | false
+
+# ── screen_type: form の場合 ──────────────────────────────────────────
+form:
+  submit_action: CON-{{api_contract_id}}    # 送信先 API Contract ID（links.depends_on に自動同期）
+  fields:
+    {{field_name}}:
+      type: {{field_type}}             # text | email | password | select | checkbox | textarea | date | number
+      required: {{required}}           # true | false → テスト導出
+      # 以下はオプション（該当するもののみ）
+      # max_length: N
+      # pattern: "regex"
+      # enum: [a, b, c]
+      # description: "フィールドの説明"
+
+validation_rules:
+  - id: VR-001
+    field: "{{field_name}}"
+    rule: "{{rule_description}}"
+    constraint:
+      pattern: "{{regex}}"             # または min/max/enum
+    error_message: "{{error_message}}"
+
+# ── screen_type: list の場合 ──────────────────────────────────────────
+list:
+  data_source: CON-{{api_contract_id}}     # データ取得 API Contract ID（links.depends_on に自動同期）
+  filters:
+    # {{param_name}}:
+    #   type: string | integer | enum
+    #   enum: [...]
+  pagination:
+    enabled: {{pagination_enabled}}    # true | false → テスト導出
+    default_page_size: {{default_page_size}}
+    max_page_size: {{max_page_size}}   # → テスト導出
+
+# ── screen_type: detail の場合 ────────────────────────────────────────
+detail:
+  data_source: CON-{{api_contract_id}}     # データ取得 API Contract ID（links.depends_on に自動同期）
+  actions:
+    - id: ACT-001
+      label: "{{action_label}}"
+      calls: CON-{{action_api_contract_id}}
+      condition: "{{condition_expression}}"   # 例: "status === 'pending'"
+
+# ── screen_type: dashboard の場合 ─────────────────────────────────────
+dashboard:
+  widgets:
+    - id: WGT-001
+      type: {{widget_type}}            # chart | table | metric | list
+      data_source: CON-{{api_contract_id}}   # （links.depends_on に自動同期）
+      required: {{required}}           # true | false → テスト導出
+
+# ── 共通オプション ────────────────────────────────────────────────────
+# access_control:
+#   roles: [admin, user]              # 空の場合は全ロール許可
+#   redirect_if_unauthorized: "/login"

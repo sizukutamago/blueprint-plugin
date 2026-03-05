@@ -11,7 +11,7 @@ alwaysApply: false
 以下の仕様ファイルを必ず読み込むこと:
 
 - `@core/spec.md` — ワークフロー定義（7 ステップ）
-- `@core/contract-schema.md` — Contract YAML スキーマ（4 タイプ）
+- `@core/contract-schema.md` — Contract YAML スキーマ（5 タイプ）
 - `@core/blueprint-structure.md` — `.blueprint/` ディレクトリ構造
 
 ## Cursor 固有の実行手順
@@ -25,7 +25,9 @@ alwaysApply: false
 ├── contracts/
 │   ├── api/
 │   ├── external/
-│   └── files/
+│   ├── file/
+│   ├── internal/
+│   └── screen/
 ├── concepts/
 └── decisions/
 ```
@@ -47,14 +49,48 @@ alwaysApply: false
 
 ### Step 5: Contract YAML 生成 + implementation セクション
 
+**⛔ 絶対厳守: Contract タイプルール**
+
+| Contract の内容 | `type` | 配置先 |
+|----------------|--------|--------|
+| 自社 HTTP API エンドポイント | `api` | `contracts/api/` |
+| 外部 API 呼び出し | `external` | `contracts/external/` |
+| ファイル入出力 | `file` | `contracts/file/` |
+| データ永続化・リポジトリ | `internal` (subtype: repository) | `contracts/internal/` |
+| ドメインサービス | `internal` (subtype: service) | `contracts/internal/` |
+| UI 画面設計（フォーム・一覧・詳細・ダッシュボード） | `screen` | `contracts/screen/` |
+
+❌ **禁止**: `function`、`model`、`service`（type として）、`repository`（type として）は type に使えない。
+
 Contract テンプレートを参照:
 - API: `@skills/spec/references/contract-templates/api.yaml`
 - External: `@skills/spec/references/contract-templates/external.yaml`
 - File: `@skills/spec/references/contract-templates/file.yaml`
+- Screen: `@skills/spec/references/contract-templates/screen.yaml`
+
+**screen Contract の depends_on 自動同期（必須）**:
+screen Contract を生成する際、以下の値を `links.depends_on` にも設定する:
+- `form.submit_action` の値
+- `list.data_source` の値
+- `detail.data_source` の値
+- `detail.actions[].calls` の全値（各アクションの呼び出し先 API も同期）
+- `dashboard.widgets[].data_source` の全値
 
 各 Contract の基本フィールド生成後、implementation セクション（data_sources + flow）を
 ユーザーと対話して決定する。詳細は `@core/spec.md` Step 5 と `@core/contract-schema.md` を参照。
 ユーザーが「スキップ」と回答した場合は省略可。
+
+**config.yaml への frontend セクション追加**:
+screen Contract が生成された場合のみ、config.yaml に frontend セクションを追加:
+
+```yaml
+tech_stack:
+  # 既存フィールドはそのまま
+  frontend:
+    framework: react   # package.json から自動検出
+    ui_library: none   # shadcn | mui | antd | none
+    test_tool: testing-library  # デフォルト
+```
 
 ### ID 体系
 

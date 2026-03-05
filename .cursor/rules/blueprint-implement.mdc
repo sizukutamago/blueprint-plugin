@@ -34,6 +34,24 @@ architecture pattern に応じて読み込み:
 4. 既存コード構造の把握
 ```
 
+**⛔ 必須: 実行スクリプトのセットアップ**
+
+プラグインスクリプトを直接読み込んでユーザープロジェクトに書き出す:
+
+```
+Read("{plugin_dir}/scripts/verify-web-app.sh")
+  → Write(".blueprint/scripts/verify-web-app.sh", <全文>)
+Read("{plugin_dir}/scripts/assert-gate-completed.sh")
+  → Write(".blueprint/scripts/assert-gate-completed.sh", <全文>)
+```
+
+```bash
+mkdir -p .blueprint/scripts
+chmod +x .blueprint/scripts/verify-web-app.sh .blueprint/scripts/assert-gate-completed.sh
+```
+
+→ `.blueprint/scripts/verify-web-app.sh` と `.blueprint/scripts/assert-gate-completed.sh` が生成される。
+
 ### Step 2: 実装計画と承認
 
 depends_on でトポロジカルソートし、並列実行グループを算出。
@@ -45,13 +63,19 @@ depends_on でトポロジカルソートし、並列実行グループを算出
 Contract 単位で実装。各 Contract について:
 
 1. Contract の `implementation` セクションを読む
-2. 必要な全ファイルを作成（型定義、スキーマ、ロジック、Repository、ルート）
-3. `business_rules` に対応するロジックは TDD（ユニットテスト先行）
+2. type に応じた必要な全ファイルを作成:
+   - api/external/file/internal: 型定義、スキーマ、ロジック、Repository、ルート
+   - screen: `src/interface/{screen-name}/` 配下のみ（{ScreenName}Page.tsx、コンポーネント）
+3. `business_rules` に対応するロジックは TDD（ユニットテスト先行、api/external/file/internal のみ）
 4. `implementation.flow` がある場合はその順序で実装
 5. `@core/defaults/` の規約に従う
-6. 対応する Level 2 テストを GREEN にする
+6. 対応するテストを GREEN にする:
+   - api/external/file/internal: `tests/contracts/level2/CON-{name}.test.ts`
+   - screen: `tests/ui/{screen-name}/{ScreenName}Page.test.tsx`
 
-名前空間分離: 各 Implementer は自分の `{entity}` 配下のみ編集。
+名前空間分離:
+- api/external/file/internal: 自分の `{entity}` 配下のみ編集
+- screen: `src/interface/{screen-name}/` 配下のみ編集
 共有ファイル（app entry, DI container）は作成しない。
 
 失敗時: 同じエラーが 3 回連続したらユーザーに報告。勝手にスキップしない。
@@ -60,7 +84,7 @@ Contract 単位で実装。各 Contract について:
 
 1. app entry の結線（ルートファイル → app.ts にインポート・登録）
 2. DI container の構成（必要な場合）
-3. 全テスト一括実行（Level 1 + Level 2 + Unit）
+3. 全テスト一括実行（Level 1 + Level 2 + Unit + UI テスト）
 4. import 循環の検出
 
 ### Phase C: Refactorer
@@ -76,7 +100,43 @@ Contract 単位で実装。各 Contract について:
 
 コードの可読性・効率・再利用性を最終チェック。
 
-★承認: 実装サマリーをユーザーに提示★
+### Web App 動作確認
+
+⛔ **スキップ禁止**（api Contract が 0 件でもスクリプトを実行して確認する）。
+
+```bash
+bash .blueprint/scripts/verify-web-app.sh
+```
+
+スクリプトが行うこと（`@core/implement.md` Step 6.5 参照）:
+1. dev/start/serve スクリプトがなければ framework に合わせたサーバーファイル（src/server.ts など）を自動生成
+2. サーバーをバックグラウンド起動 → api Contract 全エンドポイントに curl テスト
+3. 結果を `.blueprint/reviews/web-verification-{timestamp}.md` に保存 → サーバー停止
+
+HTML を返すエンドポイントがある場合はブラウザで表示確認・コンソールエラーチェック（追加）。
+
+失敗時: 修正を試みる。解決不可の場合はユーザーに報告して承認フェーズへ進む。
+
+### Code Review Gate + 承認
+
+★ **Code Review Gate（4 Agent 並列）を必ず実行してから承認サマリーを提示★**
+（テスト GREEN だけで完了とみなしてはならない。スキップ禁止）
+
+**⛔ 必須チェックリスト（この順序で全て実行すること）**:
+
+```
+1. Code Review Gate（4 Agent 並列）を実行
+2. Gate 結果を pipeline-state.yaml に書き込む（必須）:
+   # code_review_gate:
+   #   status: passed  # or revising
+   #   cycle: 1
+   #   final_counts: { p0: 0, p1: 0, p2: N }
+3. assert-gate-completed.sh を実行:
+   bash .blueprint/scripts/assert-gate-completed.sh
+4. exit 0 の場合のみ承認サマリーをユーザーに提示
+```
+
+**⚠️ よくある失敗**: Gate 実行後に pipeline-state.yaml を更新し忘れると assert スクリプトが常に exit 1。必ず書き込んでから実行すること。
 
 ### 品質基準
 

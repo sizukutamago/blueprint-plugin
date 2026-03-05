@@ -24,8 +24,8 @@ Stage 4: Doc Generation（自動）
 | ステージ | 入力 | 出力 |
 |---------|------|------|
 | Stage 1 | ユーザーのビジネス知識 | `.blueprint/contracts/`, `.blueprint/concepts/`, `.blueprint/decisions/` |
-| Stage 2 | `.blueprint/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/` |
-| Stage 3 | `tests/contracts/level2/`（RED スタブ） | 実装コード + GREEN テスト |
+| Stage 2 | `.blueprint/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/`, `tests/ui/`（screen Contract がある場合） |
+| Stage 3 | `tests/contracts/level2/`（RED スタブ）+ `tests/ui/`（screen RED スタブ） | 実装コード + GREEN テスト |
 | Code Review Gate | `.blueprint/contracts/` + ソースコード | findings（Contract↔実装の乖離リスト） |
 | Stage 4 | ソースコード + `.blueprint/` | `docs/` |
 
@@ -225,7 +225,7 @@ REVISE 判定
 
 | エージェント | 観点 | チェック項目 |
 |-------------|------|------------|
-| Schema Validator | YAML 構造 | パース可能性、必須メタデータ（id, type, version, status, owner, updated_at）、タイプ別必須フィールド（api: method/path/input/output/business_rules、external: provider/endpoint/request/response/constraints、file: direction/format/columns/processing_rules/result、internal: subtype/description/input/rules）、SemVer 形式、id が CON-* プレフィックス |
+| Schema Validator | YAML 構造 | パース可能性、必須メタデータ（id, type, version, status, owner, updated_at）、タイプ別必須フィールド（api: method/path/input/output/business_rules、external: provider/endpoint/request/response/constraints、file: direction/format/columns/processing_rules/result、internal: subtype/description/input/rules、screen: screen_type/route/links.depends_on + screen_type 別フィールド）、SemVer 形式、id が CON-* プレフィックス |
 | Completeness Checker | 完全性 | links 設定（implements/depends_on/decided_by/impacts が適切に設定されているか）、depends_on の参照先が実在するか、全入力フィールドに型/制約があるか、business_rules/constraints/processing_rules に ID が付与されているか |
 | Testability Auditor | テスト可能性 | 全入力フィールドにテスト導出可能な制約（required/min/max/pattern/enum/default のいずれか）があるか、曖昧な記述（「適切に」「など」）がないか、errors に status/code が定義されているか |
 
@@ -371,25 +371,52 @@ final_status: pending | completed  # パイプライン最終ステータス
 ### --resume フロー
 
 ```
-1. .blueprint/pipeline-state.yaml を読み込み
-2. final_status と各ステージの status を確認:
-   - final_status: completed → 「パイプラインは完了済み。--force で再実行してください」
-   - stage_3_implement.status: completed かつ code_review_gate.status: pending → Code Review Gate から再開
-   - stage_3_implement.status: partial/failed → Stage 3 から再開（ブロック解決後）
-   - code_review_gate.status: passed かつ stage_4_docs.status: pending → Stage 4 から再開
-   - stage_2_test.status: completed/skipped かつ stage_3_implement.status: pending → Stage 3 から再開
-   - stage_1_spec.status: completed/skipped かつ stage_2_test.status: pending → Stage 2 から再開
-   - stage_1_spec.status: pending/in_progress → Stage 1 から再開
-   - .blueprint/pipeline-state.yaml なし → エラー（/blueprint で最初から実行するよう案内）
+1. .blueprint/pipeline-state.yaml を読み込み（なければエラー）
+2. 以下のマッピング表で再開地点を決定
 3. 該当ステージから実行を再開
 ```
 
-**Stage 3 からの再開時**:
+**status 組み合わせ → 再開地点マッピング**:
+
+| final_status | stage_3_implement | code_review_gate | stage_4_docs | 再開地点 |
+|---|---|---|---|---|
+| completed | — | — | — | エラー: `--force` で再実行を案内 |
+| pending | — | — | — | stage_1_spec.status で分岐（下記） |
+
+**stage_1_spec.status で再開地点分岐**:
+
+| stage_1_spec | contract_review_gate | stage_2_test | 再開地点 |
+|---|---|---|---|
+| pending / in_progress | — | — | Stage 1 から再開 |
+| completed / skipped | pending / failed | — | Contract Review Gate から再開 |
+| completed / skipped | passed | pending / in_progress | Stage 2 から再開 |
+| completed / skipped | passed | completed / skipped | **test_review_gate** で分岐（下記） |
+
+**test_review_gate.status で再開地点分岐**:
+
+| test_review_gate | stage_3_implement | code_review_gate | 再開地点 |
+|---|---|---|---|
+| pending / failed | — | — | Test Review Gate から再開 |
+| passed | pending / in_progress | — | Stage 3 から再開 |
+| passed | partial | — | Stage 3 から再開（ブロック解決後） |
+| passed | failed | — | Stage 3 全体を再実行 |
+| passed | completed | pending / failed | Code Review Gate から再開 |
+| passed | completed | passed | **stage_4_docs** で分岐（下記） |
+
+**stage_4_docs で再開地点分岐**:
+
+| stage_4_docs | doc_review_gate | 再開地点 |
+|---|---|---|
+| pending / in_progress | — | Stage 4 から再開 |
+| completed / skipped | pending / failed | Doc Review Gate から再開 |
+| completed / skipped | passed | 完了済み（final_status 更新漏れ） |
+
+**Stage 3 再開時の詳細動作**:
 - `status: partial` — ブロックリストを確認し、解決済み Contract から再実装
 - `status: failed` — 失敗原因を確認し、Stage 3 全体を再実行
 - `status: completed` — Code Review Gate へ進む
 
-**Code Review Gate からの再開時**:
+**Code Review Gate 再開時の詳細動作**:
 1. Code Review Gate を実行（Contract↔実装の乖離検出）
    - PASS → Stage 4 へ
    - REVISE → ユーザーに乖離リストを提示、修正後に再実行

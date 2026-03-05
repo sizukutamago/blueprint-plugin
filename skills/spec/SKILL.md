@@ -28,7 +28,7 @@ Contract YAML のスキーマは `core/contract-schema.md` を参照。
 | ファイル | 説明 |
 |---------|------|
 | `.blueprint/config.yaml` | プロジェクト設定（初回のみ） |
-| `.blueprint/contracts/{type}/{name}.contract.yaml` | Contract YAML（メイン出力、type: api/external/files/internal） |
+| `.blueprint/contracts/{type}/{name}.contract.yaml` | Contract YAML（メイン出力、type: api/external/file/internal/screen） |
 | `.blueprint/concepts/{name}.md` | ドメイン概念メモ（副産物） |
 | `.blueprint/decisions/DEC-{NNN}-{name}.md` | 設計判断記録（副産物） |
 
@@ -45,7 +45,9 @@ Contract YAML のスキーマは `core/contract-schema.md` を参照。
 
 `core/spec.md` の 7 ステップに従う。以下は Claude Code 固有の実行詳細:
 
-### Step 1: コンテキスト読み込み
+### Step 1: コンテキスト読み込み + config.yaml 生成（必須）
+
+**⛔ 絶対必須: ブレインストーミング開始前に config.yaml を確認・生成すること。この Step を省略してはならない。**
 
 ```bash
 # git root を検出
@@ -53,44 +55,107 @@ git rev-parse --show-toplevel
 ```
 
 ```
-# 既存 .blueprint/ のスキャン
+# 1. config.yaml の存在チェック（最初に実行）
+Glob(".blueprint/config.yaml")
+→ 存在しない場合: 以下の手順で即座に生成（スキップ禁止）
+
+# 2. 技術スタック検出
+Read("package.json") if exists
+Read("tsconfig.json") if exists
+Glob("*lock*")
+
+# 3. ユーザーに技術スタックと architecture.pattern を確認
+#    （package.json がない場合は「未設定」として提示）
+#    architecture.pattern: clean / layered / flat — ユーザーが選択必須
+
+# 4. config.yaml を Write で書き出す（この後すぐ実行）
+Write(".blueprint/config.yaml", {content})
+
+# 5. 既存 .blueprint/ のスキャン
 Glob(".blueprint/**/*.yaml")
 Glob(".blueprint/**/*.md")
 ```
 
-`.blueprint/` が存在しない場合は、ディレクトリ構造を初期化:
-```
-.blueprint/
-├── contracts/
-│   ├── api/
-│   ├── external/
-│   ├── files/
-│   └── internal/
-├── concepts/
-└── decisions/
+`.blueprint/` が存在しない場合は、初期化スクリプトを使って構造を作成:
+
+```bash
+# プラグインの初期化スクリプトを使用（mkdir -p 直接実行は禁止）
+bash "$(claude plugin-dir)/scripts/init-blueprint.sh" "$(pwd)"
 ```
 
-### Step 2: スコープ確認 + config.yaml 生成
+> スクリプトのパスが取得できない場合は `mkdir -p .blueprint/{contracts,concepts,decisions}` をフォールバックとして使用。
 
-`core/spec.md` Step 2 に従いスコープを確認。
+### Step 2: スコープ確認
 
-**config.yaml 生成（初回のみ）**:
-`.blueprint/config.yaml` が存在しない場合に実行。
+`core/spec.md` Step 2 に従いスコープを確認。config.yaml は Step 1 で生成済み。
 
 ```
-# 技術スタック検出
-Read("package.json")
-Read("tsconfig.json")
-Glob("*.lock*")
-Glob("biome.json")
-Glob(".eslintrc*")
+# 1. config.yaml の存在チェック（ブレスト前に実行）
+Glob(".blueprint/config.yaml")
+→ 存在する場合: スキップ（ブレストへ）
+→ 存在しない場合: 以下を実行（スキップ禁止）
+
+# 2. 技術スタック検出（package.json が存在しない場合は空のプロジェクトとして扱う）
+Read("package.json") if exists   # framework, orm, validation, test を検出
+Read("tsconfig.json") if exists  # language を検出
+Glob("*lock*")                   # package_manager を検出
+Glob("biome.json") / Glob(".eslintrc*")
 Glob(".github/workflows/*")
 
-# 検出結果をユーザーに提示して確認/修正
-# architecture.pattern はユーザーに選択を求める（clean / layered / flat）
+# 3. ユーザーに以下を確認（1メッセージで全項目を提示）:
+#    - 検出された技術スタック（package.json がない場合は「未設定」として提示）
+#    - architecture.pattern の選択（必須、ユーザーが選択）: clean / layered / flat
+#    ※ package.json がないプロジェクトでも config.yaml は生成する
 
-# config.yaml を書き出し
-Write(".blueprint/config.yaml")
+# 4. ユーザー回答後、即座に config.yaml を書き出す（この後 Glob/Write を実行）
+Write(".blueprint/config.yaml", content)
+```
+
+**config.yaml の最小構造**（package.json がないプロジェクトの場合の例）:
+
+```yaml
+project:
+  name: "プロジェクト名"
+  language: typescript
+  runtime: node
+
+architecture:
+  pattern: clean   # ユーザーが選択
+
+tech_stack:
+  framework: none
+  orm: none
+  validation: zod
+  test: vitest
+  package_manager: npm
+
+quality:
+  lint: none
+  format: none
+  type_check: false
+  ci:
+    enabled: false
+```
+
+config.yaml のスキーマと検出ロジックの詳細は `core/spec.md` Step 2「config.yaml 生成」を参照。
+
+**frontend セクション（screen Contract が生成される場合のみ追加）**:
+
+Step 3 のブレストでユーザーが UI/画面に言及した場合、Step 5 の YAML 生成後に config.yaml に frontend セクションを追加する:
+
+```bash
+# フロントエンドフレームワーク検出
+Read("package.json")  # react/vue/svelte/next のいずれかが dependencies に含まれるか確認
+```
+
+```yaml
+# .blueprint/config.yaml に追記（screen Contract がある場合のみ）
+tech_stack:
+  # ... 既存フィールド ...
+  frontend:
+    framework: react   # 検出結果またはユーザー選択
+    ui_library: none   # shadcn | mui | antd | none
+    test_tool: testing-library  # 検出結果（デフォルト: testing-library）
 ```
 
 ### Step 3: ブレインストーミング
@@ -103,13 +168,87 @@ Write(".blueprint/config.yaml")
 
 ### Step 5: Contract YAML 生成
 
-テンプレートは `{baseDir}/references/contract-templates/` から読み込む:
-- `api.yaml` — 自社 API
-- `external.yaml` — 外部 API
-- `file.yaml` — ファイル連携
-- `internal.yaml` — 内部サービス・リポジトリ（subtype で分岐）
+**⛔ 絶対厳守: Contract タイプルール**
 
-テンプレートの `{{placeholder}}` をブレスト結果で埋める。
+| Contract の内容 | `type` の値 | `subtype` |
+|----------------|------------|-----------|
+| 自社 HTTP API エンドポイント（GET/POST/PATCH/DELETE 等） | `api` | なし |
+| 外部 API 呼び出し（Stripe/SendGrid 等のクライアント） | `external` | なし |
+| ファイル入出力（CSV 読み込み、レポート生成 等） | `file` | なし |
+| データ永続化・リポジトリ（DB/インメモリ/ファイル保存） | `internal` | `repository` |
+| ドメインサービス・ユーティリティ | `internal` | `service` |
+| UI 画面設計（フォーム・一覧・詳細・ダッシュボード） | `screen` | `screen_type` で指定 |
+
+❌ **禁止**: `function`、`model`、`service`（type として）、`repository`（type として）、`entity`、`endpoint` は **type に使えない**。
+
+**screen Contract の depends_on 自動同期（必須）**:
+
+screen Contract を生成する際、以下の値を **必ず** `links.depends_on` にも設定する:
+- `form.submit_action` の値
+- `list.data_source` の値
+- `detail.data_source` の値
+- `detail.actions[].calls` の全値（各アクションの呼び出し先 API も同期）
+- `dashboard.widgets[].data_source` の全値
+
+```yaml
+# 自動同期の例
+form:
+  submit_action: CON-order-create    # ← ユーザーが指定
+links:
+  depends_on: [CON-order-create]     # ← /spec が自動で同期（必須）
+```
+
+**screen Contract テンプレート参照**:
+
+```
+Read("skills/spec/references/contract-templates/screen.yaml")
+```
+
+screen_type（form/list/detail/dashboard）に応じて不要なセクションを削除してから書き出す。
+
+**Contract YAML の最小構造（タイプ別）**:
+
+```yaml
+# type: api の場合（HTTP エンドポイント）
+id: CON-{{name}}
+type: api          # ← 必ず "api" を使う（"function" は無効）
+version: 1.0.0
+status: draft
+method: POST       # GET | POST | PUT | PATCH | DELETE
+path: /todos
+input:
+  body:
+    title: { type: string, required: true, max: 100 }
+output:
+  success:
+    status: 201
+    body:
+      id: { type: string }
+  errors:
+    - { status: 400, code: VALIDATION_ERROR, description: "バリデーション失敗" }
+business_rules:
+  - { id: BR-001, rule: "title は必須で最大100文字" }
+```
+
+```yaml
+# type: internal の場合（リポジトリ/サービス）
+id: CON-{{name}}
+type: internal     # ← 必ず "internal" を使う
+subtype: repository  # または service
+version: 1.0.0
+status: draft
+input:
+  findById:
+    params:
+      id: { type: string, required: true }
+    returns: { type: object, description: "Todo | null" }
+  create:
+    params:
+      data: { type: object, required: true }
+    returns: { type: object, description: "作成されたTodo" }
+```
+
+ブレスト結果で `{{placeholder}}` を埋め、`type` は上記ルールに従って設定すること。
 
 **implementation セクション対話（オプション）**:
 

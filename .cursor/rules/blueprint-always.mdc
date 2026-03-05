@@ -4,6 +4,19 @@ alwaysApply: true
 ---
 # Blueprint ワークフロー共通規約
 
+## Contract タイプ一覧
+
+| type | subtype | 対象 | 配置先 |
+|------|---------|------|--------|
+| `api` | なし | 自社 HTTP API エンドポイント | `contracts/api/` |
+| `external` | なし | 外部 API 呼び出し | `contracts/external/` |
+| `file` | なし | ファイル入出力 | `contracts/file/` |
+| `internal` | `repository` | データ永続化・リポジトリ | `contracts/internal/` |
+| `internal` | `service` | ドメインサービス・ユーティリティ | `contracts/internal/` |
+| `screen` | `form` / `list` / `detail` / `dashboard` | UI 画面設計 | `contracts/screen/` |
+
+❌ `function`、`model`、`service`（type として）、`repository`（type として）は type に使えない。
+
 ## ID 採番規約
 
 詳細は @core/id-system.md を参照。
@@ -16,6 +29,7 @@ alwaysApply: true
 | API | API | API-XXX | API-001 |
 | ENT | エンティティ | ENT-{PascalCase} | ENT-User |
 | ADR | 設計決定 | ADR-XXXX | ADR-0001 |
+| CON | Contract | CON-{name} | CON-order-create |
 
 ## 出力ディレクトリ
 

@@ -1,13 +1,13 @@
 # Contract YAML Schema
 
-Contract は I/O 境界（API、外部連携、ファイル）の機械可読な仕様。
+Contract は I/O 境界（API、外部連携、ファイル、UI 画面）の機械可読な仕様。
 テスト自動生成の入力として使われる。
 
 ## 共通メタデータ（全タイプ必須）
 
 ```yaml
 id: CON-{name}                    # 一意識別子
-type: api | external | file | internal  # I/O タイプ
+type: api | external | file | internal | screen  # I/O タイプ
 subtype: service | repository     # internal の場合のみ（必須）
 version: "1.0.0"                  # SemVer
 status: draft | active | deprecated
@@ -257,6 +257,103 @@ entity:
 - `storage.type` → ストレージ固有のテスト（ファイル存在確認、DB 接続等）
 - `entity.schema` → 保存/取得データの構造一致テスト
 
+### screen — UI 画面設計
+
+フロントエンドの画面 I/O 境界の仕様。`screen_type` で4種類に分類する。
+`links.depends_on` には `/spec` 生成時に参照先 API Contract ID が自動同期される。
+
+```yaml
+# screen 定義
+screen_type: form | list | detail | dashboard  # 必須
+
+route:
+  path: "/orders/:id"               # 必須
+  auth_required: true | false       # 必須
+
+# screen_type: form の場合（必須）
+form:
+  submit_action: CON-{api-id}       # 送信先 API Contract ID
+  fields:
+    {field_name}:
+      type: text | email | password | select | checkbox | textarea | date | number
+      required: true | false        # テスト導出
+      max_length: N                 # テスト導出
+      pattern: "regex"              # テスト導出
+      enum: [a, b, c]               # テスト導出
+      description: "説明"           # オプション
+
+validation_rules:                   # form の場合は必須、他は任意
+  - id: VR-{NNN}
+    field: "{field_name}"
+    rule: "バリデーションルールの説明"
+    constraint:                     # テスト導出
+      pattern: "regex"              # または min/max/enum 等
+    error_message: "エラーメッセージ"
+
+# screen_type: list の場合（必須）
+list:
+  data_source: CON-{api-id}         # データ取得 API Contract ID
+  filters:
+    {param_name}:
+      type: string | integer | enum
+      enum: [...]                   # テスト導出
+  pagination:
+    enabled: true | false           # テスト導出
+    default_page_size: N
+    max_page_size: N                # テスト導出
+
+# screen_type: detail の場合（必須）
+detail:
+  data_source: CON-{api-id}         # データ取得 API Contract ID
+  actions:                          # オプション
+    - id: ACT-{NNN}
+      label: "アクションラベル"
+      calls: CON-{api-id}
+      condition: "status === 'pending'"  # 表示条件（任意）
+
+# screen_type: dashboard の場合（必須）
+dashboard:
+  widgets:
+    - id: WGT-{NNN}
+      type: chart | table | metric | list
+      data_source: CON-{api-id}     # データ取得 API Contract ID
+      required: true | false        # テスト導出
+
+# 共通オプション
+access_control:
+  roles: [admin, user]              # アクセス可能ロール
+  redirect_if_unauthorized: "/login"
+
+state:
+  initial: {}
+  loading_states: [data_source, submit]
+
+business_rules:
+  - id: BR-{NNN}
+    rule: "ルールの説明"
+```
+
+**依存関係の自動同期**: `/spec` が screen Contract を生成する際、以下の値を `links.depends_on` に自動コピーする。
+- `form.submit_action`
+- `list.data_source`
+- `detail.data_source`
+- `dashboard.widgets[].data_source`
+
+**テスト配置**: `tests/ui/{screen-name}/` （Level 2 とは分離）
+
+**テスト導出ポイント**:
+- `form.fields[].required: true` → 未入力でバリデーションエラーが表示されること
+- `form.fields[].max_length: N` → N+1 文字でエラーが表示されること
+- `form.fields[].pattern` → 不一致でエラーが表示されること
+- `form.fields[].enum` → 許可外の値は選択不可であること
+- `form.submit_action` → submit 時に API Contract の input 形式でリクエストが送信されること
+- `validation_rules[].constraint` → 各ルールの正常/異常テスト
+- `list.filters[].enum` → フィルター選択肢が enum と一致すること
+- `list.pagination.max_page_size: N` → N を超えた取得が行われないこと
+- `detail.actions[].condition` → condition を満たさない場合はボタンが非表示
+- `dashboard.widgets[].required: true` → ウィジェットが存在すること
+- `route.auth_required: true` → 未認証アクセスが redirect_if_unauthorized にリダイレクト
+
 ## implementation セクション（全タイプ共通、オプション）
 
 実装に必要な内部設計情報を記録する。`/spec` 実行時にユーザーと対話して決定する。
@@ -388,6 +485,17 @@ Contract のフィールドからテストを機械的に導出する:
 | `side_effects` (internal/service) | 副作用の発生/不発生テスト |
 | `input.{method}.returns: null` (internal/repository) | 存在しないキー → null テスト |
 | `storage` (internal/repository) | ストレージ固有テスト（roundtrip） |
+
+| `form.fields[].required: true` (screen) | 未入力 → バリデーションエラー表示 |
+| `form.fields[].max_length: N` (screen) | N+1 文字 → エラー表示 |
+| `form.fields[].pattern` (screen) | 不一致 → エラー表示 |
+| `form.fields[].enum` (screen) | 許可外 → 選択不可 |
+| `form.submit_action` (screen) | submit → API Contract input 形式でリクエスト |
+| `validation_rules[].constraint` (screen) | 各ルールの正常/異常テスト |
+| `list.pagination.max_page_size` (screen) | N 超の取得が行われないこと |
+| `detail.actions[].condition` (screen) | 条件不成立 → ボタン非表示 |
+| `dashboard.widgets[].required` (screen) | true → ウィジェット存在確認 |
+| `route.auth_required: true` (screen) | 未認証 → redirect_if_unauthorized へリダイレクト |
 
 > **制約干渉に注意**: テスト生成時、他の制約（例: `max: 99`）を超えない値を使う。
 > 例: 在庫不足テストで `quantity: 99999` は `max: 99` に先に引っかかる → `quantity: 10`（有効範囲内）で低在庫商品を使う。

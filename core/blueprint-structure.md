@@ -10,8 +10,9 @@
 ├── contracts/           # I/O 境界仕様（テスト強制）
 │   ├── api/             # 自社公開 API
 │   ├── external/        # 外部 API 連携
-│   ├── files/           # ファイル連携（CSV/バッチ等）
-│   └── internal/        # 内部サービス・リポジトリ
+│   ├── file/            # ファイル連携（CSV/バッチ等）
+│   ├── internal/        # 内部サービス・リポジトリ
+│   └── screen/          # UI 画面設計（form/list/detail/dashboard）
 ├── concepts/            # ドメイン知識（Obsidian 風メモ）
 └── decisions/           # 設計判断記録（ADR 形式）
 ```

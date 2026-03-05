@@ -1,0 +1,57 @@
+# Internal Contract Template
+# 外部に公開しないモジュール間の I/O 境界（ドメインサービス・リポジトリ）
+# {{placeholder}} をユーザー入力で置き換える
+# subtype: service（ドメインサービス・ユーティリティ）or repository（データ永続化）
+
+id: CON-{{name}}
+type: internal
+subtype: {{subtype}}             # service | repository （必須）
+version: 1.0.0
+status: draft
+owner: "{{owner}}"
+updated_at: "{{date}}"
+description: "{{description}}"
+
+links:
+  implements: [{{fr_ids}}]
+  depends_on: [{{depends_on}}]
+  decided_by: [{{decided_by}}]
+  impacts: []
+
+# ── メソッド定義（CRUD または任意のメソッド名）──
+input:
+  {{method_name}}:
+    description: "{{method_description}}"
+    params:
+      {{param_name}}:
+        type: {{type}}           # string | number | boolean | object | array
+        required: {{required}}   # true | false
+        description: "{{description}}"
+    returns:
+      type: {{return_type}}      # 戻り値の型（null の場合もあり）
+      description: "{{return_description}}"
+
+rules:
+  - id: R-001
+    description: "{{rule_description}}"
+
+# ── subtype: repository の場合のみ追加 ──
+# storage:
+#   type: db | file | cache      # ストレージ種別
+#   path: "{{table_or_path}}"    # テーブル名またはファイルパス
+#   format: json | csv | sql
+#
+# entity:
+#   name: "{{entity_name}}"
+#   schema:
+#     {{field_name}}:
+#       type: string | number | boolean | array | object
+#       description: "{{description}}"
+
+# ── subtype: service の場合のみ追加（オプション）──
+# state:
+#   manages: "{{state_description}}"
+#   lifecycle: "{{start}} → {{running}} → {{stopped}}"
+#
+# side_effects:
+#   - "{{side_effect_description}}"

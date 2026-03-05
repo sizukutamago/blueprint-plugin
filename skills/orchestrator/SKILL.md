@@ -66,9 +66,12 @@ Read(".blueprint/pipeline-state.yaml")
 ```
 
 **--resume モード判定**:
-- ユーザーが `--resume` を指定 → `.blueprint/pipeline-state.yaml` を読み込み、中断点から再開:
+- ユーザーが `--resume` を指定 → `.blueprint/pipeline-state.yaml` を読み込み、中断点から再開。
+  詳細な status 組み合わせ → 再開ステップのマッピングは `core/orchestrator.md` の「--resume フロー」を参照。
+  代表的なパターン:
   - `stage_3_implement` completed → テスト GREEN チェック → Code Review Gate → Stage 4 へ
-  - `code_review_gate` 失敗 → Code Review Gate から再実行
+  - `code_review_gate.status: revising` → Code Review Gate から再実行
+  - `contract_review_gate.status: revising` → Contract Review Gate から再実行（Stage 1 完了後）
   - 各ステージが `pending`/`in_progress` → 該当ステージの最初から再実行
   - `final_status: completed` → 「完了済み。--force で再実行してください」
 - `--force` を指定 → 新規パイプラインとして全ステージ実行

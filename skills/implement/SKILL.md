@@ -74,12 +74,36 @@ Glob("tests/contracts/level2/**/*.test.*")
 ```
 
 **config.yaml の検証**:
+- `.blueprint/config.yaml` が存在しない場合: **エラー停止** — 「`/spec` を先に実行してください」と案内
 - `architecture.pattern` が `clean` | `layered` | `flat` のいずれかであること
 - `tech_stack` の必須フィールド（framework, validation, test）が設定済みであること
 - 不足がある場合はユーザーに確認して補完
 
 **implementation セクション未設定の Contract**:
 - 警告を出力し、business_rules と depends_on から推定する旨を伝える
+
+**⛔ 必須: 実行スクリプトのセットアップ**
+
+プラグインスクリプトをユーザープロジェクトの `.blueprint/scripts/` にコピーする:
+
+```
+# 1. スクリプト内容を読み込み、ユーザープロジェクトに書き出す
+Read("{plugin_dir}/scripts/verify-web-app.sh")
+  → Write(".blueprint/scripts/verify-web-app.sh", <全文>)
+
+Read("{plugin_dir}/scripts/assert-gate-completed.sh")
+  → Write(".blueprint/scripts/assert-gate-completed.sh", <全文>)
+```
+
+```bash
+mkdir -p .blueprint/scripts
+chmod +x .blueprint/scripts/verify-web-app.sh .blueprint/scripts/assert-gate-completed.sh
+echo ".blueprint/scripts/ initialized."
+```
+
+> `{plugin_dir}` は `claude plugin-dir` コマンドで取得するか、SKILL.md の `core_ref` パスの親ディレクトリを参照する。
+
+→ `.blueprint/scripts/verify-web-app.sh` と `.blueprint/scripts/assert-gate-completed.sh` が生成される。
 
 ### Step 2: 実装計画の生成と承認
 
@@ -134,14 +158,16 @@ Agent({
 
     ## Contract 情報（インライン）
     - Contract ID: CON-{name}
-    - Type: {type}  (api | external | file | internal)
+    - Type: {type}  (api | external | file | internal | screen)
     - Tech Stack: {framework} + {validation} + {orm}
     - Architecture: {pattern}
     - 担当エンティティ: {entity}
+    - screen の場合は: screen_type={screen_type}, frontend.framework={frontend_framework}
 
     ## 読み込むファイル
     - Contract YAML: .blueprint/contracts/{type}/{name}.contract.yaml
-    - RED テスト: tests/contracts/level2/CON-{name}.test.ts
+    - RED テスト（api/external/file/internal）: tests/contracts/level2/CON-{name}.test.ts
+    - RED テスト（screen）: tests/ui/{screen-name}/{ScreenName}Page.test.tsx
     - 命名規約: core/defaults/naming.md
     - アーキテクチャ: core/defaults/architecture-patterns/{pattern}.md
     - エラー処理: core/defaults/error-handling.md
@@ -152,19 +178,25 @@ Agent({
     1. 上記ファイルを全て読み込む
     2. Contract の implementation.flow がある場合はその順序で実装
        flow がない場合は一括で実装
-    3. 作成するファイル（{entity} 名前空間配下のみ）:
+    3-a. api/external/file/internal の場合: 作成するファイル（{entity} 名前空間配下のみ）:
        - 型定義（Contract input/output から導出）
        - バリデーションスキーマ
        - ビジネスロジック（business_rules は TDD: ユニットテストを先に書く）
        - Repository interface + 実装
        - ルートファイル（method + path からルート定義）
-    4. ユニットテストは tests/unit/{entity}/ に配置
-    5. テスト実行: npx vitest tests/contracts/level2/CON-{name}.test.ts
+    3-b. screen の場合: 作成するファイル（src/interface/{screen-name}/ 配下のみ）:
+       - {ScreenName}Page.tsx（ページコンポーネント）
+       - components/ 配下のサブコンポーネント
+       - validation_rules → フロントエンドバリデーション実装
+    4. ユニットテストは tests/unit/{entity}/ に配置（api/external/file/internal のみ）
+    5. テスト実行:
+       - api/external/file/internal: npx vitest tests/contracts/level2/CON-{name}.test.ts
+       - screen: {frontend_test_runner} tests/ui/{screen-name}/
     6. 全テスト GREEN になるまで修正を続ける
 
     ## 重要ルール
     - app.ts や DI container など共有ファイルは作成しない（Integrator が担当）
-    - 自分の名前空間（{entity}）配下のファイルのみ作成・編集
+    - 自分の名前空間（{entity} または src/interface/{screen-name}/）配下のファイルのみ作成・編集
     - テストが GREEN にならない場合、同じエラーが 3 回連続したらその旨を報告
     - 勝手にスキップしない
   "
@@ -206,8 +238,10 @@ Agent({
 ```
 
 ```bash
-# 全テスト一括実行（Level 1 + Level 2 + Unit）
+# 全テスト一括実行（Level 1 + Level 2 + Unit + UI テスト）
 npx vitest tests/
+# screen Contract がある場合は UI テストも別途実行
+# {frontend_test_runner} tests/ui/
 ```
 
 失敗テストがある場合:
@@ -272,7 +306,36 @@ Skill("simplify")
 
 /simplify を実行し、コードの可読性・効率・再利用性を最終チェックする。
 
-### Step 7: 承認 + pipeline-state 更新
+### Step 6.5: Web App 動作確認
+
+⛔ **スキップ禁止**（api Contract が 0 件でもスクリプトを実行して確認する）。
+
+```bash
+bash .blueprint/scripts/verify-web-app.sh
+```
+
+スクリプトが行うこと（詳細は `scripts/verify-web-app.sh` 参照）:
+1. dev/start/serve スクリプトがなければ framework に合わせたサーバーファイル（src/server.ts など）を自動生成
+2. 必要なアダプター（`@hono/node-server` 等）をインストール
+3. サーバーをバックグラウンド起動（最大 30 秒待機）
+4. api Contract の全エンドポイントに curl スモークテスト（5xx → 失敗）
+5. 結果を `.blueprint/reviews/web-verification-{timestamp}.md` に保存してサーバー停止
+
+**フロントエンド確認（HTML を返すエンドポイントがある場合）**:
+
+```
+Skill("agent-browser")
+# → http://localhost:{PORT}/ を開く
+# → コンソールエラーを確認・スクリーンショット添付
+```
+
+**失敗時**: サーバーログを確認して修正を試みる。解決不可の場合はユーザーに報告して Step 7 へ進む（Code Review Gate はブロックしない）。
+
+### Step 7: 実装結果サマリー + Code Review Gate
+
+**⛔ 絶対必須: Code Review Gate は /simplify・Web 動作確認が完了した後に必ず実行する。テスト GREEN だけで完了とみなしてはならない。**
+
+実装完了サマリーを出力し、**Code Review Gate を必ず実行する**（スキップ不可）。
 
 ```
 ## 実装結果サマリー
@@ -299,16 +362,107 @@ Skill("simplify")
 - import 循環: なし
 - Refactorer: 重複 2 件排除、命名 3 件修正
 - /simplify: 改善 1 件
-
-Code Review Gate に進みますか？
 ```
 
+**重要**: テスト GREEN は「動作の正しさ」を確認するだけ。Code Review Gate は「Contract 宣言がコードに反映されているか（宣言の一致）」を検証する。**テスト GREEN でも Code Review Gate は必須**。
+
+#### Code Review Gate（4 Agent 並列）
+
+各 Agent へ渡す共通入力（`skills/orchestrator/references/review-prompts/code-reviewer.md` の「共通入力」セクション参照）:
+- Contract YAML: `.blueprint/contracts/**/*.contract.yaml`
+- ソースコード: `src/`（またはフレームワーク相当のディレクトリ）
+- `core/review-criteria.md`（P0/P1/P2 定義）
+- `skills/orchestrator/references/review-prompts/code-reviewer.md`（チェック手順）
+
+4 つの Agent を**同時**（1 つの応答で並列呼び出し）:
+
 ```
-# pipeline-state.yaml を更新
-Read(".blueprint/pipeline-state.yaml")
-# stage_3_implement のフィールドを更新
-Write(".blueprint/pipeline-state.yaml")
+Agent({
+  subagent_type: "general-purpose",
+  description: "Code Review - Schema Compliance",
+  prompt: "
+    skills/orchestrator/references/review-prompts/code-reviewer.md の
+    「Agent 1: Schema Compliance Checker」手順に従い、
+    Contract フィールド制約がバリデーション層に反映されているか検証してください。
+    共通入力・出力フォーマットは同ファイルの「共通入力」「共通出力フォーマット」参照。
+    reviewer: 'schema-compliance'
+  "
+})
+
+Agent({
+  subagent_type: "general-purpose",
+  description: "Code Review - Route & Handler",
+  prompt: "
+    skills/orchestrator/references/review-prompts/code-reviewer.md の
+    「Agent 2: Route & Handler Checker」手順に従い、
+    api/external Contract の method/path と実装ルートの一致を検証してください。
+    共通入力・出力フォーマットは同ファイルの「共通入力」「共通出力フォーマット」参照。
+    reviewer: 'route-handler'
+  "
+})
+
+Agent({
+  subagent_type: "general-purpose",
+  description: "Code Review - Business Logic",
+  prompt: "
+    skills/orchestrator/references/review-prompts/code-reviewer.md の
+    「Agent 3: Business Logic Checker」手順に従い、
+    business_rules/state_transition/constraints の実装反映を検証してください。
+    共通入力・出力フォーマットは同ファイルの「共通入力」「共通出力フォーマット」参照。
+    reviewer: 'business-logic'
+  "
+})
+
+Agent({
+  subagent_type: "general-purpose",
+  description: "Code Review - Code Quality",
+  prompt: "
+    skills/orchestrator/references/review-prompts/code-reviewer.md の
+    「Agent 4: Code Quality Checker」手順に従い、
+    レイヤー構造・重複・命名規約を検証してください。
+    architecture.pattern は .blueprint/config.yaml から確認してください。
+    共通入力・出力フォーマットは同ファイルの「共通入力」「共通出力フォーマット」参照。
+    reviewer: 'code-quality'
+  "
+})
 ```
+
+**Gate 判定**: `core/review-criteria.md` の Gate 判定プロトコルに従う（P0=0 かつ P1≤1 → PASS、それ以外 → REVISE 最大 3 サイクル）。
+
+```
+## Code Review Gate 結果
+
+| 項目 | P0 | P1 | P2 | 判定 | サイクル |
+|------|----|----|----|----- |---------|
+| Code | N  | N  | N  | PASS/REVISE | N |
+
+### 検出事項（P2 要対応リスト）
+- [対象] 問題の説明
+```
+
+**⛔ 必須チェックリスト（この順序で全て実行すること）**:
+
+```
+1. Code Review Gate（4 Agent 並列）を実行
+2. Gate 結果を pipeline-state.yaml に書き込む（Write が必須、Read して確認から更新まで）:
+   Read(".blueprint/pipeline-state.yaml")
+   Write(".blueprint/pipeline-state.yaml")
+   # 必ず以下のフォーマットで更新:
+   # code_review_gate:
+   #   status: passed  # or revising
+   #   cycle: 1
+   #   final_counts: { p0: 0, p1: 0, p2: N }
+3. assert-gate-completed.sh を実行して書き込みを検証:
+   bash .blueprint/scripts/assert-gate-completed.sh
+4. exit 0 の場合のみ承認サマリーをユーザーに提示
+```
+
+```bash
+# Step 3の実行
+bash .blueprint/scripts/assert-gate-completed.sh
+```
+
+**⚠️ よくある失敗**: Gate を実行したのに pipeline-state.yaml を更新し忘れると assert スクリプトが常に exit 1 になる。必ず Write で更新すること。
 
 ## 原則
 

@@ -28,9 +28,10 @@ Contract スキーマは `core/contract-schema.md` を参照。
 
 | ディレクトリ | 内容 |
 |------------|------|
-| `tests/contracts/level1/` | 構造検証テスト（即 GREEN） |
-| `tests/contracts/level2/` | 実装検証テスト（RED スタブ） |
+| `tests/contracts/level1/` | 構造検証テスト（即 GREEN、全タイプ） |
+| `tests/contracts/level2/` | 実装検証テスト（RED スタブ、api/external/file/internal のみ） |
 | `tests/contracts/helpers/` | 共通ヘルパー（contract-loader, タイプ別ヘルパー） |
+| `tests/ui/{screen-name}/` | UI テスト（RED スタブ、screen タイプのみ） |
 
 ## ツール
 
@@ -62,8 +63,9 @@ Glob(".blueprint/contracts/**/*.contract.yaml")
 **ディレクトリ → タイプマッピング**:
 - `contracts/api/` → api
 - `contracts/external/` → external
-- `contracts/files/` → file（注意: 複数形 `files/`）
-- `contracts/internal/` → internal（subtype で テスト生成パターン分岐）
+- `contracts/file/` → file
+- `contracts/internal/` → internal（subtype でテスト生成パターン分岐）
+- `contracts/screen/` → screen（screen_type でテスト生成パターン分岐、UI テストは tests/ui/ に配置）
 
 ### Step 2: Contract 選択
 
@@ -140,7 +142,12 @@ Glob("src/**/*.test.*")
      - internal (service): Method Input / Rules / State Lifecycle / Side Effects / Return Values
      - internal (repository): CRUD Roundtrip / Not Found Handling / Rules / Overwrite / Storage Specifics
    - `Write()` で `tests/contracts/level2/CON-{name}.test.ts` に出力
-2. タイプ別ヘルパーを生成（`tests/contracts/helpers/{type}-helpers.ts`）
+2. screen Contract の場合は UI テスト（tests/ui/）を生成（Level 2 ではなく別レイヤー）:
+   - `{baseDir}/references/test-generation-rules.md` の「screen 型: UI テスト」ルールに従う
+   - `config.yaml` の `tech_stack.frontend.test_tool` でフレームワークを決定
+   - `Write()` で `tests/ui/{screen-name}/{ScreenName}Page.test.tsx` に出力
+   - ヘルパー: `tests/ui/{screen-name}/screen-helpers.ts`
+3. タイプ別ヘルパーを生成（`tests/contracts/helpers/{type}-helpers.ts`）
 
 **各テストの導出元コメント**: テスト内に Contract フィールドへの参照を埋め込む:
 
@@ -151,7 +158,27 @@ it("BR-001: サーバー側で金額再計算", () => {
 });
 ```
 
-### Step 6: サマリー出力
+### Step 6: RED スタブ確認
+
+Level 2 / UI テストが意図通り FAIL していることを確認する（警告のみ、ブロックはしない）:
+
+```bash
+# .blueprint/config.yaml から package_manager + frontend.test_tool を取得して実行
+# Level 2 RED スタブ確認
+{pkg_manager} test -- tests/contracts/level2/ 2>&1 | grep -E "passed|failed"
+# → passed 0 件であれば OK
+
+# UI テスト RED スタブ確認（screen Contract がある場合）
+# config.yaml の tech_stack.frontend.test_tool に応じて分岐:
+#   testing-library / vitest → {pkg_manager} test -- tests/ui/
+#   playwright → {pkg_manager} exec playwright test tests/ui/
+{pkg_manager} test -- tests/ui/ 2>&1 | grep -E "passed|failed"
+# → passed 0 件であれば OK（Playwright は出力フォーマットが異なる場合あり）
+```
+
+passed が 1 件以上あれば警告を出力してユーザーに確認を促す。
+
+### Step 7: サマリー出力
 
 ```
 ## 生成結果
@@ -166,15 +193,21 @@ it("BR-001: サーバー側で金額再計算", () => {
 |----------|---------|------|
 | CON-order-create | 31 | input:12, rules:4, state:5, errors:3, response:7 |
 
+### UI テスト（screen Contract - RED スタブ）
+| Contract | テスト数 | 内訳 |
+|----------|---------|------|
+| CON-order-form | 12 | validation:5, submit:3, auth:2, ... |
+
 ### 生成ファイル
 - tests/contracts/helpers/contract-loader.ts
 - tests/contracts/level1/CON-order-create.test.ts
 - tests/contracts/level2/CON-order-create.test.ts
+- tests/ui/order-form/OrderFormPage.test.tsx
 - ...
 
 ### 次のステップ
-1. `npx vitest tests/contracts/level1` で Level 1 が GREEN であることを確認
-2. Level 2 テストの RED スタブを 1 つずつ実装して GREEN にする
+1. Level 1 テストが GREEN であることを確認
+2. Level 2 テスト・UI テストの RED スタブを 1 つずつ実装して GREEN にする
 3. 全テスト GREEN 後: `/generate-docs` で設計書を後追い生成
 ```
 

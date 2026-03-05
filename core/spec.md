@@ -77,12 +77,30 @@ Contract YAML をブレインストーミングから生成するワークフロ
 | test | `package.json` の devDependencies |
 | lint | `biome.json` / `.eslintrc*` の存在 |
 | ci | `.github/workflows/` の存在 |
+| frontend.framework | `package.json` の dependencies（react/vue/svelte/next 等） |
+| frontend.ui_library | `package.json` の dependencies（@shadcn/ui/@mui/material/antd 等） |
+| frontend.test_tool | `package.json` の devDependencies（@testing-library/react/playwright 等） |
 
 スキーマの詳細は `implement.md` の config.yaml スキーマを参照。
+
+**frontend セクション（screen Contract が存在する場合に生成）**:
+
+```yaml
+tech_stack:
+  # ... 既存フィールド ...
+  frontend:
+    framework: react | vue | svelte | next | none  # package.json から自動検出
+    ui_library: shadcn | mui | antd | none
+    test_tool: testing-library | playwright | none  # デフォルト: testing-library
+```
+
+frontend セクションは screen Contract が 1 つ以上生成される場合のみ追加する。
+screen が存在しない場合はスキップ（バックエンド専用プロジェクトに余分なフィールドを追加しない）。
 
 **greenfield の場合**（package.json もない場合）:
 - 全項目をユーザーに質問
 - デフォルト推奨: TypeScript + Hono + Zod + Vitest + pnpm + Clean Architecture
+- screen Contract がある場合: React + shadcn/ui + testing-library
 
 ### Step 3: ブレインストーミング
 
@@ -96,6 +114,16 @@ Contract YAML をブレインストーミングから生成するワークフロ
 - 外部依存（外部 API、ファイル連携）
 - ビジネスルール（金額計算、在庫管理等の業務ロジック）
 - 非機能要件（タイムアウト、リトライ、冪等性）
+
+**screen Contract が必要な場合**（ユーザーが「画面」「UI」「フロントエンド」に言及した時）:
+API 設計が完了した後に以下を追加で質問する（API → screen の順序を守る）。
+
+- 画面の種類（フォーム・一覧・詳細・ダッシュボード）
+- フォームの場合: どのフィールドがあり、それぞれの制約は何か
+- 一覧の場合: フィルター・ソート・ページネーションの仕様
+- 認証が必要か（ログインが必要な画面か）
+- アクセス可能なロールは何か
+- エラー時の表示はどうするか
 
 **終了条件**:
 - 最大 **10 質問** まで（各質問はフォーカスを持つ）
@@ -124,6 +152,9 @@ Contract YAML をブレインストーミングから生成するワークフロ
 - 外部に公開しないモジュール間の I/O 境界 → `internal`
   - ドメインサービス・ユーティリティ → `subtype: service`
   - データ永続化（Repository） → `subtype: repository`
+- UI 画面設計（フォーム・一覧・詳細・ダッシュボード） → `screen`
+  - `screen_type` を同時に決定: `form` / `list` / `detail` / `dashboard`
+  - **必ず対応する API Contract を先に確定してから** screen を追加する
 
 ユーザーの承認を得てから次へ進む。
 
@@ -144,8 +175,30 @@ Contract YAML をブレインストーミングから生成するワークフロ
 **配置先**:
 - `api` → `.blueprint/contracts/api/{name}.contract.yaml`
 - `external` → `.blueprint/contracts/external/{name}.contract.yaml`
-- `file` → `.blueprint/contracts/files/{name}.contract.yaml`
+- `file` → `.blueprint/contracts/file/{name}.contract.yaml`
 - `internal` → `.blueprint/contracts/internal/{name}.contract.yaml`
+- `screen` → `.blueprint/contracts/screen/{name}.contract.yaml`
+
+**screen Contract の depends_on 自動同期**:
+/spec は screen Contract を生成する際、以下の値を `links.depends_on` に自動コピーする
+（`/implement` のトポロジカルソートで API より先に screen が実装されるのを防ぐため）。
+
+| screen_type | 自動同期するフィールド |
+|---|---|
+| form | `form.submit_action` |
+| list | `list.data_source` |
+| detail | `detail.data_source`、`detail.actions[].calls`（全アクション） |
+| dashboard | `dashboard.widgets[].data_source`（全ウィジェット） |
+
+```yaml
+# ユーザーが指定（submit_action のみ）
+form:
+  submit_action: CON-order-create
+
+# /spec が自動で links.depends_on にも反映
+links:
+  depends_on: [CON-order-create]  ← 自動同期
+```
 
 **SemVer 初期値**: `1.0.0`（新規の場合）
 

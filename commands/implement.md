@@ -21,6 +21,7 @@ Contract YAML と RED テストから実装コードを生成する。
 4. **Integrator** - app entry 結線 + 全テスト実行
 5. **Refactorer** - コンテキスト非共有で構造リファクタリング
 6. **/simplify** - コード品質の最終チェック
+6.5. **Web App 動作確認** - dev サーバー起動 → API スモークテスト → ブラウザ確認
 7. **承認** - 実装サマリー提示 + pipeline-state 更新
 
 ## 出力先
