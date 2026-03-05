@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", or "blueprint one-command". Automates /spec → /test-from-contract → /implement → /generate-docs with Review Swarm gates between each stage.
+description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", "run complete design-to-code pipeline", "spec to implementation", "end to end development", "resume pipeline", "continue from where I left off", or "force rerun all stages". Automates /spec → /test-from-contract → /implement → /generate-docs with Review Swarm gates between each stage. Supports --resume (continue from checkpoint) and --force (rerun all stages).
 version: 1.0.0
 core_ref: core/orchestrator.md
 ---
@@ -113,13 +113,13 @@ Glob("docs/03_architecture/**")
 
 ### Step 3: Contract Review Gate
 
-3 つの Task エージェントを**並列**起動:
+3 つの Agent を**並列**起動:
 
 ```
-# 並列起動（3 Task agent）
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md の Agent 1 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md の Agent 2 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md の Agent 3 プロンプト}")
+# 並列起動（3 Agent）
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: Contract YAML ファイルパスリスト + contract-schema.md + review-criteria.md の内容
@@ -148,12 +148,12 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{contract-reviewer.md 
 
 ### Step 5: Test Review Gate
 
-3 つの Task エージェントを**並列**起動:
+3 つの Agent を**並列**起動:
 
 ```
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の Agent 1 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の Agent 2 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{test-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: テストファイルパスリスト + Contract YAML + test-from-contract.md + review-criteria.md
@@ -211,13 +211,13 @@ Code Review Gate は「Contract の宣言がコードに反映されているか
 テストが GREEN でも、バリデーションスキーマに制約が欠落していればここで検出される。
 **テスト GREEN だけで Code Review Gate をスキップしてはならない。**
 
-4 つの Task エージェントを**並列**起動:
+4 つの Agent を**並列**起動:
 
 ```
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 1 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 2 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 3 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{code-reviewer.md の Agent 4 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 4 プロンプト}")
 ```
 
 **入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ + config.yaml + core/defaults/ + review-criteria.md
@@ -249,12 +249,12 @@ code_review_gate:
 
 ### Step 9: Doc Review Gate
 
-3 つの Task エージェントを**並列**起動:
+3 つの Agent を**並列**起動:
 
 ```
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の Agent 1 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の Agent 2 プロンプト}")
-Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: docs/ ファイルリスト + .blueprint/ + ソースコード + review-criteria.md
@@ -270,7 +270,7 @@ Task(subagent_type: "feature-dev:code-reviewer", prompt: "{doc-reviewer.md の A
 | ステージ | 結果 | 成果物 |
 |---------|------|--------|
 | Stage 1: Spec | {PASS|skipped} | N Contracts |
-| Stage 2: Test Gen | {PASS|skipped} | X Level 1 + Y Level 2 |
+| Stage 2: Test Gen | {PASS|skipped} | X Level 1 + Y Level 2 (+ Z UI テスト) |
 | Stage 3: Impl | completed | 全テスト GREEN |
 | Stage 4: Doc Gen | {PASS|skipped} | Z ファイル |
 

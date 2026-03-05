@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Create I/O boundary contracts through brainstorming. Use when the user wants to "create contract", "define spec", "brainstorm API design", "design I/O boundary", "define external integration", "specify file format", or "start knowledge base". Combines interactive brainstorming with structured contract YAML generation.
+description: Create I/O boundary contracts through brainstorming. Use when the user wants to "create contract", "define spec", "brainstorm API design", "design I/O boundary", "define external integration", "specify file format", "design screen", "create UI spec", "define form contract", "screen contract", "design page layout", or "define frontend spec". Also use when the user asks to start a new feature, create .blueprint directory, or brainstorm a new service. Combines interactive brainstorming with structured contract YAML generation for all types: api, external, file, internal, and screen.
 version: 1.0.0
 core_ref: core/spec.md
 ---
@@ -87,56 +87,9 @@ bash "$(claude plugin-dir)/scripts/init-blueprint.sh" "$(pwd)"
 
 ### Step 2: スコープ確認
 
-`core/spec.md` Step 2 に従いスコープを確認。config.yaml は Step 1 で生成済み。
+`core/spec.md` Step 2 に従いスコープを確認。
 
-```
-# 1. config.yaml の存在チェック（ブレスト前に実行）
-Glob(".blueprint/config.yaml")
-→ 存在する場合: スキップ（ブレストへ）
-→ 存在しない場合: 以下を実行（スキップ禁止）
-
-# 2. 技術スタック検出（package.json が存在しない場合は空のプロジェクトとして扱う）
-Read("package.json") if exists   # framework, orm, validation, test を検出
-Read("tsconfig.json") if exists  # language を検出
-Glob("*lock*")                   # package_manager を検出
-Glob("biome.json") / Glob(".eslintrc*")
-Glob(".github/workflows/*")
-
-# 3. ユーザーに以下を確認（1メッセージで全項目を提示）:
-#    - 検出された技術スタック（package.json がない場合は「未設定」として提示）
-#    - architecture.pattern の選択（必須、ユーザーが選択）: clean / layered / flat
-#    ※ package.json がないプロジェクトでも config.yaml は生成する
-
-# 4. ユーザー回答後、即座に config.yaml を書き出す（この後 Glob/Write を実行）
-Write(".blueprint/config.yaml", content)
-```
-
-**config.yaml の最小構造**（package.json がないプロジェクトの場合の例）:
-
-```yaml
-project:
-  name: "プロジェクト名"
-  language: typescript
-  runtime: node
-
-architecture:
-  pattern: clean   # ユーザーが選択
-
-tech_stack:
-  framework: none
-  orm: none
-  validation: zod
-  test: vitest
-  package_manager: npm
-
-quality:
-  lint: none
-  format: none
-  type_check: false
-  ci:
-    enabled: false
-```
-
+config.yaml は Step 1 で生成済みのため、ここではブレストのスコープ（対象機能・画面）を確認するだけでよい。
 config.yaml のスキーマと検出ロジックの詳細は `core/spec.md` Step 2「config.yaml 生成」を参照。
 
 **frontend セクション（screen Contract が生成される場合のみ追加）**:

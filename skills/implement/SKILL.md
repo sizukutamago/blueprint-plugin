@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "make tests green", "create implementation", or "run Stage 3". Orchestrates Implementers, Integrator, and Refactorer agents to produce working code.
+description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "make tests green", "create implementation", "write code from spec", "build feature from contract", "implement feature", "implement screen", "create page components", "implement UI from contract", or "implement Stage 3". Orchestrates Implementers, Integrator, and Refactorer agents to produce working code for all contract types including screen/UI.
 version: 2.0.0
 core_ref: core/implement.md
 ---
@@ -146,60 +146,13 @@ pnpm add {packages}
 
 各 Contract に対して Agent ツールで Implementer を起動。
 **プロンプトにはハイブリッド方式で情報を渡す**: 核心情報はインライン、詳細はファイル参照。
+プロンプト本文は `{baseDir}/references/implementer-prompt-template.md` を参照すること。
 
 ```
 Agent({
   subagent_type: "general-purpose",
   description: "Implement CON-{name}",
-  prompt: "
-    ## タスク
-    Contract CON-{name} の実装を行い、RED テストを GREEN にしてください。
-    ディレクトリ・ファイルの作成から実装まで全て行ってください。
-
-    ## Contract 情報（インライン）
-    - Contract ID: CON-{name}
-    - Type: {type}  (api | external | file | internal | screen)
-    - Tech Stack: {framework} + {validation} + {orm}
-    - Architecture: {pattern}
-    - 担当エンティティ: {entity}
-    - screen の場合は: screen_type={screen_type}, frontend.framework={frontend_framework}
-
-    ## 読み込むファイル
-    - Contract YAML: .blueprint/contracts/{type}/{name}.contract.yaml
-    - RED テスト（api/external/file/internal）: tests/contracts/level2/CON-{name}.test.ts
-    - RED テスト（screen）: tests/ui/{screen-name}/{ScreenName}Page.test.tsx
-    - 命名規約: core/defaults/naming.md
-    - アーキテクチャ: core/defaults/architecture-patterns/{pattern}.md
-    - エラー処理: core/defaults/error-handling.md
-    - DI: core/defaults/di.md
-    - バリデーション: core/defaults/validation-patterns.md
-
-    ## 実装手順
-    1. 上記ファイルを全て読み込む
-    2. Contract の implementation.flow がある場合はその順序で実装
-       flow がない場合は一括で実装
-    3-a. api/external/file/internal の場合: 作成するファイル（{entity} 名前空間配下のみ）:
-       - 型定義（Contract input/output から導出）
-       - バリデーションスキーマ
-       - ビジネスロジック（business_rules は TDD: ユニットテストを先に書く）
-       - Repository interface + 実装
-       - ルートファイル（method + path からルート定義）
-    3-b. screen の場合: 作成するファイル（src/interface/{screen-name}/ 配下のみ）:
-       - {ScreenName}Page.tsx（ページコンポーネント）
-       - components/ 配下のサブコンポーネント
-       - validation_rules → フロントエンドバリデーション実装
-    4. ユニットテストは tests/unit/{entity}/ に配置（api/external/file/internal のみ）
-    5. テスト実行:
-       - api/external/file/internal: npx vitest tests/contracts/level2/CON-{name}.test.ts
-       - screen: {frontend_test_runner} tests/ui/{screen-name}/
-    6. 全テスト GREEN になるまで修正を続ける
-
-    ## 重要ルール
-    - app.ts や DI container など共有ファイルは作成しない（Integrator が担当）
-    - 自分の名前空間（{entity} または src/interface/{screen-name}/）配下のファイルのみ作成・編集
-    - テストが GREEN にならない場合、同じエラーが 3 回連続したらその旨を報告
-    - 勝手にスキップしない
-  "
+  prompt: "<references/implementer-prompt-template.md の内容に {name}/{type}/{framework}/... を埋めたもの>"
 })
 ```
 
@@ -259,42 +212,13 @@ npx depcruise src/ --validate
 ### Step 5: 構造リファクタリング
 
 Implementer・Integrator とコンテキストを共有しない独立エージェントを起動。
+プロンプト本文は `{baseDir}/references/refactorer-prompt-template.md` を参照すること。
 
 ```
 Agent({
   subagent_type: "general-purpose",
   description: "Refactor implementation",
-  prompt: "
-    ## タスク
-    実装コードの構造リファクタリングを行ってください。
-    あなたは実装プロセスのコンテキストを持ちません。
-    フレッシュな視点でコード品質を改善してください。
-
-    ## 読み込むファイル
-    - 設計規約:
-      - core/defaults/naming.md
-      - core/defaults/architecture-patterns/{pattern}.md（config.yaml から取得）
-      - core/defaults/error-handling.md
-      - core/defaults/di.md
-    - 実装コード: src/ 配下全体
-    - テスト: tests/ 配下全体
-
-    ## 実行内容
-    1. core/defaults/ を読んで設計規約を把握
-    2. src/ 配下の全コードを読み込み
-    3. 以下の観点で改善:
-       - 複数ファイルに重複するロジックの共通化
-       - 共通ユーティリティの抽出
-       - 命名の統一（naming.md 準拠）
-       - レイヤー構造の整合性（architecture-patterns 準拠）
-    4. リファクタ後、全テスト実行: npx vitest tests/
-    5. テストが壊れた場合は修正（リファクタで機能を壊さない）
-
-    ## 重要ルール
-    - テストを壊さない（全 GREEN を維持）
-    - 機能の追加・削除はしない（構造改善のみ）
-    - 大きな変更を行う場合は変更理由をコメントで残す
-  "
+  prompt: "<references/refactorer-prompt-template.md の内容に {pattern} を埋めたもの>"
 })
 ```
 

@@ -1,6 +1,6 @@
 ---
 name: test-from-contract
-description: Generate TDD tests from Contract YAML files. Use when the user wants to "generate tests from contracts", "create TDD tests", "test from contract", "generate test stubs", "create Level 1 and Level 2 tests", "derive tests from spec", "write contract tests", or "TDD from contracts". Reads .blueprint/contracts/ and produces Level 1 (structure validation) and Level 2 (implementation stubs) test files.
+description: Generate TDD tests from Contract YAML files. Use when the user wants to "generate tests from contracts", "create TDD tests", "test from contract", "generate test stubs", "create Level 1 and Level 2 tests", "write contract tests", "TDD from contracts", "generate UI tests", "create screen tests", "test UI components from contract", or "create frontend test stubs". Reads .blueprint/contracts/ and produces Level 1 (structure validation) and Level 2 (implementation stubs) test files, plus UI tests in tests/ui/ for screen contracts.
 version: 1.0.0
 core_ref: core/test-from-contract.md
 ---
