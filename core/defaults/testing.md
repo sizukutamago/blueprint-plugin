@@ -62,6 +62,32 @@ export function buildOrder(overrides?: Partial<Order>): Order {
 }
 ```
 
+## tsconfig.json（Vitest 使用時の必須設定）
+
+**Vitest は内部で Vite（bundler ベース）の import 解決を使用する**。
+TypeScript の `moduleResolution: NodeNext` は Node.js の ESM 解決規則に従うため、
+Vitest の bundler モードと衝突し `ERR_PACKAGE_PATH_NOT_EXPORTED` 等のエラーが発生する。
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",  // ← Vitest 使用時は必ず bundler
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+```
+
+| `moduleResolution` の値 | 動作 |
+|------------------------|------|
+| `bundler` ✅ | Vitest / Vite と互換（推奨） |
+| `node16` / `nodenext` ❌ | Vitest と非互換（エラーになる） |
+| `node` | 古い形式。新規プロジェクトでは使わない |
+
+> **Hono + Vitest + TypeScript** の組み合わせは `moduleResolution: bundler` を使用すること。
+
 ## ルール
 
 | ルール | 理由 |
