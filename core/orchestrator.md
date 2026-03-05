@@ -78,6 +78,20 @@ Stage 4: Doc Generation（自動）
 
 `implement.md` の 3 フェーズワークフローを実行する。
 
+**前処理: deferred findings チェック**
+
+Stage 3 開始前に、前ステージ（Test Review Gate）から繰り越された findings を確認する。
+
+```
+1. pipeline-state.yaml の test_review_gate.findings を読む
+2. disposition: deferred かつ deferred_to: "stage_3" の findings をリストアップ
+3. 該当 findings を implement.md Step 1 の「既知の課題リスト」に追加して実装に反映させる
+4. 該当 findings がなければスキップ
+```
+
+> deferred findings は P1 として扱い、Code Review Gate の評価対象に含める。
+> 修正完了時に pipeline-state.yaml の該当 finding の `disposition` を `resolved` に更新する。
+
 ```
 実行内容:
 Step 1-2: コンテキスト読み込み + 実装計画 + [承認]
@@ -120,6 +134,20 @@ Phase C: Refactorer（コンテキスト非共有）
 ### Stage 4: Doc Generation（自動）
 
 `generate-docs.md` の 5 ステップワークフローを実行する。
+
+**前処理: deferred findings チェック**
+
+Stage 4 開始前に、前ステージ（Code Review Gate）から繰り越された findings を確認する。
+
+```
+1. pipeline-state.yaml の code_review_gate.findings を読む
+2. disposition: deferred かつ deferred_to: "stage_4" の findings をリストアップ
+3. 該当 findings を generate-docs.md Step 1 の「既知の課題リスト」に追加して文書化に反映させる
+4. 該当 findings がなければスキップ
+```
+
+> deferred findings は Doc Review Gate の評価対象に含める。
+> 修正完了時に pipeline-state.yaml の該当 finding の `disposition` を `resolved` に更新する。
 
 ```
 実行内容:
