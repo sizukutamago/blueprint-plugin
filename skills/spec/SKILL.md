@@ -68,9 +68,9 @@ Read("package.json") if exists
 Read("tsconfig.json") if exists
 Glob("*lock*")
 
-# 3. ユーザーに技術スタックと architecture.pattern を確認
-#    （package.json がない場合は「未設定」として提示）
-#    architecture.pattern: clean / layered / flat — ユーザーが選択必須
+# 3. AskUserQuestion でアーキテクチャパターンを確認（必須）
+#    技術スタックが未検出（greenfield）の場合は tech_stack も合わせて確認する
+→ 下記「config.yaml 確認ダイアログ」を使用
 
 # 4. config.yaml を Write で書き出す（この後すぐ実行）
 Write(".blueprint/config.yaml", {content})
@@ -78,6 +78,61 @@ Write(".blueprint/config.yaml", {content})
 # 5. 既存 .blueprint/ のスキャン
 Glob(".blueprint/**/*.yaml")
 Glob(".blueprint/**/*.md")
+```
+
+**config.yaml 確認ダイアログ（AskUserQuestion 使用）**:
+
+```
+# アーキテクチャパターンは必ず AskUserQuestion で選択させる
+AskUserQuestion({
+  questions: [
+    {
+      question: "アーキテクチャパターンを選択してください",
+      header: "Architecture",
+      multiSelect: false,
+      options: [
+        {
+          label: "layered（推奨）",
+          description: "Routes → Services → Models の3層。中規模APIに最適"
+        },
+        {
+          label: "clean",
+          description: "Domain / Usecase / Interface / Infra の4層。大規模・長期運用向け"
+        },
+        {
+          label: "flat",
+          description: "最小構造。プロトタイプ・小規模スクリプト向け"
+        }
+      ]
+    }
+  ]
+})
+
+# greenfield（package.json なし）の場合は tech_stack も合わせて確認
+AskUserQuestion({
+  questions: [
+    {
+      question: "バックエンドフレームワークを選択してください",
+      header: "Backend",
+      multiSelect: false,
+      options: [
+        { label: "Hono（推奨）", description: "軽量・高速。Vitest と相性◎" },
+        { label: "Express", description: "エコシステムが豊富" },
+        { label: "Fastify", description: "スキーマ検証内蔵・高パフォーマンス" }
+      ]
+    },
+    {
+      question: "フロントエンドフレームワークを選択してください（API only の場合は「なし」）",
+      header: "Frontend",
+      multiSelect: false,
+      options: [
+        { label: "React（推奨）", description: "Vite + React。shadcn/ui と組み合わせ可" },
+        { label: "Next.js", description: "SSR / フルスタック。APIと同一リポジトリ" },
+        { label: "なし（API only）", description: "フロントエンドは別リポジトリまたは不要" }
+      ]
+    }
+  ]
+})
 ```
 
 `.blueprint/` が存在しない場合は、初期化スクリプトを使って構造を作成:
@@ -91,9 +146,34 @@ bash "$(claude plugin-dir)/scripts/init-blueprint.sh" "$(pwd)"
 
 ### Step 2: スコープ確認
 
-`core/spec.md` Step 2 に従いスコープを確認。
+`core/spec.md` Step 2 に従いスコープを確認。config.yaml は Step 1 で生成済み。
 
-config.yaml は Step 1 で生成済みのため、ここではブレストのスコープ（対象機能・画面）を確認するだけでよい。
+**API only キーワードが検出された場合のみ、AskUserQuestion でフロントエンドスコープを確認する**:
+
+```
+# 検出キーワード: API / バックエンド / サーバー / SDK / CLI / バッチ / ジョブ / スクリプト
+# （上記を含まない場合はフロントエンドあり確定なので聞かない）
+AskUserQuestion({
+  questions: [
+    {
+      question: "フロントエンド（UI画面）も含めますか？",
+      header: "スコープ",
+      multiSelect: false,
+      options: [
+        {
+          label: "含める",
+          description: "APIとUIの両方を設計する（screen Contract を生成）"
+        },
+        {
+          label: "APIのみ",
+          description: "バックエンドAPIのみ設計する（screen Contract をスキップ）"
+        }
+      ]
+    }
+  ]
+})
+```
+
 config.yaml のスキーマと検出ロジックの詳細は `core/spec.md` Step 2「config.yaml 生成」を参照。
 
 **frontend セクション（screen Contract が生成される場合のみ追加）**:
@@ -122,6 +202,34 @@ tech_stack:
 - ユーザーの回答からフォローアップ質問を導出
 - 具体的な値（数値範囲、パターン、列挙値）を引き出す
 - 「他にエラーケースはありますか？」で網羅性を確認
+
+### Step 4: Contract 一覧合意
+
+`core/spec.md` Step 4 のフォーマットで Contract 一覧を提示した後、**AskUserQuestion で承認を得てから次へ進む**:
+
+```
+AskUserQuestion({
+  questions: [
+    {
+      question: "この Contract 一覧で生成に進みますか？",
+      header: "Contract 確認",
+      multiSelect: false,
+      options: [
+        {
+          label: "承認 — 生成に進む",
+          description: "上記一覧で Contract YAML を生成する"
+        },
+        {
+          label: "修正する",
+          description: "Contract の追加・削除・タイプ変更がある"
+        }
+      ]
+    }
+  ]
+})
+```
+
+「修正する」が選択された場合は、変更点をヒアリングして一覧を更新し、再度 AskUserQuestion で確認する。
 
 ### Step 5: Contract YAML 生成
 
