@@ -1,6 +1,6 @@
 {
   "name": "blueprint-plugin",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "description": "Contract-first の設計ワークフロープラグイン。ブレスト → Contract → TDD テスト → 実装 → 設計書生成のパイプラインを提供。Review Swarm による品質ゲート、P0/P1/P2 判定対応。",
   "author": {
     "name": "sizukutamago"
