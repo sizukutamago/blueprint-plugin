@@ -497,7 +497,7 @@ tech_stack:
     e2e_tool: playwright | cypress | none               # 検出（デフォルト: none）
 
 quality:
-  lint: biome | eslint | none              # 検出 or 選択
+  lint: oxlint | biome | eslint | none     # 検出（なければ oxlint を自動セットアップ）
   format: biome | prettier | none          # 検出 or 選択
   type_check: true | false                 # tsconfig.json の存在で検出
   ci:
@@ -515,7 +515,7 @@ quality:
 | package_manager | `pnpm-lock.yaml` / `yarn.lock` / `package-lock.json` / `bun.lockb` |
 | framework | `package.json` の dependencies キーワード |
 | orm | `package.json` の dependencies + `prisma/schema.prisma` 等 |
-| lint | `biome.json` / `.eslintrc*` の存在 |
+| lint | `oxlint.json` / `.oxlintrc.json` → oxlint、`biome.json` → biome、`.eslintrc*` → eslint、なければ **oxlint を自動セットアップ**（`core/defaults/lint-rules.md` 参照）|
 | ci | `.github/workflows/` の存在 |
 
 **手動オーバーライド**: config.yaml を直接編集すれば、検出結果を上書きできる。

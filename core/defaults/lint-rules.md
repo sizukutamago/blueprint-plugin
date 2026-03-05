@@ -2,13 +2,89 @@
 
 ## 基本方針
 
-- **Biome 推奨**: 設定が少なく高速。config.yaml で `lint: biome` がデフォルト。
-- **ESLint 対応**: brownfield プロジェクトで既存 ESLint がある場合はそれを尊重。
-- **Implementer が設定ファイルを生成**: config.yaml の quality.lint に基づく。
+- **oxlint デフォルト**: 設定ファイル不要・高速。プロジェクトに lint 設定がない場合に自動セットアップ。
+- **既存設定を尊重**: `biome.json` / `.eslintrc*` / `oxlint.json` が存在する場合は生成しない。
+- **フォーマットは Biome**: lint は oxlint、フォーマットは biome（独立して共存可能）。
 
-## Biome 設定（推奨）
+## lint 設定の検出と判定
 
-Implementer が生成する `biome.json`:
+| 検出ファイル | 使用ツール | 対応 |
+|------------|----------|------|
+| `biome.json` | Biome | 既存設定を使う（生成しない） |
+| `.eslintrc*` / `eslint.config.*` | ESLint | 既存設定を使う（生成しない） |
+| `oxlint.json` / `.oxlintrc.json` | oxlint | 既存設定を使う（生成しない） |
+| どれもない | oxlint | 自動セットアップ（以下の手順） |
+
+## oxlint セットアップ（lint 設定が存在しない場合のデフォルト）
+
+### インストール
+
+```bash
+npm add -D oxlint
+# フォーマットも必要な場合
+npm add -D @biomejs/biome
+```
+
+### `.oxlintrc.json`
+
+```json
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/oxlint@latest/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "import"],
+  "rules": {
+    "no-unused-vars": "error",
+    "no-console": "warn",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-unused-vars": "error",
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error"
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  }
+}
+```
+
+### `package.json` scripts
+
+```json
+{
+  "scripts": {
+    "lint": "oxlint --import-plugin --tsconfig ./tsconfig.json src/ tests/",
+    "lint:fix": "oxlint --fix --import-plugin --tsconfig ./tsconfig.json src/ tests/",
+    "format": "biome format --write .",
+    "check": "npm run lint && npm run format"
+  }
+}
+```
+
+### 実行コマンド詳細
+
+```bash
+# 基本（高速チェック）
+npx oxlint src/
+
+# TypeScript 型情報あり + import 解析（推奨）
+npx oxlint --import-plugin --tsconfig ./tsconfig.json -D suspicious src/ tests/
+
+# 自動修正
+npx oxlint --fix --import-plugin --tsconfig ./tsconfig.json src/ tests/
+```
+
+**主要フラグ**:
+
+| フラグ | 効果 |
+|--------|------|
+| `--import-plugin` | import の循環依存・重複を検出 |
+| `--tsconfig ./tsconfig.json` | TypeScript パスエイリアス解決 |
+| `-D suspicious` | 疑わしいコード（重複条件、到達不能コード等）を error 扱い |
+| `-D correctness` | 明らかに誤ったコードを error 扱い（デフォルト有効）|
+| `-W pedantic` | 厳格ルール（warn レベル）|
+
+## Biome 設定（フォーマット専用 / lint が biome の場合）
+
+lint と format を両方 biome で行う場合は以下を使用:
 
 ```json
 {
@@ -37,16 +113,12 @@ Implementer が生成する `biome.json`:
 }
 ```
 
-## ESLint 設定（brownfield 用）
-
-既存の ESLint 設定がある場合、Implementer は設定ファイルを **生成しない**。
-Implementer は既存ルールに従って実装する。
-
 ## ルール
 
 | ルール | 理由 |
 |--------|------|
 | 既存設定を上書きしない | brownfield プロジェクトの設定を尊重 |
-| any 禁止 | 型安全性の確保 |
-| 認知的複雑度 ≤ 15 | 巨大関数の防止（Code Quality Checker でも検出） |
-| import 順序の自動整理 | 一貫性の確保 |
+| `any` 禁止 | 型安全性の確保 |
+| 認知的複雑度 ≤ 15 | 巨大関数の防止（Code Quality Checker でも検出）|
+| import 循環禁止 | レイヤー構造の整合性確保 |
+| import 重複禁止 | 不要な重複排除 |

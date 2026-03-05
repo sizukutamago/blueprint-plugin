@@ -8,6 +8,35 @@ Contract YAML に宣言された制約と実装コードの乖離、およびコ
 - Code Review Gate: Contract の宣言がコードに反映されているか（宣言の一致）
 - 例: テストが GREEN でも、Zod スキーマに `max: 99` が欠落していれば Code Review Gate が検出
 
+## 事前ステップ: lint 実行（並列エージェント起動前に必ず実行）
+
+4 エージェントを起動する**前**に lint を実行し、結果を finding として追加する。
+
+```
+1. lint ツールの検出（.blueprint/config.yaml の quality.lint を参照）:
+   - oxlint    → npx oxlint --import-plugin --tsconfig ./tsconfig.json -D suspicious src/ tests/
+   - biome     → npx biome check src/ tests/
+   - eslint    → npx eslint src/ tests/
+   - none / 未設定 → oxlint をデフォルトで実行（config.yaml 不問）
+
+2. lint エラーを finding に変換:
+   - error レベル → P1 finding（実装完了後に残る lint error は品質問題）
+   - warning レベル → P2 finding
+   - finding の target は "lint"、impl_file はエラーが発生したファイル:行番号
+
+3. lint finding を共通出力フォーマットに追加して 4 エージェントの結果とマージする
+```
+
+**lint finding の例**:
+```yaml
+- severity: P1
+  target: "lint"
+  field: "typescript/no-unused-vars"
+  impl_file: "src/routes/stickies.ts:7"
+  message: "canTransition がインポートされているが使用されていない"
+  suggestion: "ルートハンドラで canTransition を呼ぶか、インポートを削除する"
+```
+
 ## 共通入力
 
 各エージェントに以下を渡す:
