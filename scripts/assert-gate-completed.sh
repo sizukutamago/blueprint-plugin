@@ -24,7 +24,7 @@ if [ ! -f "$PIPELINE_STATE" ]; then
 fi
 
 # ─── code_review_gate エントリと status を一度に取得 ──────────────────
-GATE_BLOCK=$(grep -A5 "^code_review_gate:" "$PIPELINE_STATE" 2>/dev/null || echo "")
+GATE_BLOCK=$(grep -A5 "code_review_gate:" "$PIPELINE_STATE" 2>/dev/null || echo "")
 
 if [ -z "$GATE_BLOCK" ]; then
   echo "ERROR: pipeline-state.yaml に code_review_gate エントリがありません"
@@ -49,9 +49,9 @@ case "$STATUS" in
     echo "✓ Code Review Gate 実行確認: OK (status: ${STATUS})"
     exit 0
     ;;
-  revising)
-    CYCLE=$(echo "$GATE_BLOCK" | grep "cycle:" | head -1 | awk '{print $2}' || echo "?")
-    echo "ERROR: Code Review Gate が REVISE サイクル中です (cycle: ${CYCLE})"
+  revising|failed)
+    CYCLE=$(echo "$GATE_BLOCK" | grep "cycles:" | head -1 | awk '{print $2}' || echo "?")
+    echo "ERROR: Code Review Gate が REVISE サイクル中または失敗しています (status: ${STATUS}, cycles: ${CYCLE})"
     echo ""
     echo "  まだ承認フェーズへ進めません。"
     echo "  REVISE サイクルを完了し、status を 'passed' に更新してください。"
@@ -65,8 +65,11 @@ case "$STATUS" in
     exit 1
     ;;
   *)
-    # 不明な status は OK として扱う（前方互換）
-    echo "✓ Code Review Gate 実行確認: OK (status: ${STATUS})"
-    exit 0
+    # 不明な status はエラーとして扱う（安全側に倒す）
+    echo "ERROR: Code Review Gate の status が不明です (status: ${STATUS})"
+    echo ""
+    echo "  有効な status: passed | revising | pending | skipped"
+    echo "  Step 7 の Code Review Gate を実行し、pipeline-state.yaml を更新してください。"
+    exit 1
     ;;
 esac

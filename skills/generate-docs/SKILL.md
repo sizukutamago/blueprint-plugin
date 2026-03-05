@@ -1,6 +1,6 @@
 ---
 name: generate-docs
-description: Generate design documents from existing code. Use when the user wants to "generate design docs", "create documentation from code", "reverse engineer architecture", "extract design documents", "document existing system", or "create docs from implementation". Analyzes source code and generates design documentation.
+description: Generate design documents from existing code. Use when the user wants to "generate design docs", "create documentation from code", "reverse engineer architecture", "extract design documents", "document existing system", "create docs from implementation", "generate screen design docs", "document UI components", or "create frontend design specs". Also use when the user says "設計書を生成する", "ドキュメントを作る", "コードから仕様書を作成", "画面設計書を生成", or "アーキテクチャドキュメントを書く". Analyzes source code and generates design documentation.
 version: 1.0.0
 core_ref: core/generate-docs.md
 ---

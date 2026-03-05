@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Create I/O boundary contracts through brainstorming. Use when the user wants to "create contract", "define spec", "brainstorm API design", "design I/O boundary", "define external integration", "specify file format", "design screen", "create UI spec", "define form contract", "screen contract", "design page layout", or "define frontend spec". Also use when the user asks to start a new feature, create .blueprint directory, or brainstorm a new service. Combines interactive brainstorming with structured contract YAML generation for all types: api, external, file, internal, and screen.
+description: Create I/O boundary contracts through brainstorming. Use when the user wants to "create contract", "define spec", "brainstorm API design", "design I/O boundary", "define external integration", "specify file format", "design screen", "create UI spec", "define form contract", "screen contract", "design page layout", or "define frontend spec". Also use when the user asks to start a new feature, create .blueprint directory, or brainstorm a new service. Also use when the user says "仕様を作る", "APIを設計する", "コントラクト作成", "画面を設計する", "I/O境界を定義する", "ブレインストーミング", or "新機能の仕様を決める". Combines interactive brainstorming with structured contract YAML generation for all types: api, external, file, internal, and screen.
 version: 1.0.0
 core_ref: core/spec.md
 ---

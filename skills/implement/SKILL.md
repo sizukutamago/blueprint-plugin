@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "make tests green", "create implementation", "write code from spec", "build feature from contract", "implement feature", "implement screen", "create page components", "implement UI from contract", or "implement Stage 3". Orchestrates Implementers, Integrator, and Refactorer agents to produce working code for all contract types including screen/UI.
+description: Implement code from Contract YAML and RED tests. Use when the user wants to "implement contracts", "generate implementation", "make tests green", "create implementation", "write code from spec", "build feature from contract", "implement feature", "implement screen", "create page components", "implement UI from contract", or "implement Stage 3". Also use when the user says "実装する", "コードを書く", "テストをグリーンにする", "機能を実装する", "画面を実装する", or "コントラクトを実装". Orchestrates Implementers, Integrator, and Refactorer agents to produce working code for all contract types including screen/UI.
 version: 2.0.0
 core_ref: core/implement.md
 ---
@@ -302,7 +302,7 @@ Skill("agent-browser")
 
 ```
 Agent({
-  subagent_type: "general-purpose",
+  subagent_type: "tdd-workflows:code-reviewer",
   description: "Code Review - Schema Compliance",
   prompt: "
     skills/orchestrator/references/review-prompts/code-reviewer.md の
@@ -314,7 +314,7 @@ Agent({
 })
 
 Agent({
-  subagent_type: "general-purpose",
+  subagent_type: "tdd-workflows:code-reviewer",
   description: "Code Review - Route & Handler",
   prompt: "
     skills/orchestrator/references/review-prompts/code-reviewer.md の
@@ -326,7 +326,7 @@ Agent({
 })
 
 Agent({
-  subagent_type: "general-purpose",
+  subagent_type: "tdd-workflows:code-reviewer",
   description: "Code Review - Business Logic",
   prompt: "
     skills/orchestrator/references/review-prompts/code-reviewer.md の
@@ -338,7 +338,7 @@ Agent({
 })
 
 Agent({
-  subagent_type: "general-purpose",
+  subagent_type: "tdd-workflows:code-reviewer",
   description: "Code Review - Code Quality",
   prompt: "
     skills/orchestrator/references/review-prompts/code-reviewer.md の
@@ -374,7 +374,7 @@ Agent({
    # 必ず以下のフォーマットで更新:
    # code_review_gate:
    #   status: passed  # or revising
-   #   cycle: 1
+   #   cycles: 1
    #   final_counts: { p0: 0, p1: 0, p2: N }
 3. assert-gate-completed.sh を実行して書き込みを検証:
    bash .blueprint/scripts/assert-gate-completed.sh
