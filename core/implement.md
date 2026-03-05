@@ -225,19 +225,66 @@ blocked:
    - 共通ミドルウェアの設定
 
 2. フロントエンドエントリーポイント生成（screen Contract が 1 件以上ある場合）
-   以下は存在しない場合のみ生成する（既存ファイルは上書きしない）:
-   - index.html          — Vite エントリー HTML
-   - src/main.tsx        — React マウントポイント
-   - src/App.tsx         — ルーティング + コンテナ層（fetch wiring）
 
-   App.tsx のコンテナパターン（必須）:
+   **scaffold_mode の判定（3 分岐）**:
+
+   | 条件 | モード | 処理 |
+   |------|--------|------|
+   | frontend/ ディレクトリが存在しない + Vite 系 (react/vue/svelte) | greenfield-vite | scaffold 実行 → App.tsx を上書き |
+   | frontend/ ディレクトリが存在しない + Next.js | greenfield-next | scaffold 実行 → app/ を生成 |
+   | frontend/ ディレクトリが既に存在する (brownfield) | brownfield | scaffold 禁止、差分注入のみ |
+
+   **greenfield-vite の手順**:
+   ```
+   1. scaffold を実行（非インタラクティブ）:
+      npm create vite@latest frontend -- --template react-ts
+      # vue の場合: --template vue-ts
+      # svelte の場合: --template svelte-ts
+
+   2. 不要なサンプルファイルを削除:
+      frontend/src/App.css
+      frontend/src/assets/react.svg
+      frontend/public/vite.svg
+
+   3. src/App.tsx をプロジェクト固有の内容で上書き（下記コンテナパターン）
+
+   4. react-router-dom を追加:
+      cd frontend && npm install react-router-dom
+   ```
+
+   **greenfield-next の手順**:
+   ```
+   1. scaffold を実行:
+      npx create-next-app@latest frontend --yes --app --ts --no-tailwind --no-eslint --no-src-dir
+
+   2. screen Contract の route.path に対応する app/**/page.tsx を生成
+      （index.html / main.tsx / App.tsx は Next が管理するため生成しない）
+
+   3. app/layout.tsx はそのまま流用（上書きしない）
+   ```
+
+   **brownfield の手順**:
+   ```
+   1. scaffold を実行しない（既存構造を壊さない）
+
+   2. 既存のルーター設定ファイルを検出:
+      - React Router: src/App.tsx または src/router.tsx
+      - Next.js: app/ または pages/ の存在
+      - Vue Router: src/router/index.ts 等
+
+   3. 新しい screen Contract のルートと Container のみ差分追加:
+      - 既存ファイルへの Route 追加
+      - Container コンポーネントの新規生成のみ
+
+   4. 既存エントリーポイント（index.html, main.tsx, App.tsx）は一切編集しない
+   ```
+
+   **App.tsx のコンテナパターン（greenfield-vite 時の上書き内容）**:
+
    screen Implementer が Props-based design でコンポーネントを生成するため、
    App.tsx がそのpropsに実際のfetch実装を注入する。
    これにより @testing-library（コンポーネント単体）と E2E テストの両立が可能。
 
-   react-router-dom が未インストールの場合はインストールしてから生成する。
-
-   App.tsx の実装例（React + Hono バックエンドの場合）:
    ```tsx
    import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
    import { {ScreenName}Page } from './interface/{screen-name}/{ScreenName}Page'

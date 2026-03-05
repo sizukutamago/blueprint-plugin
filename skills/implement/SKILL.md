@@ -41,9 +41,9 @@ Contract スキーマは `core/contract-schema.md`（implementation セクショ
 |----------------------|------|
 | `src/` | 実装コード（architecture pattern に応じた構造） |
 | `tests/unit/` | business_rules の TDD で生成したユニットテスト |
-| `index.html` | Vite エントリー（screen Contract がある場合、存在しない時のみ生成） |
-| `src/main.tsx` | React マウントポイント（screen Contract がある場合、存在しない時のみ生成） |
-| `src/App.tsx` | ルーティング + コンテナ層（screen Contract がある場合、存在しない時のみ生成） |
+| `frontend/` | Vite scaffold 生成物（greenfield-vite: `npm create vite@latest`） |
+| `frontend/src/App.tsx` | ルーティング + コンテナ層（greenfield-vite 時に上書き生成） |
+| `frontend/app/**/page.tsx` | Next.js ページ（greenfield-next 時に生成） |
 | `biome.json` 等 | Lint/Format 設定（オプション） |
 | `.github/workflows/` | CI 設定（オプション） |
 
@@ -192,17 +192,50 @@ Agent({
    - 共通ミドルウェアの設定
 
 2. フロントエンドエントリーポイント生成（screen Contract が 1 件以上ある場合）
-   以下は存在しない場合のみ生成する（既存ファイルは上書きしない）:
+   core/implement.md の scaffold_mode 判定（3 分岐）に従う:
 
-   Glob("index.html") → 存在しない場合のみ Write("index.html")
-   Glob("src/main.tsx") → 存在しない場合のみ Write("src/main.tsx")
-   Glob("src/App.tsx") → 存在しない場合のみ Write("src/App.tsx")
+   | 条件 | モード |
+   |------|--------|
+   | `frontend/` が存在しない + Vite 系 (react/vue/svelte) | greenfield-vite |
+   | `frontend/` が存在しない + Next.js | greenfield-next |
+   | `frontend/` が既に存在する (brownfield) | brownfield |
 
-   App.tsx 生成時の考慮事項:
-   - screen Contract の route.path を Route path に反映
-   - 各 {ScreenName}Page に対して fetch wiring のコンテナコンポーネントを生成
-   - react-router-dom が package.json になければ npm install して追加
-   - Vite proxy 設定（vite.config.ts）でバックエンドへの /api プロキシを設定
+   **greenfield-vite の実行手順**:
+   ```
+   Bash("npm create vite@latest frontend -- --template react-ts")
+   # vue: --template vue-ts / svelte: --template svelte-ts
+
+   Bash("rm -f frontend/src/App.css frontend/src/assets/react.svg frontend/public/vite.svg")
+
+   Write("frontend/src/App.tsx")  # core/implement.md のコンテナパターン参照
+
+   Bash("cd frontend && npm install react-router-dom")
+
+   # vite.config.ts に /api プロキシ設定を追加（未設定の場合）
+   ```
+
+   **greenfield-next の実行手順**:
+   ```
+   Bash("npx create-next-app@latest frontend --yes --app --ts --no-tailwind --no-eslint --no-src-dir")
+
+   # screen Contract の route.path → app/**/page.tsx を生成
+   # app/layout.tsx は上書きしない（Next.js が管理）
+   # index.html / main.tsx は生成しない
+   ```
+
+   **brownfield の実行手順**:
+   ```
+   # scaffold 禁止（既存 frontend/ を破壊しない）
+
+   # 既存ルーター設定ファイルを検出:
+   Glob("frontend/src/App.tsx")       # React Router
+   Glob("frontend/src/router.tsx")
+   Glob("frontend/app/")              # Next.js App Router
+   Glob("frontend/pages/")            # Next.js Pages Router
+
+   # 新しい screen Contract のルートと Container のみ差分追加
+   # index.html / main.tsx / App.tsx は一切編集しない
+   ```
 
 3. 全テスト一括実行
 ```
