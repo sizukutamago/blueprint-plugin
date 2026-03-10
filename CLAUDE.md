@@ -53,6 +53,10 @@ blueprint-plugin/
 │   ├── test-from-contract.md    #   /test-from-contract
 │   ├── implement.md             #   /implement
 │   └── generate-docs.md         #   /generate-docs
+│   └── blueprint-improve.md     #   /blueprint-improve
+├── hooks/                       # Hook 定義（self-improve ログ収集）
+│   ├── hooks.json               #   SessionEnd/SessionStart Hook
+│   └── scripts/                 #   Hook 実行スクリプト
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── orchestrator/            #   パイプラインオーケストレーター
 │   │   └── references/
@@ -184,6 +188,7 @@ claude --plugin-dir /path/to/blueprint-plugin
 /test-from-contract     # Contract から TDD テスト生成
 /implement              # Contract + RED テスト → 実装コード生成
 /generate-docs          # コードから設計書を後追い生成
+/blueprint-improve      # 使用ログ分析 → 改善 PR 自動生成
 ```
 
 ### Cursor での使用

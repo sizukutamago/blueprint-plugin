@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/hooks.json",
+  "description": "Blueprint plugin hooks for self-improvement log collection",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/collect_blueprint_log.sh\"",
+            "timeout": 15000,
+            "onError": "ignore"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/notify_pending_logs.sh\"",
+            "timeout": 5000,
+            "onError": "ignore"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,177 +1,235 @@
 # blueprint-plugin 詳細ガイド
 
+## このプラグインが解決する問題
+
+AI にコードを書かせると、仕様が曖昧なまま実装が始まり、後から「これ違う」の手戻りが起きがちです。
+blueprint-plugin は **仕様を先に固める → テストで仕様を検証可能にする → テストが通る実装を生成する** という順序を強制することで、この問題を構造的に解消します。
+
+さらに、使い続けるとログが蓄積され、「Gate でいつも同じ指摘が出る」「ユーザーがいつも同じ修正をしている」といったパターンをプラグイン自身が検出し、改善 PR を提案します。
+
+---
+
 ## 目次
 
-- [パイプライン概要](#パイプライン概要)
-- [Stage 1: /spec — Contract 生成](#stage-1-spec--contract-生成)
-- [Stage 2: /test-from-contract — テスト生成](#stage-2-test-from-contract--テスト生成)
-- [Stage 3: /implement — 実装生成](#stage-3-implement--実装生成)
-- [Stage 4: /generate-docs — 設計書生成](#stage-4-generate-docs--設計書生成)
-- [Contract YAML の構造](#contract-yaml-の構造)
-- [Review Gate（品質チェック）](#review-gate品質チェック)
-- [アーキテクチャパターン選択](#アーキテクチャパターン選択)
-- [既存プロジェクト（brownfield）への適用](#既存プロジェクトbrownfieldへの適用)
-- [トラブルシューティング](#トラブルシューティング)
+### パイプライン — 「何を作るか」を決めて、作って、文書化する
+
+1. [/blueprint — 全自動パイプライン](#1-blueprint--全自動パイプライン)
+2. [/spec — 仕様を会話で固める](#2-spec--仕様を会話で固める)
+3. [/test-from-contract — 仕様をテストに変換する](#3-test-from-contract--仕様をテストに変換する)
+4. [/implement — テストが通る実装を生成する](#4-implement--テストが通る実装を生成する)
+5. [/generate-docs — コードから設計書を後追い生成する](#5-generate-docs--コードから設計書を後追い生成する)
+
+### 品質 — 各ステージの出力をチェックする仕組み
+
+6. [Review Gate — AI の出力を AI がレビューする](#6-review-gate--ai-の出力を-ai-がレビューする)
+
+### 自己改善 — プラグイン自体を良くしていく
+
+7. [/blueprint-improve — 使用ログから改善案を生成する](#7-blueprint-improve--使用ログから改善案を生成する)
+
+### リファレンス
+
+8. [Contract YAML の書き方](#8-contract-yaml-の書き方)
+9. [アーキテクチャパターン](#9-アーキテクチャパターン)
+10. [既存プロジェクトへの適用](#10-既存プロジェクトへの適用)
+11. [トラブルシューティング](#11-トラブルシューティング)
 
 ---
 
-## パイプライン概要
+## 1. /blueprint — 全自動パイプライン
 
-```
-Stage 1  /spec              ブレスト → Contract YAML
-            ↓
-        [Contract Review Gate]  3 エージェント並列レビュー
-            ↓
-Stage 2  /test-from-contract  Contract → Level 1/2 テスト
-            ↓
-        [Test Review Gate]
-            ↓
-Stage 3  /implement          RED テスト → 実装コード
-            ↓
-        [Code Review Gate]    4 エージェント並列レビュー
-            ↓
-Stage 4  /generate-docs       コード → 設計書
-            ↓
-        [Doc Review Gate]
-```
+### なぜあるのか
 
-各 Gate の判定基準: **P0=0 かつ P1≤1 → PASS**（最大 3 サイクル自動修正）
-
----
-
-## Stage 1: /spec — Contract 生成
+4つのステージ（/spec → /test-from-contract → /implement → /generate-docs）を毎回手動で呼ぶのは面倒です。`/blueprint` はこれを1コマンドで順番に実行し、各ステージ間で Review Gate を自動挿入します。途中で止まっても `--resume` で再開できるので、長いパイプラインでも安心です。
 
 ### 何をするか
 
-- Claude が質問（技術スタック・アーキテクチャ・機能要件）を投げかける
-- 回答を元に `.blueprint/config.yaml` と Contract YAML を生成する
-- Contract Review Gate で 3 エージェントが仕様の一貫性をチェック
+```
+/spec              → Contract YAML を生成
+    ↓ Contract Gate（3 エージェント並列レビュー）
+/test-from-contract → Level 1/2 テストを生成
+    ↓ Test Gate
+/implement          → 実装コードを生成
+    ↓ Code Gate（4 エージェント並列レビュー）
+/generate-docs      → 設計書を生成
+    ↓ Doc Gate
+```
 
-### 生成物
+各 Gate で **P0=0 かつ P1≤1** なら PASS。それ以外は自動修正サイクル（最大 3 回）。
+
+### どう使うか
+
+```bash
+# 基本: プロジェクトルートで実行し、質問に答えていく
+/blueprint
+
+# 途中で止まった・コンテキストが切れた場合
+/blueprint --resume
+
+# 全ステージをゼロからやり直す場合
+/blueprint --force
+```
+
+### いつ使うか
+
+- **新規プロジェクト**: 最初から `/blueprint` で始めるのが最も効率的
+- **機能追加**: 既存の `.blueprint/` がある状態で `/blueprint` を実行すると、差分だけ処理される
+- **やり直し**: `--force` で全ステージを強制再実行
+
+---
+
+## 2. /spec — 仕様を会話で固める
+
+### なぜあるのか
+
+AI に「○○を作って」と言うと、AI が勝手に仕様を想像して実装してしまいます。結果、「そうじゃない」という手戻りが発生します。
+
+`/spec` は、**実装の前に仕様を構造化された YAML（Contract）に固める**ステージです。Claude が対話で質問を投げかけ、あなたの回答をもとに Contract YAML を生成します。この Contract が後続のテスト・実装・設計書の全てのソースになります。
+
+### 何をするか
+
+1. Claude が技術スタック・アーキテクチャ・機能要件について質問する
+2. 回答をもとに `.blueprint/config.yaml`（プロジェクト設定）を生成する（初回のみ）
+3. 機能ごとに Contract YAML（`.blueprint/contracts/`）を生成する
+4. Contract Review Gate で 3 エージェントが仕様の一貫性をチェックする
+
+### どう使うか
+
+```bash
+/spec
+```
+
+質問に答えていくと、以下が生成されます:
 
 ```
 .blueprint/
 ├── config.yaml               # 技術スタック・アーキテクチャ設定
 ├── contracts/
-│   ├── {entity}-domain.yaml  # ドメインロジック（type: internal/service）
-│   ├── {entity}-repo.yaml    # データアクセス（type: internal/repository）
-│   ├── {entity}-api.yaml     # REST API（type: api）
-│   └── {screen}.yaml         # 画面仕様（type: screen）  ← フロントあり時
+│   ├── {entity}-domain.yaml  # ドメインロジック
+│   ├── {entity}-repo.yaml    # データアクセス
+│   ├── {entity}-api.yaml     # REST API
+│   └── {screen}.yaml         # 画面仕様（フロントあり時）
 ├── concepts/                 # ドメイン概念メモ
-└── decisions/                # ADR（アーキテクチャ決定記録）
+└── decisions/                # ADR（設計判断の記録）
 ```
 
 ### Contract タイプ
 
-| type | subtype | 用途 |
-|------|---------|------|
-| `api` | — | REST/HTTP エンドポイント |
-| `internal` | `service` | ドメインロジック・ユースケース |
-| `internal` | `repository` | データアクセス境界 |
-| `external` | — | 外部 API クライアント |
-| `file` | — | ファイル入出力 |
-| `screen` | `list` / `form` / `detail` / `dashboard` | 画面コンポーネント |
+Contract は I/O 境界の種類ごとに分かれています。「何が入って何が出るか」を明示することで、テストと実装を機械的に導出できるようになります。
 
-### 途中で止まった場合
-
-```bash
-/blueprint --resume  # 最後に完了した Stage から再開
-```
+| type | subtype | 何を定義するか |
+|------|---------|--------------|
+| `api` | — | REST エンドポイントの入出力・エラーコード |
+| `internal` | `service` | ドメインロジックの引数・戻り値・ビジネスルール |
+| `internal` | `repository` | データアクセスのインターフェース |
+| `external` | — | 外部 API との接続仕様 |
+| `file` | — | ファイル入出力のフォーマット |
+| `screen` | `list` / `form` / `detail` / `dashboard` | 画面の props・イベント・表示ロジック |
 
 ---
 
-## Stage 2: /test-from-contract — テスト生成
+## 3. /test-from-contract — 仕様をテストに変換する
 
-### 2レベルのテスト
+### なぜあるのか
 
-**Level 1 — 構造検証（即 GREEN）**
-- Contract で宣言した型・インターフェース・列挙値の存在を確認
-- 実装前でも全て PASS する
-- 「この型定義が合意されているか」の仕様確認テスト
+Contract YAML は「仕様書」ですが、それだけでは実装が仕様に従っているかを自動検証できません。
+`/test-from-contract` は、Contract を **実行可能なテストコード** に変換します。
 
-**Level 2 — 実装検証（RED stubs）**
-- Contract の振る舞い（ビジネスルール・エラーコード・HTTP ステータス）を検証
-- 実装前は import エラーで RED → 実装後に GREEN
-- TDD の「テストが仕様書」として機能する
+テストを2レベルに分けているのは理由があります:
 
-### 生成物
+- **Level 1（構造テスト）**: 「この型・インターフェースが存在するか」を検証。実装前でも GREEN になる。つまり、**テストの書き方自体が間違っていないことを、実装なしで確認できる**
+- **Level 2（振る舞いテスト）**: 「ビジネスルール通りに動くか」を検証。実装前は RED。**TDD の "Red" に相当し、このテストを GREEN にするのが /implement の仕事**
+
+### 何をするか
+
+1. `.blueprint/contracts/` の全 Contract YAML を読み込む
+2. Level 1 テスト（型・構造）と Level 2 テスト（振る舞い）を生成する
+3. Level 1 テストが全て GREEN であることを実行確認する
+4. Test Review Gate でテスト品質をチェックする
+
+### どう使うか
+
+```bash
+/test-from-contract
+```
+
+生成物:
 
 ```
 tests/contracts/
-├── helpers/fixtures.ts      # テスト用型定義・サンプルデータ
-├── level1/                  # 構造検証（即 GREEN）
-│   ├── {contract}.test.ts
-│   └── ...
-└── level2/                  # 実装検証（RED → 実装後 GREEN）
-    ├── {contract}.test.ts
-    └── ...
+├── helpers/fixtures.ts      # テスト用のサンプルデータ
+├── level1/                  # 構造検証（実装前でも GREEN）
+│   └── {contract}.test.ts
+└── level2/                  # 振る舞い検証（実装前は RED）
+    └── {contract}.test.ts
 ```
 
-### テスト実行
+テスト実行:
 
 ```bash
-npm run test:level1   # Level 1 のみ（実装前の確認）
-npm run test:level2   # Level 2 のみ（実装後の確認）
+npm run test:level1   # 構造テストのみ（実装前に確認）
+npm run test:level2   # 振る舞いテストのみ（実装後に確認）
 npm test              # 全テスト
 ```
 
 ---
 
-## Stage 3: /implement — 実装生成
+## 4. /implement — テストが通る実装を生成する
 
-### 実行フロー
+### なぜあるのか
 
-1. **実装計画提示（承認必要）** — トポロジカルソートで実装順序を決定
-2. **Group 別実装** — 依存なし → 依存あり の順に実装
-3. **Level 2 テスト GREEN 確認** — 各 Contract の実装後にテスト実行
-4. **Refactorer** — コンテキスト非共有の独立エージェントがコード品質をチェック
-5. **Code Review Gate** — 4 エージェントが Contract との乖離を検出
+Level 2 テストが RED の状態は「仕様は決まっているが実装がない」状態です。
+`/implement` は、**RED テストを GREEN にすることだけを目的に実装コードを生成する** ステージです。
 
-### アーキテクチャパターン
+仕様に書かれていないことは実装しません。これにより「AI が勝手に余計な機能を作る」問題を防ぎます。
 
-`/spec` で選択したパターンに応じた構造が生成される:
+### 何をするか
 
-**layered（推奨・中規模 API 向け）**
-```
-src/
-├── domain/           # エンティティ・ビジネスルール（依存なし）
-├── infrastructure/   # DB・外部API実装
-├── application/      # ユースケース
-└── presentation/     # HTTP ルーター
-```
+1. Contract の依存関係をトポロジカルソートし、実装順序を決定する
+2. 実装計画をユーザーに提示する（**承認が必要**）
+3. 依存なし → 依存あり の順に Group 別で実装する
+4. 各 Contract の実装後に Level 2 テストが GREEN になることを確認する
+5. Refactorer（コンテキスト非共有の独立エージェント）がコード品質をチェックする
+6. Code Review Gate（4 エージェント）で Contract との乖離を検出する
+7. 実装完了をユーザーに報告する（**承認が必要**）
 
-**clean（大規模・長期運用向け）**
-```
-src/
-├── domain/           # Entity, Value Object, Repository Interface
-├── usecase/          # Application Business Rules
-├── interface/        # Controller, Presenter, Gateway Interface
-└── infrastructure/   # DB, External API, Framework
+### どう使うか
+
+```bash
+/implement
 ```
 
-**flat（プロトタイプ・小規模向け）**
-```
-src/
-├── routes/
-├── models/
-└── services/
-```
+生成されるディレクトリ構造は `/spec` で選んだアーキテクチャパターンに依存します（→ [9. アーキテクチャパターン](#9-アーキテクチャパターン)）。
 
-### フロントエンドが含まれる場合
-
-`screen` タイプの Contract がある場合、Integrator が自動生成:
-- `index.html` / `src/main.tsx` — Vite エントリーポイント
-- `src/App.tsx` — ルーティング + fetch wiring（コンテナパターン）
-
-コンポーネントは **Props-based design** で生成されるため、`@testing-library/react` テストとの両立が可能。
+`screen` タイプの Contract がある場合、フロントエンド（Vite + React）も自動生成されます:
+- `index.html` / `src/main.tsx` — エントリーポイント
+- `src/App.tsx` — ルーティング + API 接続
+- コンポーネントは Props-based design（テストしやすい構造）
 
 ---
 
-## Stage 4: /generate-docs — 設計書生成
+## 5. /generate-docs — コードから設計書を後追い生成する
 
-実装コードから設計書を**後追い生成**する。仕様先行（/spec → /implement）で作ると、コードと設計書の乖離が起きにくい。
+### なぜあるのか
 
-### 生成物
+先に設計書を書いてから実装すると、実装中に仕様が変わって設計書が陳腐化します。
+blueprint-plugin では **実装が完了してから設計書を生成する** ことで、「コードと設計書の乖離」を構造的に防ぎます。
+
+設計書のソースは Contract YAML + 実装コードなので、常にコードの実態と一致します。
+
+### 何をするか
+
+1. `.blueprint/contracts/` と実装コードを読み込む
+2. `docs/` に設計書を生成する
+3. Doc Review Gate でドキュメント品質をチェックする
+
+### どう使うか
+
+```bash
+/generate-docs
+```
+
+生成物:
 
 ```
 docs/
@@ -185,9 +243,159 @@ docs/
 
 ---
 
-## Contract YAML の構造
+## 6. Review Gate — AI の出力を AI がレビューする
 
-### api タイプの例
+### なぜあるのか
+
+AI が生成したコード・テスト・仕様を、同じ AI が「いいね」と言っても信頼性がありません。
+Review Gate は **複数の独立エージェント**（3〜4体）が並列でレビューすることで、単一 AI の盲点を補います。
+
+Gate があることで、仕様の抜け・テストの不足・実装の乖離が次のステージに伝播する前に検出されます。
+
+### 仕組み
+
+| Gate | タイミング | エージェント数 | 検証内容 |
+|------|-----------|-------------|---------|
+| Contract Gate | /spec の後 | 3 | Contract 間の整合性・メタデータ・型定義 |
+| Test Gate | /test-from-contract の後 | 3 | テストカバレッジ・Contract との一致 |
+| Code Gate | /implement の後 | 4 | 実装と Contract の乖離・コード品質 |
+| Doc Gate | /generate-docs の後 | 3 | ドキュメントの正確性・網羅性 |
+
+### Severity（深刻度）
+
+| レベル | 意味 | Gate への影響 |
+|--------|------|-------------|
+| **P0** | 致命的（仕様違反・バグ） | 1件でも → REVISE |
+| **P1** | 重要（乖離・警告） | 2件以上 → REVISE |
+| **P2** | 軽微（改善提案） | Gate に影響しない |
+
+### REVISE になったら
+
+```
+Gate が REVISE を返す
+  → 自動修正サイクル（最大 3 回）
+  → 3 回後も REVISE → ユーザーに報告して相談
+```
+
+### Finding を却下・延期する（disposition）
+
+レビュー指摘が誤検出や意図的な設計の場合は、disposition を付けて処理できます:
+
+| disposition | いつ使うか |
+|-------------|-----------|
+| `false_positive` | 指摘自体が間違っている |
+| `wont_fix` | 意図的にそうしている（既知の制限） |
+| `downgraded` | P0 → P1 等に降格したい（理由を添える） |
+| `deferred` | 今は対応しない。別ステージに繰越（Gate カウント除外） |
+
+---
+
+## 7. /blueprint-improve — 使用ログから改善案を生成する
+
+### なぜあるのか
+
+blueprint-plugin を使い続けると、**パターン** が見えてきます:
+
+- 「Gate でいつも `missing_constraint` が指摘される」→ テンプレートに制約例を追加すべき
+- 「/implement で毎回同じツールエラーが出る」→ エラーハンドリングの改善が必要
+- 「ユーザーが毎回 /spec の出力を手修正している」→ /spec の質問やテンプレートに問題がある
+
+人間がこれを目視で振り返るのは現実的ではありません。`/blueprint-improve` は、蓄積されたログからこれらのパターンを自動検出し、具体的な改善案を PR として提案します。
+
+### 全体像
+
+```
+あなたが普段通りパイプラインを使う
+        ↓
+SessionEnd Hook が透過的にログを収集（自動・設定不要）
+  └─ 何を収集: Gate findings, エラー, ユーザー修正, セッション統計
+  └─ 保存先:   ~/.claude/blueprint-logs/bl-YYYYMMDD-NNN.yaml
+        ↓
+ログが蓄積（10 件以上で起動時に通知）
+        ↓
+/blueprint-improve を実行
+  └─ 統計レポート → パターン検出 → 改善案提示 → ユーザー承認 → PR 作成
+```
+
+### 収集されるデータと理由
+
+| データ | ソース | なぜ収集するか |
+|--------|--------|--------------|
+| Gate findings | pipeline-state.yaml | 「どの category の指摘が繰り返されるか」を知るため |
+| エラーパターン | transcript | 「どのツールがどのフェーズで失敗しやすいか」を知るため |
+| ユーザー修正 | transcript | 「ユーザーが手動で直す＝AI の出力品質が低い箇所」を特定するため |
+| セッション統計 | transcript | パイプラインの効率（ツール使用数、コード変更数）を計測するため |
+
+### どう使うか
+
+#### 統計だけ見たいとき
+
+```bash
+/blueprint-improve --stats
+```
+
+何件のログがあり、Gate findings・エラー・ユーザー修正がどう分布しているかを確認できます。PR は作成しません。
+
+出力例:
+
+```yaml
+summary:
+  log_count: 15
+  log_range:
+    from: "bl-20260301-001"
+    to: "bl-20260310-003"
+  pipeline_results:
+    completed: 12
+    partial: 2
+    failed: 1
+  gate_findings:
+    total_p0: 0
+    total_p1: 12
+    total_p2: 34
+  errors:
+    total: 3
+  user_corrections:
+    total: 5
+```
+
+#### 改善 PR を作成したいとき
+
+```bash
+/blueprint-improve
+```
+
+1. 統計レポートを生成し、全体像を把握する
+2. パターンを検出する（例: `missing_constraint` が 5 回出現 → high priority）
+3. 改善案を一覧で提示する（対象ファイル・根拠・優先度付き）
+4. **あなたが採用/棄却を選ぶ**（勝手に PR は作らない）
+5. 承認された改善を適用し、`sizukutamago/blueprint-plugin` に PR を作成する
+6. 分析済みログのステータスを更新する（再分析を防止）
+
+#### 古いログを掃除したいとき
+
+```bash
+/blueprint-improve --cleanup
+```
+
+90 日（TTL）を超過したログを一覧表示し、確認後に削除します。分析済みのログは TTL に関わらず保持されます。
+
+### プライバシー
+
+| 項目 | 内容 |
+|------|------|
+| **保存先** | ローカルのみ（`~/.claude/blueprint-logs/`） |
+| **外部送信** | 一切なし |
+| **保持期間** | 90 日（`--cleanup` で期限切れを削除） |
+| **収集停止** | ログの `privacy.opt_out: true` を設定 |
+| **手動削除** | `rm ~/.claude/blueprint-logs/bl-*.yaml` でいつでも削除可能 |
+
+---
+
+## 8. Contract YAML の書き方
+
+### api タイプ — REST エンドポイントを定義する
+
+「何を受け取って何を返すか」と「どんなエラーがありうるか」を宣言します。これが /test-from-contract でテストに、/implement で実装コードになります。
 
 ```yaml
 id: CON-book-api
@@ -227,7 +435,9 @@ business_rules:
     rule: rating は status が read の場合のみ設定可能
 ```
 
-### screen タイプの例
+### screen タイプ — 画面の振る舞いを定義する
+
+画面が受け取る props・発火するイベント・表示ロジックを宣言します。Props-based design なので、テスト容易な構造が強制されます。
 
 ```yaml
 id: CON-book-list-screen
@@ -255,102 +465,117 @@ events:
 
 ---
 
-## Review Gate（品質チェック）
+## 9. アーキテクチャパターン
 
-### Severity レベル
+`/spec` の対話中にアーキテクチャを選択します。選択に迷ったら layered を選んでください。
 
-| レベル | 意味 | Gate への影響 |
-|--------|------|--------------|
-| P0 | 致命的な仕様違反・バグ | 1件でも → REVISE（ブロック） |
-| P1 | 重要な乖離・警告 | 2件以上 → REVISE |
-| P2 | 軽微な改善提案 | Gate に影響しない |
+### layered（推奨・中規模）
 
-### Gate を通過できない場合
+最もバランスが良く、多くのプロジェクトに適合します。層の境界が明確なので、後から clean に移行することも容易です。
 
 ```
-[REVISE] P0: 1件, P1: 2件
-→ 自動修正サイクル（最大3回）
-→ 3回後も REVISE → ユーザーに報告・相談
+src/
+├── domain/           # エンティティ・ビジネスルール（外部依存なし）
+├── infrastructure/   # DB・外部 API 実装
+├── application/      # ユースケース
+└── presentation/     # HTTP ルーター
 ```
 
-### Finding の disposition（却下・延期）
+### clean（大規模・長期運用）
 
-| disposition | 意味 |
-|-------------|------|
-| `false_positive` | 誤検出として却下 |
-| `wont_fix` | 既知の制限として受け入れ |
-| `downgraded` | P0 → P1 等に降格（理由必須） |
-| `deferred` | 別ステージに繰越（Gate カウント除外） |
+依存関係の逆転（Dependency Inversion）を徹底。テストしやすく変更に強いが、層が多いためコード量が増えます。
+
+```
+src/
+├── domain/           # Entity, Value Object, Repository Interface
+├── usecase/          # Application Business Rules
+├── interface/        # Controller, Presenter, Gateway Interface
+└── infrastructure/   # DB, External API, Framework
+```
+
+### flat（プロトタイプ・小規模）
+
+最小構造。PoC や小さな API を素早く作りたいときに。規模が大きくなったら layered に移行推奨。
+
+```
+src/
+├── routes/
+├── models/
+└── services/
+```
+
+後から変更する場合: `.blueprint/config.yaml` の `architecture` を書き換えて `/implement` を再実行。
 
 ---
 
-## アーキテクチャパターン選択
+## 10. 既存プロジェクトへの適用
 
-| パターン | 向いている規模 | 特徴 |
-|---------|--------------|------|
-| `layered` | 中規模（推奨） | 3層。理解しやすく変更しやすい |
-| `clean` | 大規模・長期 | 4層。依存関係の逆転でテスト容易 |
-| `flat` | 小規模・PoC | 最小構造。素早く立ち上げられる |
+既存コードベース（brownfield）に blueprint を適用する場合は、まず `/gap-analysis` で現状を分析してから Contract を作成します。
 
-`/spec` 実行時にアーキテクチャを選択する。後から変更する場合は `config.yaml` を直接編集して `/implement` を再実行。
-
----
-
-## 既存プロジェクト（brownfield）への適用
-
-`/gap-analysis` スキルを使い、既存コードベースを分析してから Contract を作成する:
-
-```
-1. /gap-analysis        # 既存コードの分析・課題抽出
-2. /spec                # 分析結果を元に Contract 生成
-3. /test-from-contract  # テスト生成（既存テストとの整合を確認）
-4. /implement           # 差分のみ実装
+```bash
+/gap-analysis        # 既存コードを分析し、課題と改善点を抽出する
+/spec                # 分析結果をもとに Contract を生成する
+/test-from-contract  # テストを生成する（既存テストとの整合を確認）
+/implement           # 差分のみ実装する
 ```
 
 ---
 
-## トラブルシューティング
+## 11. トラブルシューティング
 
 ### Contract Review Gate が通らない
 
-```yaml
-# findings を確認してどの Contract のどのフィールドに問題があるか特定
-# P0 の場合は自動修正されるが、繰り返す場合は Contract を手動で修正
+**原因**: Contract YAML のフォーマットや型指定が不正。
 
-# 例: type が無効な場合
-type: domain  # ← 無効
-type: internal  # ← 正しい（subtype: service を追加）
-subtype: service
+```
+対処:
+1. Gate の findings を確認し、どの Contract のどのフィールドが問題か特定する
+2. P0 指摘は自動修正されるが、繰り返す場合は手動で修正する
+3. よくある原因:
+   - type: domain → 無効。type: internal + subtype: service が正しい
+   - depends_on の参照先が存在しない
+   - required フィールドに型指定がない
 ```
 
 ### Level 2 テストが RED のまま
 
-Level 2 テストは実装前は RED が正常。実装後も RED の場合:
+**前提**: Level 2 テストは実装前は RED が正常です。
 
-```bash
-# エラーを確認
-npm run test:level2 2>&1 | head -50
+```
+実装後も RED の場合:
+1. npm run test:level2 2>&1 | head -50 でエラーを確認
+2. インポートパスが間違っている → tests/contracts/level2/ を修正
+3. ビジネスルールの実装が足りない → src/domain/ を確認
+4. テスト自体が Contract と乖離している → /test-from-contract を再実行
+```
 
-# インポートパスが間違っている場合は tests/contracts/level2/ を修正
-# ビジネスルールの実装が足りない場合は src/domain/ を確認
+### /blueprint-improve でログが 0 件
+
+**原因**: SessionEnd Hook は **セッション終了時** にログを収集します。実行中のセッションではまだ収集されていません。
+
+```
+対処:
+1. Claude Code を一度終了して再起動する
+2. ls ~/.claude/blueprint-logs/ でログファイルが存在するか確認
+3. Hook が登録されているか確認:
+   cat ~/.claude/plugins/*/hooks/hooks.json 2>/dev/null | grep SessionEnd
 ```
 
 ### プラグインのキャッシュが古い
 
 ```bash
-# キャッシュを使わずローカルのプラグインを直接読む
+# 方法 1: キャッシュをバイパスしてローカル読み込み
 claude --plugin-dir /path/to/blueprint-plugin
 
-# またはキャッシュをクリアしてアップデート
+# 方法 2: キャッシュクリア + アップデート
 ./scripts/plugin-update.sh
 ```
 
 ### コンテキスト不足でパイプラインが止まる
 
-複雑なプロジェクトでは `/context-compressor` を使ってコンテキストを圧縮:
+**原因**: 複雑なプロジェクトではコンテキストウィンドウが足りなくなることがあります。
 
 ```bash
-/context-compressor  # 設計書・Contract を要約してコンテキストを節約
+/context-compressor      # 設計書・Contract を要約してトークンを節約
+/blueprint --resume      # 最後に完了した Stage から再開
 ```
-
-その後、`/blueprint --resume` で再開。

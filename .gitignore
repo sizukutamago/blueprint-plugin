@@ -30,3 +30,6 @@ plans/
 
 # Demo/example projects
 examples/
+
+# Workspace (skill-creator eval etc.)
+workspace/
