@@ -70,21 +70,17 @@ git rev-parse --show-toplevel
 
 **brownfield 時の Agent 起動（3 並列）**:
 
-各 Agent のプロンプトは `{baseDir}/references/explorer-prompts/` を参照:
+各 Agent のプロンプトは `{baseDir}/references/explorer-prompts/` を参照。
+3 つの Agent を**同一メッセージ内で並列**起動する:
 
 ```
-Agent 1 — Tech Stack Analyzer:
-  Read("{baseDir}/references/explorer-prompts/tech-stack-analyzer.md")
-  → プロンプトに従い技術スタックを分析
-
-Agent 2 — Domain Analyzer:
-  Read("{baseDir}/references/explorer-prompts/domain-analyzer.md")
-  → プロンプトに従いドメインモデル・画面構成を分析
-
-Agent 3 — Integration Analyzer:
-  Read("{baseDir}/references/explorer-prompts/integration-analyzer.md")
-  → プロンプトに従い外部連携・NFR を分析
+# 並列起動（3 Agent、同一ターンで全て起動）
+Agent(subagent_type: "Explore", prompt: "{explorer-prompts/tech-stack-analyzer.md の内容} 対象: {プロジェクトルートパス}")
+Agent(subagent_type: "Explore", prompt: "{explorer-prompts/domain-analyzer.md の内容} 対象: {プロジェクトルートパス}")
+Agent(subagent_type: "Explore", prompt: "{explorer-prompts/integration-analyzer.md の内容} 対象: {プロジェクトルートパス}")
 ```
+
+> **subagent_type**: `Explore` を使用（コードベース探索に特化、Read/Grep/Glob が利用可能）
 
 3 Agent の結果をマージして `Write("docs/requirements/.work/context_summary.md")` に書き出す。
 

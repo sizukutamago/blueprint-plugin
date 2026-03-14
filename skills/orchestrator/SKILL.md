@@ -84,6 +84,11 @@ Read(".blueprint/pipeline-state.yaml")
 各ステージの Smart Skip 条件をチェック:
 
 ```
+# Stage 0 スキップ判定
+Glob("docs/requirements/user-stories.md")
+→ user-stories.md が存在 → ユーザーに確認:
+  「既存の要件定義が見つかりました。これを使いますか？ 新規作成しますか？」
+
 # Stage 1 スキップ判定
 Glob(".blueprint/contracts/**/*.contract.yaml")
 → active/draft Contract ≥1 → ユーザーに確認:
@@ -100,30 +105,29 @@ Glob("docs/03_architecture/**")
   「既存のドキュメントが見つかりました。これを使いますか？ 再生成しますか？」
 ```
 
-### Step 2: Stage 1 — Spec 実行
+### Step 2: Stage 0 — Requirements 実行
 
-`core/spec.md` の 7 ステップワークフローを直接実行する。
+`core/requirements.md` の 6 ステップワークフローを実行する。
 
-1. `.blueprint/` コンテキスト読み込み
-2. スコープ確認（ユーザー対話）
-3. ブレインストーミング（ユーザー対話）
-4. Contract 一覧合意（ユーザー承認必須）
-5. Contract YAML 生成
-6. 副産物生成
-7. サマリー出力
+1. コンテキスト読み込み + モード判定（greenfield/brownfield）
+2. インタビュー（Double Diamond パターン、最大 10 質問）
+3. 構造化（Epic → Story 階層化、ユーザー承認必須）
+4. ユーザーストーリー生成（EARS 記法 + Gherkin AC）
+5. 品質チェック + 自動補正
+6. サマリー出力
 
-### Step 3: Contract Review Gate
+### Step 3: Requirements Review Gate
 
 3 つの Agent を**並列**起動:
 
 ```
 # 並列起動（3 Agent）
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 1 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 2 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{requirements-reviewer.md の Agent 1: Completeness Checker プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{requirements-reviewer.md の Agent 2: Quality Auditor プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{requirements-reviewer.md の Agent 3: Traceability Checker プロンプト}")
 ```
 
-**入力**: Contract YAML ファイルパスリスト + contract-schema.md + review-criteria.md の内容
+**入力**: `docs/requirements/user-stories.md` + `core/id-system.md` + `core/review-criteria.md` + `skills/requirements/references/quality_rules.md` の内容
 
 **Gate 判定**:
 1. 3 エージェントの findings を集約
@@ -132,7 +136,41 @@ Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.
 4. P0≥1 or P1≥2 → REVISE → findings をもとに修正 → Step 3 再実行（最大 3 サイクル）
 5. 3 サイクル超過 → ユーザーに介入要請
 
-### Step 4: Stage 2 — Test Generation 実行
+### Step 4: Stage 1 — Spec 実行
+
+`core/spec.md` の 7 ステップワークフローを直接実行する。
+
+> `docs/requirements/user-stories.md` が存在する場合、Step 2（スコープ確認）で自動読み込みし、ブレストの初期入力にする。
+
+1. `.blueprint/` コンテキスト読み込み
+2. スコープ確認（ユーザー対話 + user-stories.md ベース）
+3. ブレインストーミング（ユーザー対話）
+4. Contract 一覧合意（ユーザー承認必須）
+5. Contract YAML 生成
+6. 副産物生成
+7. サマリー出力
+
+### Step 5: Contract Review Gate
+
+3 つの Agent を**並列**起動:
+
+```
+# 並列起動（3 Agent）
+Agent(subagent_type: "general-purpose", prompt: "{contract-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{contract-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{contract-reviewer.md の Agent 3 プロンプト}")
+```
+
+**入力**: Contract YAML ファイルパスリスト + contract-schema.md + review-criteria.md の内容
+
+**Gate 判定**:
+1. 3 エージェントの findings を集約
+2. 重複正規化（同一 target + field をマージ、最高 severity を採用、message は連結保持）
+3. P0=0 かつ P1≤1 → PASS → Step 6 へ
+4. P0≥1 or P1≥2 → REVISE → findings をもとに修正 → Step 5 再実行（最大 3 サイクル）
+5. 3 サイクル超過 → ユーザーに介入要請
+
+### Step 6: Stage 2 — Test Generation 実行
 
 `core/test-from-contract.md` の 6 ステップワークフローを実行する。
 
@@ -147,21 +185,21 @@ Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{contract-reviewer.
 5. Level 2 テスト生成
 6. サマリー出力
 
-### Step 5: Test Review Gate
+### Step 7: Test Review Gate
 
 3 つの Agent を**並列**起動:
 
 ```
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 1 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 2 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{test-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{test-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{test-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{test-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: テストファイルパスリスト + Contract YAML + test-from-contract.md + review-criteria.md
 
-**Gate 判定**: Step 3 と同じプロトコル
+**Gate 判定**: Step 5 と同じプロトコル
 
-### Step 6: Stage 3 — Implementation
+### Step 8: Stage 3 — Implementation
 
 implement スキル（`core/implement.md`）のワークフローを実行する。
 
@@ -205,9 +243,9 @@ stage_3_implement:
   final_approval: accepted           # 実装完了承認
 ```
 
-### Step 7: Code Review Gate（Contract↔実装の乖離検出）— 必須
+### Step 9: Code Review Gate（Contract↔実装の乖離検出）— 必須
 
-**重要**: テスト GREEN チェック（Step 7）は「動作の正しさ」を確認するだけ。
+**重要**: テスト GREEN チェック（Step 8）は「動作の正しさ」を確認するだけ。
 Code Review Gate は「Contract の宣言がコードに反映されているか（宣言の一致）」+「コード品質」を検証する。
 テストが GREEN でも、バリデーションスキーマに制約が欠落していればここで検出される。
 **テスト GREEN だけで Code Review Gate をスキップしてはならない。**
@@ -215,15 +253,15 @@ Code Review Gate は「Contract の宣言がコードに反映されているか
 4 つの Agent を**並列**起動:
 
 ```
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 1 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 2 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 3 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{code-reviewer.md の Agent 4 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{code-reviewer.md の Agent 1: Schema Compliance Checker プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{code-reviewer.md の Agent 2: Route & Handler Checker プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{code-reviewer.md の Agent 3: Business Logic Checker プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{code-reviewer.md の Agent 4: Code Quality Checker プロンプト}")
 ```
 
 **入力**: Contract YAML + ソースコード（src/, app/, routes/）+ バリデーションスキーマ + tests/ui/（screen Contract がある場合）+ config.yaml + core/defaults/ + review-criteria.md
 
-**Gate 判定**: Step 3 と同じプロトコル
+**Gate 判定**: Step 5 と同じプロトコル
 
 - PASS → pipeline-state.yaml の `code_review_gate` を更新して Stage 4 へ
 - REVISE → ユーザーに乖離リストを提示、修正後に再実行
@@ -238,7 +276,7 @@ code_review_gate:
   notes: "Schema/Route/Business/Quality 4-agent 検証完了"
 ```
 
-### Step 8: Stage 4 — Doc Generation 実行
+### Step 10: Stage 4 — Doc Generation 実行
 
 `core/generate-docs.md` の 5 ステップワークフローを実行する。
 
@@ -248,21 +286,21 @@ code_review_gate:
 4. トレーサビリティ検証
 5. レビュー + サマリー
 
-### Step 9: Doc Review Gate
+### Step 11: Doc Review Gate
 
 3 つの Agent を**並列**起動:
 
 ```
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 1 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 2 プロンプト}")
-Agent(subagent_type: "tdd-workflows:code-reviewer", prompt: "{doc-reviewer.md の Agent 3 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{doc-reviewer.md の Agent 1 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{doc-reviewer.md の Agent 2 プロンプト}")
+Agent(subagent_type: "general-purpose", prompt: "{doc-reviewer.md の Agent 3 プロンプト}")
 ```
 
 **入力**: docs/ ファイルリスト + .blueprint/ + ソースコード + review-criteria.md
 
 **Gate 判定**: Step 3 と同じプロトコル
 
-### Step 10: 最終サマリー出力
+### Step 12: 最終サマリー出力
 
 ```
 ## パイプライン完了
