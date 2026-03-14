@@ -66,6 +66,10 @@ git rev-parse --show-toplevel
 4. package.json がない greenfield の場合は **AskUserQuestion ツールを呼び出して** フレームワークも選択させる
 5. `Write(".blueprint/config.yaml", content)` で即座に書き出す
 6. `Glob(".blueprint/**/*.yaml")` `Glob(".blueprint/**/*.md")` で既存スキャン
+6.5. `Glob("docs/requirements/user-stories.md")` で requirements 出力を確認
+   - 存在する場合: `Read("docs/requirements/user-stories.md")` で読み込み
+   - Epic/Story 構造を Contract 一覧候補のベースにする
+   - ユーザーへの報告: 「要件定義が見つかりました。これを元に Contract を設計します」
 
 **⛔ Step 3 のアーキテクチャ・フレームワーク質問は、Step 1 で AskUserQuestion を呼んだ場合は必ず省略すること**（二重質問禁止）。
 
@@ -116,6 +120,11 @@ bash "$(claude plugin-dir)/scripts/init-blueprint.sh" "$(pwd)"
 ### Step 2: スコープ確認
 
 `core/spec.md` Step 2 に従いスコープを確認。config.yaml は Step 1 で生成済み。
+
+**user-stories.md が存在する場合**、スコープ確認のベースにする:
+- 既存のペルソナ・Epic・Story 構造を提示
+- 追加・変更がないかユーザーに確認
+- `/requirements` で回答済みの内容（プラットフォーム、ターゲットユーザー等）は再質問しない
 
 **API only キーワード（API / バックエンド / サーバー / SDK / CLI / バッチ / ジョブ / スクリプト）が検出された場合のみ、AskUserQuestion ツールを呼び出してフロントエンドスコープを確認する**（それ以外はフロントエンドあり確定なので聞かない）:
 

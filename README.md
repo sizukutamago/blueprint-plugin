@@ -2,7 +2,7 @@
 
 Contract-first の設計ワークフロープラグイン（Claude Code / Cursor 対応）
 
-ブレスト → Contract YAML → TDD テスト → 実装 → 設計書生成のパイプラインを、**会話しながら自動生成**します。
+要件定義 → ブレスト → Contract YAML → TDD テスト → 実装 → 設計書生成の 5 ステージパイプラインを、**会話しながら自動生成**します。
 使い続けるほどログが蓄積され、プラグイン自体を改善する **Self-Improve** 機能も搭載。
 
 ## クイックスタート
@@ -21,7 +21,7 @@ claude --plugin-dir /path/to/blueprint-plugin
 ### 2. パイプライン実行
 
 ```bash
-/blueprint       # プロジェクトルートで実行 → 質問に答えるだけで全自動
+/blueprint       # プロジェクトルートで実行 → 質問に答えるだけで全自動（5 ステージ）
 ```
 
 ### 3. 出力物を確認
@@ -47,6 +47,7 @@ docs/                   # 設計書（後追い生成）
 
 | コマンド | Stage | 説明 |
 |----------|-------|------|
+| `/requirements` | 0 | ユーザーストーリー定義（Double Diamond + EARS-inspired 記法） |
 | `/spec` | 1 | ブレスト → Contract YAML 生成 |
 | `/test-from-contract` | 2 | Contract → TDD テスト生成 |
 | `/implement` | 3 | RED テスト → 実装コード生成 |

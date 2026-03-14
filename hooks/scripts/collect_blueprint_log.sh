@@ -54,7 +54,7 @@ fi
 
 # 判定2: transcript から blueprint スキル使用痕跡を検出
 if [ "$BLUEPRINT_USED" = false ] && [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    if grep -qE '"skill"[[:space:]]*:[[:space:]]*"(blueprint-plugin:)?(spec|test-from-contract|implement|generate-docs|orchestrator|blueprint)"' "$TRANSCRIPT_PATH" 2>/dev/null; then
+    if grep -qE '"skill"[[:space:]]*:[[:space:]]*"(blueprint-plugin:)?(requirements|spec|test-from-contract|implement|generate-docs|orchestrator|blueprint)"' "$TRANSCRIPT_PATH" 2>/dev/null; then
         BLUEPRINT_USED=true
     fi
 fi
@@ -103,7 +103,7 @@ if [ "$PIPELINE_STATE_PRESENT" = true ]; then
 
     # 実行されたステージを検出
     STAGES_EXECUTED=""
-    for stage in spec test_from_contract implement generate_docs; do
+    for stage in requirements spec test_from_contract implement generate_docs; do
         if grep -q "stage_.*${stage}:" "$PIPELINE_STATE" 2>/dev/null; then
             stage_clean=$(echo "$stage" | tr '_' '-')
             if [ -n "$STAGES_EXECUTED" ]; then

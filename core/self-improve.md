@@ -76,6 +76,7 @@ Review Gate で検出された P0/P1/P2 指摘。
 |---------|---------------|------|
 | template_update | `skills/*/references/` | テンプレート・サンプルの改善 |
 | review_criteria_update | `core/review-criteria.md` | レビュー基準の追加・修正 |
+| requirements_update | `core/requirements.md`, `skills/requirements/SKILL.md` | /requirements ワークフローの改善 |
 | spec_update | `core/spec.md` | /spec ワークフローの改善 |
 | default_update | `core/defaults/` | 実装規約の更新 |
 | skill_update | `skills/*/SKILL.md` | スキル実行手順の改善 |

@@ -15,7 +15,9 @@
 チェック項目:
 - docs/requirements/ の存在（既存要件の有無）
 - .blueprint/ の存在（既に /spec 済みか）
-- src/ の存在 + ファイル数（brownfield 判定）
+- ソースコードディレクトリの存在 + ファイル数（brownfield 判定）
+  - 判定対象: src/, cmd/, internal/, pkg/, app/, lib/, packages/, apps/
+- docs/requirements/.work/ が .gitignore に含まれているか確認
 - README.md, PRD 等のプロジェクト説明ドキュメント
 ```
 
@@ -23,8 +25,11 @@
 
 | 条件 | モード |
 |------|--------|
-| `src/` なし、または `src/` 内ファイル数 < 5 | greenfield |
-| `src/` あり、かつファイル数 >= 5 | brownfield |
+| 判定対象ディレクトリ（`src/`, `cmd/`, `internal/`, `pkg/`, `app/`, `lib/`, `packages/`, `apps/`）のいずれも存在しない、またはファイル数合計 < 5 | greenfield |
+| 上記ディレクトリのいずれかが存在し、かつファイル数合計 >= 5 | brownfield |
+
+**.gitignore チェック**:
+- `docs/requirements/.work/` が `.gitignore` に含まれていない場合、自動で追加する
 
 **greenfield の場合**:
 - Explorer は完全スキップ
@@ -46,7 +51,7 @@
 - 既存の user-stories.md を読み込んでユーザーに提示
 - 「上書き更新」か「追記」かを確認
 
-### Step 2: インタビュー（Double Diamond + EARS 記法）
+### Step 2: インタビュー（Double Diamond + EARS-inspired 記法）
 
 ユーザーから要件を引き出すコアフェーズ。
 **`/requirements` の最大の価値がここにある。**
@@ -77,18 +82,21 @@ Diamond 2 — 確認（Deliver）
 
 - 全質問は構造化された形式で実行する（自由テキスト質問禁止）
 - 1 質問ずつ実行する（まとめて聞かない）
-- ユーザーの回答に応じてフォローアップ質問を追加してよい（最大 10 質問の枠内）
+- コア質問は最大 10 問。フォローアップは枠を消費しない（各質問につき最大 2 回まで）
 - Q9, Q10 は Q7/Q8 の回答内容に応じて条件付き実行
 
-#### EARS 記法の適用
+#### EARS-inspired 記法の適用
 
 各回答を以下の記法で即座に分類する:
+
+> 本記法は EARS (Mavin et al., 2009) をベースに拡張した独自記法である。MAY/MUST NOT は RFC 2119 由来。
 
 | 記法 | パターン | 用途 | 例 |
 |------|---------|------|-----|
 | SHALL | `<主語> SHALL <動作>` | 必須機能 | システム SHALL 注文履歴を表示する |
 | WHEN-THEN | `WHEN <イベント> THEN <主語> SHALL <動作>` | イベント駆動 | WHEN 在庫が 0 THEN システム SHALL 通知する |
 | IF-THEN | `IF <条件> THEN <主語> SHALL <動作>` | 条件分岐 | IF 管理者 THEN システム SHALL 全データを表示する |
+| WHILE | `WHILE <前提条件が継続中> <主語> SHALL <動作>` | 状態駆動 | WHILE ユーザーがログイン中 システム SHALL セッションを維持する |
 | WHERE | `WHERE <制約>` | 非機能制約 | WHERE レスポンスは 500ms 以内 |
 | MAY | `<主語> MAY <動作>` | オプション機能 | ユーザー MAY ダークモードを選択する |
 | MUST NOT | `<主語> MUST NOT <動作>` | 禁止要件 | システム MUST NOT パスワードを平文保存する |
@@ -105,7 +113,7 @@ Diamond 2 — 確認（Deliver）
 
 #### 終了条件
 
-- 最大 **10 質問**（フォローアップ含む）
+- コア質問最大 **10 問**（フォローアップは枠外）
 - ユーザーが「十分」「次に進んで」等で終了宣言
 - 未解決の論点は `open_questions` リストに退避して次へ進む
 
@@ -171,11 +179,11 @@ Diamond 2 — 確認（Deliver）
 **各 Story の生成ルール**:
 
 1. **As a / I want / So that 形式**（必須）
-2. **EARS 記法**（必須）: 各 Story に対応する EARS 分類を付記
+2. **EARS-inspired 記法**（必須）: 各 Story に対応する EARS-inspired 分類を付記
 3. **受け入れ基準（AC）**:
    - Gherkin 形式（Given/When/Then）
    - 正常系 AC: 最低 1 件（必須）
-   - 異常系 AC: 最低 1 件（必須）
+   - 異常系 AC: 最低 1 件（必須）。ただし MAY のストーリーは異常系 AC をオプションとする（省略時は N/A + 理由を記載）
    - 各 AC に信頼度レベルを付与
    - ID: AC-{StoryID の数字部分}-{連番}（例: AC-001-1）
 4. **NFR 紐付け**:
@@ -195,7 +203,7 @@ Diamond 2 — 確認（Deliver）
 | チェック | 内容 | 違反時の対応 |
 |---------|------|-------------|
 | 曖昧語チェック | 禁止語リスト（`quality_rules.md` 参照）が残っていないか | 自動で具体化を試みる |
-| EARS 準拠 | 全要件が SHALL/WHEN-THEN/IF-THEN/WHERE/MAY/MUST NOT のいずれかに分類されているか | 自動分類を試みる |
+| EARS-inspired 準拠 | 全要件が SHALL/WHEN-THEN/IF-THEN/WHILE/WHERE/MAY/MUST NOT のいずれかに分類されているか | 自動分類を試みる |
 | テスト可能性 | 全 AC に Given/When/Then があるか。定量基準があるか | 定量化を試みる |
 | 完全性 | 全 Epic に最低 1 Story、全 Story に正常系+異常系 AC | 不足分を自動補完 |
 | 信頼度バランス | Red が全体の 30% を超えていないか | 追加質問を提案（強制しない） |
@@ -269,14 +277,14 @@ Contract を生成するには: `/spec`
 | ユーザーがビジネス判断 | AI は質問・構造化・品質チェックを担当。要件の優先度・スコープはユーザーが決める |
 | 信頼度の透明性 | AI の推測は Red で明示。ユーザーが確認すれば Blue/Yellow に昇格 |
 | テスト可能性 | 全要件・AC は検証可能な基準を含む。曖昧な記述は具体化を求める |
-| EARS 記法で構造化 | 自然言語の要件を 6 分類で構造化し、テスト導出しやすくする |
+| EARS-inspired 記法で構造化 | 自然言語の要件を 7 分類で構造化し、テスト導出しやすくする |
 | YAGNI | 「将来必要になるかも」より「今回の MVP に必要か」を優先 |
 
 ## エラーハンドリング
 
 | エラー | 対応 |
 |--------|------|
-| インタビューが収束しない | 10 質問上限 + open_questions への退避 |
+| インタビューが収束しない | コア質問 10 問上限 + open_questions への退避 |
 | brownfield 分析が大規模すぎる | ファイル数 > 500 の場合、ディレクトリ単位のサンプリングに切り替え |
 | ユーザーが曖昧な回答を続ける | 具体例を提示して選択させる（「例えば X ですか、Y ですか？」） |
 | 既存 requirements との競合 | 既存ファイルを提示し、上書き / 追記 / 中止 を確認 |

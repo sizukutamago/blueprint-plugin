@@ -353,6 +353,7 @@ stages:
     status: pending | passed | failed
     cycles: 0
     final_counts: { p0: 0, p1: 0, p2: 0 }
+    findings: []                   # レビュー findings リスト
     notes: null
 
   stage_1_spec:
@@ -460,7 +461,15 @@ final_status: pending | completed  # パイプライン最終ステータス
 | final_status | stage_3_implement | code_review_gate | stage_4_docs | 再開地点 |
 |---|---|---|---|---|
 | completed | — | — | — | エラー: `--force` で再実行を案内 |
-| pending | — | — | — | stage_1_spec.status で分岐（下記） |
+| pending | — | — | — | stage_0_requirements.status で分岐（下記） |
+
+**stage_0_requirements.status で再開地点分岐**:
+
+| stage_0_requirements | requirements_review_gate | 再開地点 |
+|---|---|---|
+| pending / in_progress | — | Stage 0 から再開 |
+| completed / skipped | pending / failed | Requirements Review Gate から再開 |
+| completed / skipped | passed | stage_1_spec.status で分岐（下記） |
 
 **stage_1_spec.status で再開地点分岐**:
 
@@ -504,7 +513,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 
 ```
 1. .blueprint/pipeline-state.yaml が存在する場合は上書き
-2. 全ステージを Stage 1 から強制実行（Smart Skip を無視）
+2. 全ステージを Stage 0 から強制実行（Smart Skip を無視）
 3. レビューゲートも通常通り実行
 ```
 
@@ -526,6 +535,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 ### ステージ結果
 | ステージ | 結果 | 成果物 |
 |---------|------|--------|
+| Stage 0: Requirements | PASS (skipped) | user-stories.md |
 | Stage 1: Spec | PASS (skipped) | 3 Contracts |
 | Stage 2: Test Gen | PASS | 12 Level 1 + 45 Level 2 |
 | Stage 3: Impl | completed | 全テスト GREEN |
@@ -534,6 +544,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 ### Review Gate サマリー
 | Gate | P0 | P1 | P2 | 判定 | サイクル |
 |------|----|----|----|----- |---------|
+| Requirements | 0 | 0 | 1 | PASS | 1 |
 | Contract | 0 | 0 | 2 | PASS | 1 |
 | Test | 0 | 1 | 3 | PASS | 1 |
 | Code | 0 | 1 | 2 | PASS | 1 |
@@ -554,6 +565,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 | エラー | 対応 |
 |--------|------|
 | git リポジトリでない | エラー報告、`git init` を案内 |
+| /requirements 中にユーザーが中断 | .blueprint/pipeline-state.yaml に stage_0_requirements.status: in_progress で保存、次回 /blueprint で再開可能 |
 | /spec 中にユーザーが中断 | .blueprint/pipeline-state.yaml に stage_1_spec.status: in_progress で保存、次回 /blueprint で再開可能 |
 | Review Gate で REVISE 3 回超過 | ユーザーに介入要請、findings リストを提示 |
 | テストフレームワーク未検出 | ユーザーに確認（デフォルト: Vitest） |

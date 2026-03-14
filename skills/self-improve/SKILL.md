@@ -93,6 +93,7 @@ bash "${baseDir}/scripts/analyze_logs.sh" --details
 | パターン種別 | 対象ファイル | 改善カテゴリ |
 |-------------|-------------|-------------|
 | Gate の category 反復 | `core/review-criteria.md` | review_criteria_update |
+| /requirements 関連の修正 | `core/requirements.md`, `skills/requirements/SKILL.md` | requirements_update |
 | /spec 関連の修正 | `core/spec.md` | spec_update |
 | Contract 関連の指摘 | `core/contract-schema.md` | schema_update |
 | 実装規約のエラー | `core/defaults/` | default_update |

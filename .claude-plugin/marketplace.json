@@ -4,21 +4,21 @@
     "name": "sizukutamago"
   },
   "metadata": {
-    "description": "設計ドキュメント生成ワークフロー（agent-teams 並列実行）"
+    "description": "要件定義〜設計ドキュメント生成ワークフロー（agent-teams 並列実行）"
   },
   "plugins": [
     {
       "name": "blueprint-plugin",
       "source": "./",
-      "description": "agent-teams による3-wave並列実行で設計ドキュメントを生成。アーキテクチャ設計、DB設計、API設計、画面設計、テスト設計、運用設計、レビューをIPA標準準拠で自動化。",
-      "version": "3.3.2",
+      "description": "agent-teams による並列実行で要件定義〜設計ドキュメントを生成。ユーザーストーリー定義、アーキテクチャ設計、DB設計、API設計、画面設計、テスト設計、運用設計、レビューを自動化。",
+      "version": "3.4.0",
       "category": "documentation",
       "tags": [
+        "requirements",
         "design-docs",
         "agent-teams",
         "architecture",
-        "japanese",
-        "ipa-standards"
+        "japanese"
       ]
     }
   ]

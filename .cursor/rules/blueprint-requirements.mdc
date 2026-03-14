@@ -18,7 +18,7 @@ alwaysApply: false
 ### Step 1: コンテキスト読み込み + モード判定
 
 1. `docs/requirements/` の存在を確認
-2. `src/` の存在 + ファイル数で greenfield/brownfield 判定
+2. ソースコードディレクトリ（`src/`, `cmd/`, `internal/`, `pkg/`, `app/`, `lib/`, `packages/`, `apps/`）の存在 + ファイル数で greenfield/brownfield 判定
 3. brownfield: 既存コードを分析して context_summary を生成
 4. greenfield: README.md / PRD を読み込み
 
@@ -30,7 +30,7 @@ alwaysApply: false
 - Diamond 1 — 収束: MVP 優先度、非目標
 - Diamond 2 — 深掘り: ビジネスルール、成功指標
 - Diamond 2 — 確認: 外部連携、NFR（条件付き）
-- 各回答に EARS 分類 + 信頼度レベル（Blue/Yellow/Red）を付与
+- 各回答に EARS-inspired 分類 + 信頼度レベル（Blue/Yellow/Red）を付与
 
 ### Step 3: 構造化
 
@@ -42,12 +42,12 @@ alwaysApply: false
 
 - As a / I want / So that 形式
 - Gherkin AC（Given/When/Then）
-- EARS 記法で分類
+- EARS-inspired 記法で分類
 - `docs/requirements/user-stories.md` に書き出し
 
 ### Step 5: 品質チェック
 
-- 曖昧語チェック、EARS 準拠、テスト可能性、完全性
+- 曖昧語チェック、EARS-inspired 準拠、テスト可能性、完全性
 - 自動補正最大 2 回
 
 ### Step 6: サマリー

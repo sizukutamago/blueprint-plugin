@@ -1,6 +1,6 @@
 ---
 name: requirements
-description: "Define requirements through structured user interviews using Double Diamond pattern and EARS notation. This skill should be used BEFORE /spec — use /spec when you already know what to build and need I/O boundary contracts, use /requirements when you need to figure out WHAT to build first. Use when the user wants to \"define requirements\", \"gather requirements\", \"create user stories\", \"interview for requirements\", \"identify personas\", \"define MVP scope\", \"create acceptance criteria\", \"structure requirements\", \"start a new project\", \"plan a new app\", \"figure out what to build\", or \"scope out a product\". Also use when the user says \"要件定義\", \"ユーザーストーリー\", \"要件をまとめる\", \"ヒアリング\", \"ペルソナを定義\", \"MVPを決める\", \"受け入れ基準\", \"何を作るか整理\", \"新しいプロジェクトを始めたい\", \"アプリのアイデアがある\", \"何を作るか決めたい\", \"プロダクトの要件を整理\", or \"機能を洗い出したい\". Make sure to use this skill proactively when the user describes an app idea or project concept without existing contracts or specs."
+description: "Define requirements through structured user interviews using Double Diamond pattern and EARS-inspired notation. This skill should be used BEFORE /spec — use /spec when you already know what to build and need I/O boundary contracts, use /requirements when you need to figure out WHAT to build first. Use when the user wants to \"define requirements\", \"gather requirements\", \"create user stories\", \"interview for requirements\", \"identify personas\", \"define MVP scope\", \"create acceptance criteria\", \"structure requirements\", \"start a new project\", \"plan a new app\", \"figure out what to build\", or \"scope out a product\". Also use when the user says \"要件定義\", \"ユーザーストーリー\", \"要件をまとめる\", \"ヒアリング\", \"ペルソナを定義\", \"MVPを決める\", \"受け入れ基準\", \"何を作るか整理\", \"新しいプロジェクトを始めたい\", \"アプリのアイデアがある\", \"何を作るか決めたい\", \"プロダクトの要件を整理\", or \"機能を洗い出したい\". Make sure to use this skill proactively when the user describes an app idea or project concept without existing contracts or specs."
 version: 1.0.0
 core_ref: core/requirements.md
 ---
@@ -8,7 +8,7 @@ core_ref: core/requirements.md
 # Requirements スキル (Claude Code)
 
 ユーザーへの構造化インタビューを通じて要件定義を行うスキル。
-Double Diamond パターンでヒアリングし、EARS 記法で構造化、信頼度レベルで透明性を確保する。
+Double Diamond パターンでヒアリングし、EARS-inspired 記法で構造化、信頼度レベルで透明性を確保する。
 
 ## 仕様参照
 
@@ -65,8 +65,18 @@ git rev-parse --show-toplevel
        - label: `"上書き更新"` / description: `"既存の要件を破棄して新規作成する"`
        - label: `"追記"` / description: `"既存の要件に追加する"`
        - label: `"中止"` / description: `"既存の要件をそのまま使う"`
-2. `Glob("src/**/*")` でファイル数をカウント → greenfield/brownfield 判定
-3. brownfield の場合: Agent を 3 つ並列起動
+2. ソースコードディレクトリの検出 + ファイル数で greenfield/brownfield 判定:
+   ```
+   # 判定対象ディレクトリ: src/, cmd/, internal/, pkg/, app/, lib/, packages/, apps/
+   Glob("{src,cmd,internal,pkg,app,lib,packages,apps}/**/*") でファイル数をカウント
+   # いずれかが存在し、合計ファイル数 >= 5 → brownfield
+   ```
+3. `.gitignore` チェック:
+   ```
+   Grep("docs/requirements/.work" in ".gitignore")
+   → 存在しない場合: Bash("echo '\n# requirements work directory\ndocs/requirements/.work/' >> .gitignore")
+   ```
+4. brownfield の場合: Agent を 3 つ並列起動
 
 **brownfield 時の Agent 起動（3 並列）**:
 
@@ -84,8 +94,8 @@ Agent(subagent_type: "Explore", prompt: "{explorer-prompts/integration-analyzer.
 
 3 Agent の結果をマージして `Write("docs/requirements/.work/context_summary.md")` に書き出す。
 
-4. greenfield の場合: `Read("README.md")` と PRD ファイルを確認（存在すれば内容を要約して Q1 に活用）
-5. `Bash("mkdir -p docs/requirements/.work")` でディレクトリ作成
+5. greenfield の場合: `Read("README.md")` と PRD ファイルを確認（存在すれば内容を要約して Q1 に活用）
+6. `Bash("mkdir -p docs/requirements/.work")` でディレクトリ作成
 
 ### Step 2: インタビュー（コアフェーズ）
 
@@ -96,7 +106,7 @@ Agent(subagent_type: "Explore", prompt: "{explorer-prompts/integration-analyzer.
 **実行ルール**:
 - 全質問は **AskUserQuestion ツール** で実行する（テキスト質問禁止）
 - 1 質問ずつ実行する（まとめて聞かない）
-- 回答を受け取ったら即座に EARS 分類 + 信頼度レベルを付与
+- 回答を受け取ったら即座に EARS-inspired 分類 + 信頼度レベルを付与
 - フォローアップ質問は回答内容に応じて動的に生成
 - brownfield の場合、context_summary の内容を質問に反映
 
@@ -125,13 +135,13 @@ AskUserQuestion:
 ### Q{N}: {質問タイトル}
 - **質問**: {質問文}
 - **回答**: {ユーザーの回答}
-- **EARS 分類**: {SHALL / WHEN-THEN / IF-THEN / WHERE / MAY / MUST NOT}
+- **EARS-inspired 分類**: {SHALL / WHEN-THEN / IF-THEN / WHILE / WHERE / MAY / MUST NOT}
 - **信頼度**: {Blue / Yellow / Red}
 - **導出された要件**:
-  - {EARS 記法で構造化した要件文}
+  - {EARS-inspired 記法で構造化した要件文}
 ```
 
-**終了条件**: 最大 10 質問 or ユーザーの終了宣言。
+**終了条件**: コア質問最大 10 問（フォローアップは枠を消費しない、各質問につき最大 2 回まで） or ユーザーの終了宣言。
 未解決論点は `open_questions` リストに退避。
 
 インタビュー完了後、`Write("docs/requirements/.work/interview_log.md")` で記録を保存。
@@ -163,9 +173,9 @@ AskUserQuestion:
 `references/user_stories_format.md` のフォーマットに従い、`docs/requirements/user-stories.md` を生成。
 
 **生成ルール**:
-- 各 Story に As a / I want / So that + EARS 記法 + メタテーブル
+- 各 Story に As a / I want / So that + EARS-inspired 記法 + メタテーブル
 - 正常系 AC: 最低 1 件（Gherkin 形式）
-- 異常系 AC: 最低 1 件（Gherkin 形式）
+- 異常系 AC: 最低 1 件（Gherkin 形式）。ただし MAY のストーリーは異常系 AC をオプションとする（省略時は N/A + 理由を記載）
 - 全 AC に信頼度レベル付記
 - NFR は WHERE 記法で紐付け
 
@@ -177,7 +187,7 @@ AskUserQuestion:
 
 チェック順序:
 1. 曖昧語チェック（禁止語リスト照合）
-2. EARS 準拠チェック（全要件が分類済みか）
+2. EARS-inspired 準拠チェック（全要件が分類済みか）
 3. テスト可能性チェック（Gherkin 形式、定量基準）
 4. 完全性チェック（Epic/Story/AC の網羅性）
 5. 信頼度バランスチェック（Red の割合）
@@ -234,5 +244,5 @@ Contract を生成するには: `/spec`
 |--------|------|
 | git root 検出失敗 | ユーザーにプロジェクトルートで実行するよう案内 |
 | brownfield 分析タイムアウト | Agent にタイムアウトを設定。失敗した Agent の分析はスキップし、インタビューで補完 |
-| インタビューが収束しない | 10 質問上限 + open_questions への退避 |
+| インタビューが収束しない | コア質問 10 問上限 + open_questions への退避 |
 | 既存 requirements との競合 | 既存ファイルを提示し、上書き / 追記 / 中止 を確認 |

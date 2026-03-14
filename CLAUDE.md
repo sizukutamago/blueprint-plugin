@@ -5,10 +5,10 @@
 
 ## 概要
 
-- **ワークフロー**: `/spec` → `/test-from-contract` → `/implement` → `/generate-docs`
+- **ワークフロー**: `/requirements` → `/spec` → `/test-from-contract` → `/implement` → `/generate-docs`
 - **`.blueprint/` ディレクトリ**: contracts/ (I/O 境界仕様) + concepts/ + decisions/
 - **Contract YAML**: 4 タイプ (api/external/file/internal) の機械可読 I/O 境界仕様
-- **Review Swarm**: 各ステージ完了時に 3 エージェント並列レビュー（P0/P1/P2 Gate 判定）
+- **Review Swarm**: 各ステージ完了時に 3 エージェント並列レビュー（P0/P1/P2 Gate 判定、5 gates）
 - **設計書はコードから後追い生成**: `/generate-docs` でコード → docs/
 
 ## プロジェクト構造
@@ -16,6 +16,7 @@
 ```
 blueprint-plugin/
 ├── core/                        # ★ 統一仕様層（Platform 非依存、Single Source of Truth）
+│   ├── requirements.md          #   /requirements ワークフロー
 │   ├── spec.md                  #   /spec ワークフロー
 │   ├── test-from-contract.md    #   /test-from-contract ワークフロー
 │   ├── generate-docs.md         #   /generate-docs ワークフロー
@@ -49,10 +50,11 @@ blueprint-plugin/
 ├── .claude-plugin/              # Claude Code プラグインメタデータ
 ├── commands/                    # Claude Code コマンド定義
 │   ├── blueprint.md             #   /blueprint（パイプライン全体）
+│   ├── requirements.md          #   /requirements
 │   ├── spec.md                  #   /spec
 │   ├── test-from-contract.md    #   /test-from-contract
 │   ├── implement.md             #   /implement
-│   └── generate-docs.md         #   /generate-docs
+│   ├── generate-docs.md         #   /generate-docs
 │   └── blueprint-improve.md     #   /blueprint-improve
 ├── hooks/                       # Hook 定義（self-improve ログ収集）
 │   ├── hooks.json               #   SessionEnd/SessionStart Hook
@@ -60,7 +62,8 @@ blueprint-plugin/
 ├── skills/                      # ★ Claude Code 用ラッパー（core 参照 + 固有部分）
 │   ├── orchestrator/            #   パイプラインオーケストレーター
 │   │   └── references/
-│   │       └── review-prompts/  #   Review Swarm プロンプト（4 gates）
+│   │       └── review-prompts/  #   Review Swarm プロンプト（5 gates）
+│   ├── requirements/            #   ユーザーストーリー定義（Double Diamond）
 │   ├── spec/                    #   ブレスト + Contract 生成
 │   ├── test-from-contract/      #   Contract から TDD テスト生成
 │   ├── implement/               #   Contract + RED テスト → 実装
@@ -152,6 +155,10 @@ alwaysApply: false
 
 | プレフィックス | 用途 | 例 |
 |---------------|------|-----|
+| P | ペルソナ | P-001 |
+| Epic | エピック | Epic-001 |
+| US | ユーザーストーリー | US-001 |
+| AC | 受け入れ条件 | AC-001 |
 | FR | 機能要件 | FR-001 |
 | NFR | 非機能要件 | NFR-PERF-001 |
 | SC | 画面 | SC-001 |
@@ -181,9 +188,10 @@ claude --plugin-dir /path/to/blueprint-plugin
 ### スキル呼び出し（Claude Code）
 
 ```bash
-/blueprint              # 全パイプライン自動実行（/spec → テスト → 実装 → docs）
+/blueprint              # 全パイプライン自動実行（/requirements → /spec → テスト → 実装 → docs）
 /blueprint --resume     # 中断点から再開
 /blueprint --force      # 全ステージ強制再実行
+/requirements           # ユーザーストーリー定義（Double Diamond + EARS-inspired 記法）
 /spec                   # ブレスト → Contract YAML 生成
 /test-from-contract     # Contract から TDD テスト生成
 /implement              # Contract + RED テスト → 実装コード生成
@@ -200,6 +208,7 @@ claude --plugin-dir /path/to/blueprint-plugin
 ## 出力規約
 
 詳細は `core/output-structure.md` を参照。設計ドキュメントは `docs/` 配下に生成。
+要件定義成果物は `.blueprint/requirements/user-stories.md` に出力。
 
 ## 変更時の注意
 
