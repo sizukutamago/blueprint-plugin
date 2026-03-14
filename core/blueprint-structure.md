@@ -94,6 +94,21 @@ links:
 ---
 ```
 
+## 要件定義出力ディレクトリ構造
+
+`/requirements` が生成する要件定義ドキュメントの配置先:
+
+```
+docs/requirements/
+├── user-stories.md         # メイン成果物（ペルソナ、Epic、US、Gherkin AC）
+└── .work/                  # 中間成果物（.gitignore 対象）
+    ├── context_summary.md  # brownfield 分析結果
+    ├── interview_log.md    # インタビュー記録
+    └── story_map.md        # ストーリーマップ
+```
+
+`docs/requirements/.work/` はプロジェクトの `.gitignore` に追加する。
+
 ## 初期化
 
 プロジェクトで初めて `.blueprint/` を使う場合:
@@ -101,6 +116,7 @@ links:
 1. `.blueprint/` ディレクトリと 3 つのサブディレクトリを作成
 2. 最初の concept を 1 つ以上作成（ドメインの核となる概念）
 3. 最初の contract を作成（`/spec` スキルが支援）
+4. （オプション）`/requirements` で要件定義を先に行い、`docs/requirements/user-stories.md` を `/spec` の入力にする
 
 ## AI コンテキスト取得パターン
 

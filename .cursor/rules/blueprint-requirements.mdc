@@ -1,0 +1,64 @@
+---
+description: "Blueprint - Requirements workflow. Apply when defining requirements, gathering user stories, conducting interviews, or working with docs/requirements/ directory."
+globs: "docs/requirements/**"
+alwaysApply: false
+---
+
+# Requirements ワークフロー (Cursor)
+
+## 仕様参照
+
+以下の仕様ファイルを必ず読み込むこと:
+
+- `@core/requirements.md` — ワークフロー定義（6 ステップ）
+- `@core/id-system.md` — ID 採番規約（P, Epic, US, AC プレフィックス）
+
+## Cursor 固有の実行手順
+
+### Step 1: コンテキスト読み込み + モード判定
+
+1. `docs/requirements/` の存在を確認
+2. `src/` の存在 + ファイル数で greenfield/brownfield 判定
+3. brownfield: 既存コードを分析して context_summary を生成
+4. greenfield: README.md / PRD を読み込み
+
+### Step 2: インタビュー（Double Diamond パターン）
+
+`@core/requirements.md` Step 2 に従い、ユーザーに構造化質問を行う。
+
+- Diamond 1 — 発散: 概要、ユーザー、ユースケース、プラットフォーム
+- Diamond 1 — 収束: MVP 優先度、非目標
+- Diamond 2 — 深掘り: ビジネスルール、成功指標
+- Diamond 2 — 確認: 外部連携、NFR（条件付き）
+- 各回答に EARS 分類 + 信頼度レベル（Blue/Yellow/Red）を付与
+
+### Step 3: 構造化
+
+- インタビュー結果から Epic → Story 階層を生成
+- MoSCoW 分類（Must/Should/Could）
+- ストーリーマップをユーザーに提示して承認
+
+### Step 4: ユーザーストーリー生成
+
+- As a / I want / So that 形式
+- Gherkin AC（Given/When/Then）
+- EARS 記法で分類
+- `docs/requirements/user-stories.md` に書き出し
+
+### Step 5: 品質チェック
+
+- 曖昧語チェック、EARS 準拠、テスト可能性、完全性
+- 自動補正最大 2 回
+
+### Step 6: サマリー
+
+- 統計 + 信頼度サマリー + 次のステップ案内
+
+## 出力先
+
+- `docs/requirements/user-stories.md` — メイン成果物
+- `docs/requirements/.work/` — 中間成果物
+
+## 次のステップ
+
+- `/spec` — ユーザーストーリーから Contract YAML を生成

@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", "run complete design-to-code pipeline", "spec to implementation", "end to end development", "resume pipeline", "continue from where I left off", "force rerun all stages", "build full-stack app from scratch", "design and implement screens with API", or "create full-stack app with UI". Also use when the user says "パイプラインを実行", "仕様から実装まで", "一気通貫で開発", "設計から実装を自動化", or "フルスタックアプリを作る". Automates /spec → /test-from-contract → /implement → /generate-docs with Review Gates (Contract / Test / Code / Doc) between each stage. Supports --resume (continue from checkpoint) and --force (rerun all stages).
+description: Run the full workflow pipeline. Use when the user wants to "run blueprint workflow", "automate spec to docs", "orchestrate pipeline", "run the full pipeline", "execute blueprint", "start blueprint", "run complete design-to-code pipeline", "spec to implementation", "end to end development", "resume pipeline", "continue from where I left off", "force rerun all stages", "build full-stack app from scratch", "design and implement screens with API", or "create full-stack app with UI". Also use when the user says "パイプラインを実行", "仕様から実装まで", "一気通貫で開発", "設計から実装を自動化", or "フルスタックアプリを作る". Automates /requirements → /spec → /test-from-contract → /implement → /generate-docs with Review Gates (Requirements / Contract / Test / Code / Doc) between each stage. Supports --resume (continue from checkpoint) and --force (rerun all stages).
 version: 1.0.0
 core_ref: core/orchestrator.md
 ---
@@ -8,12 +8,13 @@ core_ref: core/orchestrator.md
 # Orchestrator スキル (Claude Code)
 
 パイプラインをワンコマンドで自動実行するオーケストレーター。
-4 ステージの直列パイプラインを実行し、各ステージ後に Review Gate（Contract / Test / Code / Doc）で品質を担保する。
+5 ステージの直列パイプラインを実行し、各ステージ後に Review Gate（Requirements / Contract / Test / Code / Doc）で品質を担保する。
 
 ## 仕様参照
 
 本スキルのワークフローは `core/orchestrator.md` に定義。
 各ステージの詳細仕様:
+- Stage 0: `core/requirements.md`
 - Stage 1: `core/spec.md`
 - Stage 2: `core/test-from-contract.md`
 - Stage 3: `core/implement.md`

@@ -1,14 +1,16 @@
 # Orchestrator Workflow
 
 パイプラインをワンコマンドで自動実行するオーケストレーター。
-`/spec` → `/test-from-contract` → 実装（一時停止）→ `/generate-docs` の 4 ステージを直列に実行し、
+`/requirements` → `/spec` → `/test-from-contract` → 実装（一時停止）→ `/generate-docs` の 5 ステージを直列に実行し、
 各ステージ後に Review Swarm（複数エージェント並列レビュー）で品質を担保する。
 
-> **前提**: `spec.md`, `test-from-contract.md`, `generate-docs.md`, `contract-schema.md` を参照。
+> **前提**: `requirements.md`, `spec.md`, `test-from-contract.md`, `generate-docs.md`, `contract-schema.md` を参照。
 
 ## パイプライン概要
 
 ```
+Stage 0: Requirements（対話的）
+    → Requirements Review Gate（3 並列レビュー）
 Stage 1: Spec（対話的）
     → Contract Review Gate（3 並列レビュー）
 Stage 2: Test Generation（自動）
@@ -23,13 +25,34 @@ Stage 4: Doc Generation（自動）
 
 | ステージ | 入力 | 出力 |
 |---------|------|------|
-| Stage 1 | ユーザーのビジネス知識 | `.blueprint/contracts/`, `.blueprint/concepts/`, `.blueprint/decisions/` |
+| Stage 0 | ユーザーのビジネス知識、README/PRD | `docs/requirements/user-stories.md` |
+| Stage 1 | `docs/requirements/user-stories.md` + ユーザーのビジネス知識 | `.blueprint/contracts/`, `.blueprint/concepts/`, `.blueprint/decisions/` |
 | Stage 2 | `.blueprint/contracts/` | `tests/contracts/level1/`, `tests/contracts/level2/`, `tests/contracts/helpers/`, `tests/ui/`（screen Contract がある場合） |
 | Stage 3 | `tests/contracts/level2/`（RED スタブ）+ `tests/ui/`（screen RED スタブ） | 実装コード + GREEN テスト |
 | Code Review Gate | `.blueprint/contracts/` + ソースコード | findings（Contract↔実装の乖離リスト） |
 | Stage 4 | ソースコード + `.blueprint/` | `docs/` |
 
 ## ステージ詳細
+
+### Stage 0: Requirements（対話的）
+
+`requirements.md` の 6 ステップワークフローを実行する。
+
+```
+実行内容:
+1. コンテキスト読み込み + モード判定（greenfield/brownfield）
+2. インタビュー（Double Diamond パターン、最大 10 質問）
+3. 構造化（Epic → Story 階層化、ユーザー承認必須）
+4. ユーザーストーリー生成（EARS 記法 + Gherkin AC）
+5. 品質チェック + 自動補正
+6. サマリー出力
+```
+
+**Smart Skip 条件**:
+- `docs/requirements/user-stories.md` が存在
+- スキップ検出時: ユーザーに確認（「既存の要件定義を使いますか？ 新規作成しますか？」）
+  - 既存を使う → Stage 0 をスキップし、Requirements Review Gate へ直接進む
+  - 新規作成 → Stage 0 を実行
 
 ### Stage 1: Spec（対話的）
 
@@ -249,6 +272,14 @@ REVISE 判定
     → 超過時: ユーザーに介入要請（findings リストを提示）
 ```
 
+### Requirements Review Gate（Stage 0 後）
+
+| エージェント | 観点 | チェック項目 |
+|-------------|------|------------|
+| Completeness Checker | 完全性 | 全 Epic に最低 1 Story があるか、全 Story に正常系+異常系 AC があるか、ペルソナが 1 人以上定義されているか、Non-Goals が明示されているか |
+| Quality Auditor | 品質 | 曖昧語（`quality_rules.md` の禁止語リスト）が残っていないか、全要件が EARS 記法に分類されているか、全 AC が Gherkin 形式（Given/When/Then）か、信頼度 Red が 30% 以上なら警告 |
+| Traceability Checker | 追跡可能性 | 全 US に Epic が紐付いているか、全 AC に ID（AC-XXX-Y）が付与されているか、NFR への紐付けがあるか、ID 連番に欠番がないか |
+
 ### Contract Review Gate（Stage 1 後）
 
 | エージェント | 観点 | チェック項目 |
@@ -305,6 +336,25 @@ started_at: "YYYY-MM-DDTHH:MM:SSZ"
 paused_at: null                    # 予約フィールド（現在未使用）
 
 stages:
+  stage_0_requirements:
+    status: pending | in_progress | completed | skipped
+    reason: null                   # skipped 時の理由
+    personas: 0
+    epics: 0
+    stories: 0
+    acceptance_criteria: 0
+    confidence:
+      blue: 0
+      yellow: 0
+      red: 0
+    output_file: "docs/requirements/user-stories.md"
+
+  requirements_review_gate:        # Stage 0 後のレビューゲート結果
+    status: pending | passed | failed
+    cycles: 0
+    final_counts: { p0: 0, p1: 0, p2: 0 }
+    notes: null
+
   stage_1_spec:
     status: pending | in_progress | completed | skipped
     reason: null                   # skipped 時の理由
@@ -389,6 +439,7 @@ final_status: pending | completed  # パイプライン最終ステータス
 
 | ステージ | スキップ条件 | --force 時 |
 |---------|------------|-----------|
+| Stage 0 | `docs/requirements/user-stories.md` が存在 | 強制実行 |
 | Stage 1 | `.blueprint/contracts/` に active/draft Contract ≥1 | 強制実行 |
 | Stage 2 | `tests/contracts/` に `@generated` マーカー付きテスト ≥1 | 強制実行 |
 | Stage 3 | `src/` に実装あり + Level 2 テスト全 GREEN | 強制実行 |
